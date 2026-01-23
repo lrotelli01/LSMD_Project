@@ -7,6 +7,7 @@ import largebeb.services.FavoredPropertyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/favored")
@@ -26,7 +27,7 @@ public class FavoredPropertyController {
     @PostMapping
     public ResponseEntity<?> addFavoredProperty(
             @RequestHeader("Authorization") String token,
-            @RequestBody FavoredPropertyRequestDTO request) {
+            @Valid @RequestBody FavoredPropertyRequestDTO request) {
         try {
             return ResponseEntity.ok(favoredPropertyService.addFavoredProperty(token, request));
         } catch (RuntimeException e) {

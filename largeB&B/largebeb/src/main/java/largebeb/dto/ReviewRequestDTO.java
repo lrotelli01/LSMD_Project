@@ -2,6 +2,7 @@ package largebeb.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -12,21 +13,25 @@ public class ReviewRequestDTO {
 
     private String text;
 
-    // Ratings are not @NotNull here to allow Manager to reply without sending ratings back.
-    // However, they will be checked programmatically during CREATION.
+    @NotNull
     @Min(1) @Max(5)
     private Double rating; // Overall
 
+    @NotNull
     @Min(1) @Max(5)
     private Double cleanliness;
     
+    @NotNull
     @Min(1) @Max(5)
     private Double communication;
     
+    @NotNull
     @Min(1) @Max(5)
     private Double location;
     
+    @NotNull
     @Min(1) @Max(5)
+    // Value for money
     private Double value;
 
     // Manager can set this field alone in an update
