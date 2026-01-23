@@ -7,7 +7,7 @@ URI = "neo4j+s://fc8b8e32.databases.neo4j.io"
 AUTH = ("neo4j", "X1Yq0MgmXHYcHmSe-Jk15AZWFTMWq32kRrN-VMbWGQk") 
 base_path = os.path.dirname(os.path.abspath(__file__))
 def load_json(filename):
-    try:
+    try: 
         file_path = os.path.join(base_path, filename)
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
