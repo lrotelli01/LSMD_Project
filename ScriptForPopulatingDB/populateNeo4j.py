@@ -3,8 +3,8 @@ from neo4j import GraphDatabase
 
 # --- NEO4J CONFIGURATION ---
 # Change the password if you have changed it!
-URI = "bolt://localhost:7687"
-AUTH = ("neo4j", "Carota123!") 
+URI = "neo4j+s://fc8b8e32.databases.neo4j.io"
+AUTH = ("neo4j", "X1Yq0MgmXHYcHmSe-Jk15AZWFTMWq32kRrN-VMbWGQk") 
 
 def load_json(filename):
     try:
