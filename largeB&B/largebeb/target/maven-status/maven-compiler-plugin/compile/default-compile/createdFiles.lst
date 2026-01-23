@@ -69,6 +69,7 @@ largebeb/services/ReservationService.class
 largebeb/dto/ManagerReservationDTO.class
 largebeb/dto/FavoredPropertyRequestDTO.class
 largebeb/utilities/BillingAddress.class
+largebeb/config/GlobalExceptionHandler.class
 largebeb/dto/PropertyResponseDTO$PropertyResponseDTOBuilder.class
 largebeb/model/Notification.class
 largebeb/controllers/NotificationController.class

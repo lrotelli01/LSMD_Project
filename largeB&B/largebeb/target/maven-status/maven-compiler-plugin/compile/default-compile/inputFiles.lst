@@ -20,6 +20,7 @@
 /home/luca/Scaricati/LSMD_Project_3 (1)/LSMD_Project_3/LSMD_Project/largeB&B/largebeb/src/main/java/largebeb/dto/AnalyticsResponseDTO.java
 /home/luca/Scaricati/LSMD_Project_3 (1)/LSMD_Project_3/LSMD_Project/largeB&B/largebeb/src/main/java/largebeb/dto/LogoutResponseDTO.java
 /home/luca/Scaricati/LSMD_Project_3 (1)/LSMD_Project_3/LSMD_Project/largeB&B/largebeb/src/main/java/largebeb/config/RedisConfig.java
+/home/luca/Scaricati/LSMD_Project_3 (1)/LSMD_Project_3/LSMD_Project/largeB&B/largebeb/src/main/java/largebeb/config/GlobalExceptionHandler.java
 /home/luca/Scaricati/LSMD_Project_3 (1)/LSMD_Project_3/LSMD_Project/largeB&B/largebeb/src/main/java/largebeb/services/ManagerReservationService.java
 /home/luca/Scaricati/LSMD_Project_3 (1)/LSMD_Project_3/LSMD_Project/largeB&B/largebeb/src/main/java/largebeb/controllers/FavoredPropertyController.java
 /home/luca/Scaricati/LSMD_Project_3 (1)/LSMD_Project_3/LSMD_Project/largeB&B/largebeb/src/main/java/largebeb/services/MessageService.java

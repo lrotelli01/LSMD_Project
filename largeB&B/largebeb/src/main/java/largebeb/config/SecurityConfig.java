@@ -30,7 +30,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
+    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -42,7 +42,8 @@ public class SecurityConfig {
                     "/api/auth/**",       // Login, Register, Logout
                     "/v3/api-docs/**",    // Swagger Docs
                     "/swagger-ui/**",     // Swagger UI Resources
-                    "/swagger-ui.html"    // Swagger UI Page
+                    "/swagger-ui.html",   // Swagger UI Page
+                    "/error"
                 ).permitAll()
 
                 // 2. GUEST & CUSTOMER (Sola Lettura Proprietà)
