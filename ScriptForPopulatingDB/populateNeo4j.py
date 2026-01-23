@@ -2,7 +2,7 @@ import json
 from neo4j import GraphDatabase
 
 # --- NEO4J CONFIGURATION ---
-# Change the password if you have changed it!
+# Change the password if you have changed it
 URI = "neo4j+s://fc8b8e32.databases.neo4j.io"
 AUTH = ("neo4j", "X1Yq0MgmXHYcHmSe-Jk15AZWFTMWq32kRrN-VMbWGQk") 
 
