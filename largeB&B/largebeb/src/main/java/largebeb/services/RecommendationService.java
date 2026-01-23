@@ -1,0 +1,107 @@
+package largebeb.services;
+
+import largebeb.dto.PropertyResponseDTO;
+import largebeb.model.Property;
+import largebeb.repository.PropertyRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.neo4j.core.Neo4jClient;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class RecommendationService {
+
+    private final Neo4jClient neo4jClient;
+    private final PropertyRepository propertyRepository;
+    private final MongoTemplate mongoTemplate;
+
+    // --- 1. COLLABORATIVE FILTERING (Neo4j) ---
+    public List<PropertyResponseDTO> getCollaborativeRecommendations(String propertyId) {
+        
+        String cypherQuery = """
+            MATCH (p:Property {propertyId: $propId})<-[:BOOKED]-(u:User)-[:BOOKED]->(other:Property)
+            RETURN other.propertyId AS recommendedId, count(*) AS strength
+            ORDER BY strength DESC
+            LIMIT 5
+        """;
+
+        Collection<String> recommendedIds = neo4jClient.query(cypherQuery)
+                .bind(propertyId).to("propId")
+                .fetchAs(String.class)
+                .mappedBy((typeSystem, record) -> record.get("recommendedId").asString())
+                .all();
+
+        if (recommendedIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Property> properties = (List<Property>) propertyRepository.findAllById(recommendedIds);
+        return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    // --- 2. CONTENT-BASED FILTERING (MongoDB) ---
+    public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyId) {
+        Property current = propertyRepository.findById(propertyId).orElse(null);
+        if (current == null || current.getAmenities() == null || current.getAmenities().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").ne(propertyId));
+        query.addCriteria(Criteria.where("amenities").in(current.getAmenities()));
+        query.limit(10);
+
+        List<Property> candidates = mongoTemplate.find(query, Property.class);
+
+        candidates.sort((p1, p2) -> {
+            long common1 = countCommon(p1.getAmenities(), current.getAmenities());
+            long common2 = countCommon(p2.getAmenities(), current.getAmenities());
+            return Long.compare(common2, common1);
+        });
+
+        return candidates.stream()
+                .limit(5)
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private long countCommon(List<String> l1, List<String> l2) {
+        if (l1 == null || l2 == null) return 0;
+        List<String> copy = new ArrayList<>(l1);
+        copy.retainAll(l2);
+        return copy.size();
+    }
+
+    // Helper: Mappa Entity -> DTO (CORRETTO IL FLOAT E LA FOTO)
+    private PropertyResponseDTO mapToDTO(Property p) {
+        Double minPrice = 0.0;
+        if (p.getRooms() != null && !p.getRooms().isEmpty()) {
+            minPrice = p.getRooms().stream()
+                .filter(r -> r.getPricePerNightAdults() != null)
+                .mapToDouble(r -> r.getPricePerNightAdults().doubleValue())
+                .min()
+                .orElse(0.0);
+        }
+
+        return PropertyResponseDTO.builder()
+                .id(p.getId())
+                .name(p.getName())
+                .city(p.getCity())
+                .pricePerNight(minPrice)
+                .rating(p.getRatingStats() != null ? p.getRatingStats().getValue() : 0.0)
+                .amenities(p.getAmenities())
+                // Corretto: Usiamo photos() invece di mainPhoto() che non esisteva
+                .photos(p.getPhotos()) 
+                .pois(p.getPois())
+                .build();
+    }
+}
