@@ -15,7 +15,7 @@ public class Neo4jIndexConfig {
     public Neo4jIndexConfig(Neo4jClient neo4jClient) {
         this.neo4jClient = neo4jClient;
     }
-
+ 
     /*
       Executes Cypher commands to create the strict set of constraints 
       defined in the documentation immediately after application startup.
