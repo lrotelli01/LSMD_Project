@@ -22,7 +22,7 @@ public class Neo4jIndexConfig {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void createIndexesAndConstraints() {
-        
+          
         // Mapped 1-to-1 with your LaTeX "Neo4j Indexing Strategy"
         List<String> startupQueries = List.of(
             
