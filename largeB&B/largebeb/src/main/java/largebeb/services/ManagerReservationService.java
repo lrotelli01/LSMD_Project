@@ -30,8 +30,9 @@ public class ManagerReservationService {
 
     /**
      * Get all reservations for all properties owned by the manager
+     * Supports optional date filtering
      */
-    public List<ManagerReservationDTO> getAllMyReservations(String token) {
+    public List<ManagerReservationDTO> getAllMyReservations(String token, LocalDate startDate, LocalDate endDate) {
         RegisteredUser manager = getManagerFromToken(token);
         
         // Get all properties owned by this manager
@@ -55,8 +56,9 @@ public class ManagerReservationService {
         // Get all reservations for these rooms
         List<Reservation> allReservations = reservationRepository.findByRoomIdIn(allRoomIds);
 
-        // Map to DTO with all details
+        // Apply date filtering if provided
         return allReservations.stream()
+                .filter(res -> filterByDateRange(res, startDate, endDate))
                 .map(res -> mapToManagerReservationDTO(res, myProperties))
                 .sorted(Comparator.comparing(ManagerReservationDTO::getCreatedAt).reversed())
                 .collect(Collectors.toList());
@@ -64,8 +66,10 @@ public class ManagerReservationService {
 
     /**
      * Get reservations for a specific property
+     * Supports optional date filtering
      */
-    public List<ManagerReservationDTO> getPropertyReservations(String token, String propertyId) {
+    public List<ManagerReservationDTO> getPropertyReservations(String token, String propertyId, 
+                                                                LocalDate startDate, LocalDate endDate) {
         RegisteredUser manager = getManagerFromToken(token);
         
         Property property = propertyRepository.findById(propertyId)
@@ -89,16 +93,38 @@ public class ManagerReservationService {
         List<Reservation> reservations = reservationRepository.findByRoomIdIn(roomIds);
 
         return reservations.stream()
+                .filter(res -> filterByDateRange(res, startDate, endDate))
                 .map(res -> mapToManagerReservationDTO(res, List.of(property)))
                 .sorted(Comparator.comparing(ManagerReservationDTO::getCreatedAt).reversed())
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get reservations filtered by status
+     * Filter reservation by date range
+     * @param res The reservation to check
+     * @param startDate If provided, reservation checkIn must be >= startDate
+     * @param endDate If provided, reservation checkOut must be <= endDate
+     */
+    private boolean filterByDateRange(Reservation res, LocalDate startDate, LocalDate endDate) {
+        if (res.getDates() == null) {
+            return false;
+        }
+        if (startDate != null && res.getDates().getCheckIn() != null 
+                && res.getDates().getCheckIn().isBefore(startDate)) {
+            return false;
+        }
+        if (endDate != null && res.getDates().getCheckOut() != null 
+                && res.getDates().getCheckOut().isAfter(endDate)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Get reservations filtered by status (uses overloaded method with null dates)
      */
     public List<ManagerReservationDTO> getReservationsByStatus(String token, String status) {
-        List<ManagerReservationDTO> allReservations = getAllMyReservations(token);
+        List<ManagerReservationDTO> allReservations = getAllMyReservations(token, null, null);
         
         return allReservations.stream()
                 .filter(r -> status.equalsIgnoreCase(r.getStatus()))
@@ -109,7 +135,7 @@ public class ManagerReservationService {
      * Get upcoming reservations (check-in date in the future)
      */
     public List<ManagerReservationDTO> getUpcomingReservations(String token) {
-        List<ManagerReservationDTO> allReservations = getAllMyReservations(token);
+        List<ManagerReservationDTO> allReservations = getAllMyReservations(token, null, null);
         LocalDate today = LocalDate.now();
         
         return allReservations.stream()
@@ -122,7 +148,7 @@ public class ManagerReservationService {
      * Get current reservations (ongoing stays)
      */
     public List<ManagerReservationDTO> getCurrentReservations(String token) {
-        List<ManagerReservationDTO> allReservations = getAllMyReservations(token);
+        List<ManagerReservationDTO> allReservations = getAllMyReservations(token, null, null);
         LocalDate today = LocalDate.now();
         
         return allReservations.stream()

@@ -311,25 +311,33 @@ curl -X DELETE "http://localhost:8080/api/manager/properties/64abc123/rooms/room
 
 ## 📊 ANALYTICS
 
-### 9. GET /api/manager/analytics/property/{propertyId}
-**Descrizione:** Analytics dettagliate per una singola proprietà
+### 9. GET /api/manager/analytics
+**Descrizione:** Analytics unificato - se `propertyId` è fornito restituisce analytics per quella proprietà, altrimenti per tutte le proprietà del manager
 
 **Input:**
 | Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
 |-----------|------|-----------|--------------|-------------|
 | Authorization | String | Header | ✅ | Token JWT |
-| propertyId | String | URL Path | ✅ | ID proprietà |
+| propertyId | String | Query Param | ❌ | ID proprietà (se assente: tutte le proprietà) |
 | startDate | String | Query Param | ❌ | Data inizio (formato: YYYY-MM-DD) |
 | endDate | String | Query Param | ❌ | Data fine (formato: YYYY-MM-DD) |
 
 **Esempio cURL:**
 ```bash
-# Analytics per tutto il periodo (dalla creazione)
-curl -X GET "http://localhost:8080/api/manager/analytics/property/64abc123" \
+# Analytics per TUTTE le proprietà del manager
+curl -X GET "http://localhost:8080/api/manager/analytics" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
 
-# Analytics per periodo specifico
-curl -X GET "http://localhost:8080/api/manager/analytics/property/64abc123?startDate=2025-01-01&endDate=2025-12-31" \
+# Analytics per una singola proprietà
+curl -X GET "http://localhost:8080/api/manager/analytics?propertyId=64abc123" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+
+# Analytics per periodo specifico (tutte le proprietà)
+curl -X GET "http://localhost:8080/api/manager/analytics?startDate=2025-01-01&endDate=2025-12-31" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+
+# Analytics per una proprietà in un periodo
+curl -X GET "http://localhost:8080/api/manager/analytics?propertyId=64abc123&startDate=2025-01-01&endDate=2025-12-31" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
 ```
 
@@ -662,16 +670,23 @@ curl -X GET "http://localhost:8080/api/manager/reviews/property/64abc123?startDa
 ## 📅 RESERVATIONS VIEW
 
 ### 17. GET /api/manager/reservations
-**Descrizione:** Tutte le prenotazioni delle proprietà del manager
+**Descrizione:** Tutte le prenotazioni delle proprietà del manager, con filtro opzionale per periodo
 
 **Input:**
 | Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
 |-----------|------|-----------|--------------|-------------|
 | Authorization | String | Header | ✅ | Token JWT |
+| startDate | String | Query Param | ❌ | Data inizio (checkIn >= startDate) |
+| endDate | String | Query Param | ❌ | Data fine (checkOut <= endDate) |
 
 **Esempio cURL:**
 ```bash
+# Tutte le prenotazioni
 curl -X GET "http://localhost:8080/api/manager/reservations" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+
+# Prenotazioni in un periodo specifico
+curl -X GET "http://localhost:8080/api/manager/reservations?startDate=2025-01-01&endDate=2025-06-30" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
 ```
 
@@ -702,15 +717,21 @@ curl -X GET "http://localhost:8080/api/manager/reservations" \
 ---
 
 ### 18. GET /api/manager/reservations/property/{propertyId}
-**Descrizione:** Prenotazioni per una singola proprietà
+**Descrizione:** Prenotazioni per una singola proprietà, con filtro opzionale per periodo
 
 **Input:**
 | Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
 |-----------|------|-----------|--------------|-------------|
 | Authorization | String | Header | ✅ | Token JWT |
 | propertyId | String | URL Path | ✅ | ID proprietà |
+| startDate | String | Query Param | ❌ | Data inizio (checkIn >= startDate) |
+| endDate | String | Query Param | ❌ | Data fine (checkOut <= endDate) |
 
----
+**Esempio cURL:**
+```bash
+curl -X GET "http://localhost:8080/api/manager/reservations/property/64abc123?startDate=2025-01-01&endDate=2025-12-31" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```---
 
 ### 19. GET /api/manager/reservations/status/{status}
 **Descrizione:** Filtra prenotazioni per stato
