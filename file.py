@@ -1,6 +1,3 @@
-# Per usare questo script, devi avere la libreria fpdf installata.
-# Se usi Google Colab, esegui prima: !pip install fpdf
-
 from fpdf import FPDF
 
 class PDF(FPDF):

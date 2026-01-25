@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -18,6 +20,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "reservations")
+// AVAILABILITY CHECK INDEX (CRITICAL)
+// Optimizes the query: "Is Room X free between Date A and Date B?"
+@CompoundIndex(name = "room_availability_idx", def = "{'roomId': 1, 'dates.checkIn': 1, 'dates.checkOut': 1}")
 public class Reservation {
 
     @Id
@@ -28,7 +33,13 @@ public class Reservation {
 
     private String status; 
 
+    // USER HISTORY INDEX
+    // Fast lookup for "My Bookings" page
+    @Indexed
     private String userId;
+
+    // Indexed as part of the Compound Index above, but also useful alone
+    @Indexed
     private String roomId;
     
     // Nested object for 'dates'

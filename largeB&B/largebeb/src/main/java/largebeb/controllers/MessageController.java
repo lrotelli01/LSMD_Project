@@ -8,6 +8,7 @@ import largebeb.utilities.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,7 +24,7 @@ public class MessageController {
     @PostMapping("/send")
     public ResponseEntity<?> sendMessage(
             @RequestHeader("Authorization") String token,
-            @RequestBody MessageRequestDTO request) {
+            @Valid @RequestBody MessageRequestDTO request) {
 
         String senderId = extractUserIdFromToken(token);
         try {

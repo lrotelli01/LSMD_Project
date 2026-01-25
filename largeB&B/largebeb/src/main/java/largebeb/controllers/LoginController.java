@@ -6,6 +6,7 @@ import largebeb.services.LoginService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController // Tells Spring this class handles Web Requests
 @RequestMapping("/api/auth") // Base URL for this controller
@@ -20,7 +21,7 @@ public class LoginController {
     }
 
     @PostMapping("/login") // Handles POST requests to /login
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         
         // Input check
         if (loginRequest.getEmail() == null || loginRequest.getPassword() == null) {

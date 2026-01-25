@@ -163,6 +163,9 @@ public class ReservationService {
     
     // CONFIRM PAYMENT
     public ReservationResponseDTO confirmPayment(String token, PaymentRequestDTO paymentRequest) {
+        if (paymentRequest.getTempReservationId() == null || paymentRequest.getTempReservationId().isEmpty()) {
+            throw new IllegalArgumentException("Temporary Reservation ID is required to confirm payment.");
+        }   
         String redisKey = REDIS_PREFIX + paymentRequest.getTempReservationId();
 
         // Check if the temporary reservation exists in Redis
@@ -440,6 +443,14 @@ public class ReservationService {
 
     // Check capacity room
     private void validateOccupancy(Room room, int adults, int children) {
+        // Validation for minimum number of people
+        if (adults < 1) {
+            throw new IllegalArgumentException("At least 1 adult is required per reservation.");
+        }
+        if (children < 0) {
+            throw new IllegalArgumentException("Children count cannot be negative.");
+        }
+        // Validation against room capacity
         if (adults > room.getCapacityAdults()) {
             throw new IllegalArgumentException("Too many adults. Max allowed for this room: " + room.getCapacityAdults());
         }
@@ -461,7 +472,7 @@ public class ReservationService {
 
     private boolean isOverlapping(Reservation.ReservationDates existing, LocalDate newIn, LocalDate newOut) {
         return newIn.isBefore(existing.getCheckOut()) && newOut.isAfter(existing.getCheckIn());
-    }
+    }   
 
     // Maps Reservation to ReservationResponseDTO using Room details for price, image, and message
     private ReservationResponseDTO mapToDTO(Reservation res, Room room, String message) {

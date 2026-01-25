@@ -1,17 +1,18 @@
 import json
 from neo4j import GraphDatabase
-
+import os
 # --- NEO4J CONFIGURATION ---
-# Change the password if you have changed it!
-URI = "neo4j+s://fc8b8e32.databases.neo4j.io"
-AUTH = ("neo4j", "X1Yq0MgmXHYcHmSe-Jk15AZWFTMWq32kRrN-VMbWGQk") 
-
+# Change the password if you have changed it
+URI = "neo4j://127.0.0.1:7687"
+AUTH = ("neo4j", "Carota123!") 
+base_path = os.path.dirname(os.path.abspath(__file__))
 def load_json(filename):
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
+    try: 
+        file_path = os.path.join(base_path, filename)
+        with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"ERROR: File {filename} not found.")
+        print(f"ERROR: File {file_path} not found.")
         return []
 
 class LargeBnBImporter:
@@ -156,4 +157,4 @@ def main():
         print("--- IMPORT COMPLETED ---")
 
 if __name__ == "__main__":
-    main()
+    main()  

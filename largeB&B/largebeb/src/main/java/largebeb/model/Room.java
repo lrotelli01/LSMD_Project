@@ -4,7 +4,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.util.List;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 
 @Data
 @NoArgsConstructor
@@ -14,27 +16,31 @@ public class Room {
     @Field("roomId")
     private String id;
 
-    // Links this room to a specific Property (B&B/Hotel)
+    // Useful for internal reverse lookups
+    @Indexed 
     private String propertyId; 
     
-    private String roomType; // e.g., "Single", "Double", "Suite"
-    
-    private String name;     // e.g., "Blue Room with Sea View"
-    
-    // number of beds
+    @Indexed
+    private String roomType; 
+    @TextIndexed(weight = 2)
+    private String name;  
+    @Indexed   
+    @Field("beds")
     private short numBeds; 
     
+    // Specific filter for room features (e.g., "En-suite bathroom")
     private List<String> amenities;
+
     private List<String> photos;
     
-    // Room status ("available", "maintenance", etc.)
     private String status; 
     
-    // Capacity
+    // (Capacity is handled by the @CompoundIndex in Property.java)
     private Long capacityAdults;
     private Long capacityChildren;
     
-    // Pricing
+    // PRICE FILTER
+    // Fast Range queries (e.g., "AdultsPrice < 100 && ChildrenPrice < 50")
     private Float pricePerNightAdults;
     private Float pricePerNightChildren;
 }

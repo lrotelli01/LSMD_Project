@@ -46,21 +46,25 @@ public class RegistrationService {
             return new RegistrationResponseDTO("Invalid Phone Number format.", null, null);
         }
 
-        // Age Validation (Must be 18+)
+        // Age and Date Format Validation
+        // If parsing fails before reaching here, Spring throws a HttpMessageNotReadableException.
         if (request.getBirthdate() == null) {
-            return new RegistrationResponseDTO("Birthdate is mandatory.", null, null);
+            return new RegistrationResponseDTO("Birthdate is mandatory and must follow the format 'yyyy-MM-dd'.", null, null);
         }
-        // If birthdate is AFTER the date 18 years ago, the user is too young.
+        
+        // Check if user is at least 18 years old
         if (request.getBirthdate().isAfter(LocalDate.now().minusYears(18))) {
              return new RegistrationResponseDTO("User must be at least 18 years old to register.", null, null);
         }
 
-        // Duplicate Check (Database)
+        // Check if Email already exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return new RegistrationResponseDTO("Email is already in use.", null, null);
+            return new RegistrationResponseDTO("This email address is already in use.", null, null);
         }
+
+        // Check if Username already exists
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return new RegistrationResponseDTO("Username is already in use.", null, null);
+            return new RegistrationResponseDTO("This username is already taken.", null, null);
         }
 
         // Password Validation

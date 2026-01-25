@@ -11,7 +11,7 @@ DB_NAME = "large_bnb_db"
 # NOW SET TO: The same directory as this script file.
 # It will look for 'properties.json', 'rooms.json', etc. right next to this .py file.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+ 
 def load_json(filename):
     """Loads a JSON file from the BASE_DIR."""
     full_path = os.path.join(BASE_DIR, filename)
