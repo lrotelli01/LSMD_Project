@@ -4,6 +4,7 @@ import largebeb.dto.*;
 import largebeb.services.AnalyticsService;
 import largebeb.services.ManagerPropertyService;
 import largebeb.services.ManagerReservationService;
+import largebeb.services.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ public class ManagerController {
     private final ManagerPropertyService managerPropertyService;
     private final AnalyticsService analyticsService;
     private final ManagerReservationService managerReservationService;
+    private final ReviewService reviewService;
 
     // ==================== PROPERTY MANAGEMENT ====================
 
@@ -180,6 +182,112 @@ public class ManagerController {
         }
         try {
             return ResponseEntity.ok(analyticsService.getAggregatedAnalytics(token, startDate, endDate));
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    // ==================== ADVANCED ANALYTICS ====================
+
+    /**
+     * Get rating evolution analysis for a specific property
+     * Tracks how ratings change over time with detailed breakdown
+     */
+    @GetMapping("/analytics/ratings/{propertyId}")
+    public ResponseEntity<?> getRatingEvolution(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String propertyId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        logger.info("[GET] Rating evolution for property: {}", propertyId);
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("Validation Error: startDate cannot be after endDate");
+        }
+        try {
+            return ResponseEntity.ok(analyticsService.getRatingEvolution(token, propertyId, startDate, endDate));
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
+     * Get reservation trends and booking patterns analysis
+     * Includes booking velocity, day-of-week patterns, lead time, stay duration
+     */
+    @GetMapping("/analytics/trends/{propertyId}")
+    public ResponseEntity<?> getReservationTrends(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String propertyId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        logger.info("[GET] Reservation trends for property: {}", propertyId);
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("Validation Error: startDate cannot be after endDate");
+        }
+        try {
+            return ResponseEntity.ok(analyticsService.getReservationTrends(token, propertyId, startDate, endDate));
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
+     * Get comparative performance benchmarking against similar properties
+     * Compares revenue, occupancy, ratings against market averages
+     */
+    @GetMapping("/analytics/benchmark/{propertyId}")
+    public ResponseEntity<?> getComparativePerformance(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String propertyId) {
+        
+        logger.info("[GET] Comparative performance for property: {}", propertyId);
+        try {
+            return ResponseEntity.ok(analyticsService.getComparativePerformance(token, propertyId));
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    // ==================== REVIEWS BY PERIOD ====================
+
+    /**
+     * Get all reviews for a specific property within a time period
+     */
+    @GetMapping("/reviews/property/{propertyId}")
+    public ResponseEntity<?> getPropertyReviews(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String propertyId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        logger.info("[GET] Reviews for property: {} from {} to {}", propertyId, startDate, endDate);
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("Validation Error: startDate cannot be after endDate");
+        }
+        try {
+            return ResponseEntity.ok(reviewService.getReviewsByPropertyIdAndPeriod(token, propertyId, startDate, endDate));
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
+     * Get all reviews for all properties owned by the manager within a time period
+     */
+    @GetMapping("/reviews")
+    public ResponseEntity<?> getAllMyReviews(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        logger.info("[GET] All reviews for manager from {} to {}", startDate, endDate);
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("Validation Error: startDate cannot be after endDate");
+        }
+        try {
+            return ResponseEntity.ok(reviewService.getAllManagerReviewsByPeriod(token, startDate, endDate));
         } catch (Exception e) {
             return handleException(e);
         }

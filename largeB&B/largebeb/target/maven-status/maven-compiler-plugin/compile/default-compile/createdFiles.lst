@@ -1,5 +1,7 @@
 largebeb/model/Property.class
 largebeb/dto/RoomPaymentStatusDTO$RoomStatusDetail$RoomStatusDetailBuilder.class
+largebeb/dto/AnalyticsResponseDTO$RatingAnalyticsDTO$RatingAnalyticsDTOBuilder.class
+largebeb/dto/AnalyticsResponseDTO$ReservationTrendsDTO$ReservationTrendsDTOBuilder.class
 largebeb/services/DeleteAccountService.class
 largebeb/dto/PaymentMethodResponseDTO.class
 largebeb/services/AnalyticsService.class
@@ -20,10 +22,12 @@ largebeb/dto/DeleteAccountResponseDTO$DeleteAccountResponseDTOBuilder.class
 largebeb/controllers/DeleteAccountController.class
 largebeb/dto/LoginRequestDTO.class
 largebeb/dto/LogoutResponseDTO$LogoutResponseDTOBuilder.class
+largebeb/services/AnalyticsService$PropertyMetrics.class
 largebeb/dto/RoomResponseDTO.class
 largebeb/model/RegisteredUser.class
 largebeb/services/LoginService.class
 largebeb/services/MessageService.class
+largebeb/dto/AnalyticsResponseDTO$ReservationTrendsDTO.class
 largebeb/dto/AnalyticsResponseDTO$RoomAnalyticsDTO.class
 largebeb/dto/ReviewRequestDTO.class
 largebeb/model/PointOfInterest.class
@@ -33,6 +37,7 @@ largebeb/dto/ManagerReservationDTO$ManagerReservationDTOBuilder.class
 largebeb/dto/MessageResponseDTO$MessageResponseDTOBuilder.class
 largebeb/repository/ReservationRepository.class
 largebeb/dto/RoomPaymentStatusDTO.class
+largebeb/dto/AnalyticsResponseDTO$RatingAnalyticsDTO.class
 largebeb/model/Room.class
 largebeb/dto/DeleteAccountResponseDTO.class
 largebeb/dto/AnalyticsResponseDTO$RoomAnalyticsDTO$RoomAnalyticsDTOBuilder.class
@@ -41,17 +46,20 @@ largebeb/repository/ReviewRepository.class
 largebeb/controllers/PaymentMethodController.class
 largebeb/dto/ReservationResponseDTO.class
 largebeb/model/Reservation$ReservationDates$ReservationDatesBuilder.class
+largebeb/dto/AnalyticsResponseDTO$ComparativePerformanceDTO.class
 largebeb/LargebebApplication.class
 largebeb/dto/NotificationResponseDTO.class
 largebeb/services/FavoredPropertyService.class
 largebeb/services/PaymentMethodService.class
 largebeb/services/ReviewService.class
 largebeb/dto/PaymentRequestDTO.class
+largebeb/services/AnalyticsService$BasicStats.class
 largebeb/controllers/RegistrationController.class
 largebeb/controllers/ManagerController.class
 largebeb/dto/PropertyResponseDTO.class
 largebeb/dto/RoomRequestDTO.class
 largebeb/dto/PaymentMethodRequestDTO.class
+largebeb/services/AnalyticsService$AggregatedResult.class
 largebeb/repository/PropertyRepository.class
 largebeb/repository/MessageRepository.class
 largebeb/model/Message$MessageBuilder.class
@@ -62,6 +70,7 @@ largebeb/dto/RoomPaymentStatusDTO$RoomPaymentStatusDTOBuilder.class
 largebeb/services/RecommendationService.class
 largebeb/dto/MessageRequestDTO.class
 largebeb/dto/AnalyticsResponseDTO.class
+largebeb/dto/AnalyticsResponseDTO$ComparativePerformanceDTO$ComparativePerformanceDTOBuilder.class
 largebeb/dto/RegistrationRequestDTO.class
 largebeb/dto/LogoutRequestDTO.class
 largebeb/repository/UserRepository.class

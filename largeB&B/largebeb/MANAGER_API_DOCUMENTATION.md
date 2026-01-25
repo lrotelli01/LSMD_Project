@@ -351,6 +351,8 @@ curl -X GET "http://localhost:8080/api/manager/analytics/property/64abc123?start
   "totalGuests": 95,
   "totalAdults": 78,
   "totalChildren": 17,
+  "mostBookedRoomType": "Double Room",
+  "avgGuestsPerRoomPerBooking": 2.3,
   "roomAnalytics": [
     {
       "roomId": "room1",
@@ -398,11 +400,268 @@ curl -X GET "http://localhost:8080/api/manager/analytics/summary" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
 ```
 
+**Campi Analytics aggiuntivi:**
+| Campo | Descrizione |
+|-------|-------------|
+| `mostBookedRoomType` | Tipologia di camera più prenotata (es. "Double Room", "Suite") |
+| `avgGuestsPerRoomPerBooking` | Media ospiti per camera per prenotazione |
+| `occupancyRate` | Tasso di occupazione percentuale (0-100) |
+| `totalRevenue` | Ricavi totali nel periodo |
+| `totalReservations` | Numero totale prenotazioni |
+| `roomAnalytics` | Dettaglio per ogni camera |
+| `monthlyBreakdown` | Breakdown mensile (prenotazioni, ricavi, ospiti) |
+
+---
+
+## 📈 ADVANCED ANALYTICS (Business Intelligence)
+
+### 12. GET /api/manager/analytics/ratings/{propertyId}
+**Descrizione:** Analisi dell'evoluzione delle valutazioni nel tempo
+
+**Input:**
+| Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
+|-----------|------|-----------|--------------|-------------|
+| Authorization | String | Header | ✅ | Token JWT |
+| propertyId | String | URL Path | ✅ | ID proprietà |
+| startDate | String | Query Param | ❌ | Data inizio (YYYY-MM-DD) |
+| endDate | String | Query Param | ❌ | Data fine (YYYY-MM-DD) |
+
+**Esempio cURL:**
+```bash
+curl -X GET "http://localhost:8080/api/manager/analytics/ratings/64abc123?startDate=2025-01-01&endDate=2025-12-31" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+**Risposta Successo (200):**
+```json
+{
+  "currentAverageRating": 4.35,
+  "previousPeriodRating": 4.10,
+  "ratingTrend": 6.1,
+  "totalReviews": 45,
+  "monthlyAverageRatings": {
+    "2025-01": 4.2,
+    "2025-02": 4.3,
+    "2025-03": 4.5
+  },
+  "avgCleanliness": 4.5,
+  "avgCommunication": 4.3,
+  "avgLocation": 4.8,
+  "avgValue": 4.0,
+  "ratingDistribution": {
+    "1": 2,
+    "2": 3,
+    "3": 5,
+    "4": 15,
+    "5": 20
+  },
+  "bestAspect": "Location",
+  "worstAspect": "Value"
+}
+```
+
+**Campi risposta:**
+| Campo | Descrizione |
+|-------|-------------|
+| `currentAverageRating` | Media valutazioni nel periodo selezionato |
+| `previousPeriodRating` | Media del periodo precedente (per confronto) |
+| `ratingTrend` | % di miglioramento/peggioramento vs periodo precedente |
+| `monthlyAverageRatings` | Media mensile per tracciare l'evoluzione |
+| `ratingDistribution` | Distribuzione delle valutazioni (1-5 stelle) |
+| `bestAspect` / `worstAspect` | Aspetto migliore/peggiore della proprietà |
+
+---
+
+### 13. GET /api/manager/analytics/trends/{propertyId}
+**Descrizione:** Analisi dei pattern di prenotazione e tendenze
+
+**Input:**
+| Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
+|-----------|------|-----------|--------------|-------------|
+| Authorization | String | Header | ✅ | Token JWT |
+| propertyId | String | URL Path | ✅ | ID proprietà |
+| startDate | String | Query Param | ❌ | Data inizio (YYYY-MM-DD) |
+| endDate | String | Query Param | ❌ | Data fine (YYYY-MM-DD) |
+
+**Esempio cURL:**
+```bash
+curl -X GET "http://localhost:8080/api/manager/analytics/trends/64abc123?startDate=2025-01-01&endDate=2025-12-31" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+**Risposta Successo (200):**
+```json
+{
+  "avgBookingsPerMonth": 8.5,
+  "bookingGrowthRate": 15.3,
+  "bookingsByDayOfWeek": {
+    "MONDAY": 12,
+    "TUESDAY": 15,
+    "WEDNESDAY": 18,
+    "THURSDAY": 20,
+    "FRIDAY": 35,
+    "SATURDAY": 40,
+    "SUNDAY": 25
+  },
+  "bookingsByMonth": {
+    "2025-01": 6,
+    "2025-02": 8,
+    "2025-03": 12
+  },
+  "avgLeadTimeDays": 14.5,
+  "minLeadTimeDays": 1.0,
+  "maxLeadTimeDays": 90.0,
+  "avgStayDuration": 3.2,
+  "stayDurationDistribution": {
+    "1-2 nights": 25,
+    "3-5 nights": 45,
+    "6-7 nights": 20,
+    "1-2 weeks": 8,
+    "2+ weeks": 2
+  },
+  "cancellationRate": 12.5,
+  "monthlyCancellationRates": {
+    "2025-01": 15.0,
+    "2025-02": 10.0,
+    "2025-03": 8.0
+  },
+  "peakMonths": ["2025-07", "2025-08", "2025-12"],
+  "lowSeasonMonths": ["2025-01", "2025-02", "2025-11"]
+}
+```
+
+**Campi risposta:**
+| Campo | Descrizione |
+|-------|-------------|
+| `avgBookingsPerMonth` | Media prenotazioni mensili |
+| `bookingGrowthRate` | Tasso di crescita % (seconda metà vs prima metà periodo) |
+| `bookingsByDayOfWeek` | Distribuzione check-in per giorno della settimana |
+| `avgLeadTimeDays` | Giorni medi tra prenotazione e check-in |
+| `avgStayDuration` | Durata media del soggiorno in notti |
+| `stayDurationDistribution` | Distribuzione durata soggiorni |
+| `cancellationRate` | Tasso di cancellazione % |
+| `peakMonths` | Mesi di alta stagione (>25% sopra media) |
+| `lowSeasonMonths` | Mesi di bassa stagione (<25% sotto media) |
+
+---
+
+### 14. GET /api/manager/analytics/benchmark/{propertyId}
+**Descrizione:** Benchmarking comparativo con proprietà simili nella stessa area
+
+**Input:**
+| Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
+|-----------|------|-----------|--------------|-------------|
+| Authorization | String | Header | ✅ | Token JWT |
+| propertyId | String | URL Path | ✅ | ID proprietà |
+
+**Esempio cURL:**
+```bash
+curl -X GET "http://localhost:8080/api/manager/analytics/benchmark/64abc123" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+**Risposta Successo (200):**
+```json
+{
+  "comparisonScope": "Same City: Roma",
+  "propertiesCompared": 45,
+  "propertyRevenue": 52000.00,
+  "avgMarketRevenue": 38500.00,
+  "revenuePercentile": 78.5,
+  "propertyOccupancy": 72.5,
+  "avgMarketOccupancy": 65.0,
+  "occupancyPercentile": 68.0,
+  "propertyRating": 4.35,
+  "avgMarketRating": 4.1,
+  "ratingPercentile": 72.0,
+  "propertyAvgPrice": 95.00,
+  "marketAvgPrice": 85.00,
+  "pricePositioning": "Mid-Range",
+  "overallPerformanceScore": 73.15,
+  "performanceCategory": "Above Average"
+}
+```
+
+**Campi risposta:**
+| Campo | Descrizione |
+|-------|-------------|
+| `comparisonScope` | Ambito del confronto (città/regione) |
+| `propertiesCompared` | Numero di proprietà nel benchmark |
+| `revenuePercentile` | Percentile ricavi (78.5 = meglio del 78.5% dei concorrenti) |
+| `occupancyPercentile` | Percentile occupazione |
+| `ratingPercentile` | Percentile valutazioni |
+| `pricePositioning` | Posizionamento prezzo: "Budget", "Mid-Range", "Premium" |
+| `overallPerformanceScore` | Score complessivo 0-100 (ponderato) |
+| `performanceCategory` | "Top Performer", "Above Average", "Average", "Needs Improvement" |
+
+---
+
+## ⭐ REVIEWS BY PERIOD
+
+### 15. GET /api/manager/reviews
+**Descrizione:** Lista tutte le reviews di tutte le proprietà del manager, con filtro opzionale per periodo
+
+**Input:**
+| Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
+|-----------|------|-----------|--------------|-------------|
+| Authorization | String | Header | ✅ | Token JWT |
+| startDate | String | Query Param | ❌ | Data inizio (YYYY-MM-DD) |
+| endDate | String | Query Param | ❌ | Data fine (YYYY-MM-DD) |
+
+**Esempio cURL:**
+```bash
+# Tutte le reviews
+curl -X GET "http://localhost:8080/api/manager/reviews" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+
+# Reviews in un periodo specifico
+curl -X GET "http://localhost:8080/api/manager/reviews?startDate=2025-01-01&endDate=2025-06-30" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+**Risposta Successo (200):**
+```json
+[
+  {
+    "id": "rev123",
+    "reservationId": "res456",
+    "userId": "user789",
+    "creationDate": "2025-03-15",
+    "text": "Ottimo soggiorno, personale cordiale",
+    "rating": 5,
+    "cleanliness": 4.5,
+    "communication": 5.0,
+    "location": 4.0,
+    "value": 4.5,
+    "managerReply": "Grazie per il feedback!"
+  }
+]
+```
+
+---
+
+### 16. GET /api/manager/reviews/property/{propertyId}
+**Descrizione:** Lista le reviews di una specifica proprietà, con filtro opzionale per periodo
+
+**Input:**
+| Parametro | Tipo | Posizione | Obbligatorio | Descrizione |
+|-----------|------|-----------|--------------|-------------|
+| Authorization | String | Header | ✅ | Token JWT |
+| propertyId | String | URL Path | ✅ | ID proprietà |
+| startDate | String | Query Param | ❌ | Data inizio (YYYY-MM-DD) |
+| endDate | String | Query Param | ❌ | Data fine (YYYY-MM-DD) |
+
+**Esempio cURL:**
+```bash
+curl -X GET "http://localhost:8080/api/manager/reviews/property/64abc123?startDate=2025-01-01&endDate=2025-12-31" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
 ---
 
 ## 📅 RESERVATIONS VIEW
 
-### 12. GET /api/manager/reservations
+### 17. GET /api/manager/reservations
 **Descrizione:** Tutte le prenotazioni delle proprietà del manager
 
 **Input:**
@@ -442,7 +701,7 @@ curl -X GET "http://localhost:8080/api/manager/reservations" \
 
 ---
 
-### 13. GET /api/manager/reservations/property/{propertyId}
+### 18. GET /api/manager/reservations/property/{propertyId}
 **Descrizione:** Prenotazioni per una singola proprietà
 
 **Input:**
@@ -453,7 +712,7 @@ curl -X GET "http://localhost:8080/api/manager/reservations" \
 
 ---
 
-### 14. GET /api/manager/reservations/status/{status}
+### 19. GET /api/manager/reservations/status/{status}
 **Descrizione:** Filtra prenotazioni per stato
 
 **Input:**
@@ -470,7 +729,7 @@ curl -X GET "http://localhost:8080/api/manager/reservations/status/CONFIRMED" \
 
 ---
 
-### 15. GET /api/manager/reservations/upcoming
+### 20. GET /api/manager/reservations/upcoming
 **Descrizione:** Prenotazioni future (check-in dopo oggi)
 
 **Input:**
@@ -480,7 +739,7 @@ curl -X GET "http://localhost:8080/api/manager/reservations/status/CONFIRMED" \
 
 ---
 
-### 16. GET /api/manager/reservations/current
+### 21. GET /api/manager/reservations/current
 **Descrizione:** Soggiorni attualmente in corso
 
 **Input:**
@@ -492,7 +751,7 @@ curl -X GET "http://localhost:8080/api/manager/reservations/status/CONFIRMED" \
 
 ## 💳 PAYMENT STATUS
 
-### 17. GET /api/manager/payment-status
+### 22. GET /api/manager/payment-status
 **Descrizione:** Stato pagamenti di tutte le stanze
 
 **Input:**
@@ -535,7 +794,7 @@ curl -X GET "http://localhost:8080/api/manager/payment-status" \
 
 ---
 
-### 18. GET /api/manager/payment-status/property/{propertyId}
+### 23. GET /api/manager/payment-status/property/{propertyId}
 **Descrizione:** Stato pagamenti per una singola proprietà
 
 **Input:**

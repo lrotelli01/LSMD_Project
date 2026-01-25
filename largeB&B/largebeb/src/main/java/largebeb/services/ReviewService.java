@@ -224,6 +224,84 @@ public class ReviewService {
         return reviews.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Get reviews for a property within a specific time period (Manager requirement)
+     * Allows manager to see reviews received during a selected time period
+     */
+    public List<ReviewResponseDTO> getReviewsByPropertyIdAndPeriod(String token, String propertyId, 
+                                                                    LocalDate startDate, LocalDate endDate) {
+        RegisteredUser manager = getUserFromToken(token);
+
+        // Verify user is a manager
+        if (!"MANAGER".equalsIgnoreCase(manager.getRole())) {
+            throw new SecurityException("Only managers can access this endpoint.");
+        }
+
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new IllegalArgumentException("Property not found with id: " + propertyId));
+
+        // Verify ownership
+        if (!property.getManagerId().equals(manager.getId())) {
+            throw new SecurityException("You can only view reviews of your own properties.");
+        }
+
+        List<Review> reviews;
+        if (startDate != null && endDate != null) {
+            // Use date range filter
+            reviews = reviewRepository.findByPropertyIdAndCreationDateBetween(propertyId, startDate, endDate);
+        } else {
+            // No date filter - return all reviews
+            reviews = reviewRepository.findByPropertyId(propertyId);
+        }
+
+        // Sort by creation date descending (most recent first)
+        return reviews.stream()
+                .sorted(Comparator.comparing(Review::getCreationDate, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all reviews for all properties owned by the manager within a time period
+     */
+    public List<ReviewResponseDTO> getAllManagerReviewsByPeriod(String token, LocalDate startDate, LocalDate endDate) {
+        RegisteredUser manager = getUserFromToken(token);
+
+        // Verify user is a manager
+        if (!"MANAGER".equalsIgnoreCase(manager.getRole())) {
+            throw new SecurityException("Only managers can access this endpoint.");
+        }
+
+        // Get all manager's properties
+        List<Property> managerProperties = propertyRepository.findByManagerId(manager.getId());
+        
+        if (managerProperties.isEmpty()) {
+            return List.of();
+        }
+
+        // Get all property IDs
+        List<String> propertyIds = managerProperties.stream()
+                .map(Property::getId)
+                .collect(Collectors.toList());
+
+        // Get all reviews for these properties
+        List<Review> allReviews = reviewRepository.findByPropertyIdIn(propertyIds);
+
+        // Filter by date if provided
+        if (startDate != null && endDate != null) {
+            allReviews = allReviews.stream()
+                    .filter(r -> r.getCreationDate() != null)
+                    .filter(r -> !r.getCreationDate().isBefore(startDate) && !r.getCreationDate().isAfter(endDate))
+                    .collect(Collectors.toList());
+        }
+
+        // Sort by creation date descending
+        return allReviews.stream()
+                .sorted(Comparator.comparing(Review::getCreationDate, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
     // Helper methods
 
     private void validateCreationRatings(ReviewRequestDTO request) {
