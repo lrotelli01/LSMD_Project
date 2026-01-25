@@ -1,0 +1,2941 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage{longtable,booktabs,array}
+\usepackage{multirow}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{}
+
+\begin{document}
+
+\includegraphics[width=1.99167in,height=2.025in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image1.png}
+
+\begin{quote}
+UNIVERSITÀ DI PISA\\
+DIPARTIMENTO DI INGEGNERIA\\
+DELL'INFORMAZIONE\\
+Master's Degree in Artificial Intelligence and Data Engineering
+
+\textbf{LARGE SCALE AND MULTI}\\
+\textbf{STRUCTURED DATABASES PROJECT My Akiba}
+
+\textbf{Studen}\\
+Gianmaria Saggini\\
+Cristina Maria Rita Lombardo\\
+Alessio Franchini
+\end{quote}
+
+ACADEMIC YEAR 2024/2025
+
+\begin{quote}
+1. Introduction
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+4
+
+2. Design
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+5
+
+2.1. Actors
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+5
+
+2.2. Mockups
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+5
+
+2.2.1. Unregistered user view
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+5
+
+2.2.2. Registered user view
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+7
+
+2.2.3. Administrator view
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+8
+
+2.3. Requirements
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+9
+
+2.3.1. Functional requirements
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ 9
+
+2.3.2. Non-Functional Requirements
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ 12
+
+2.4. UML Class Diagram
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+13
+
+2.5. Data Models
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+13
+
+2.5.1. Document DB Collections
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ 13
+
+2.5.1.1. Document Examples
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+15
+
+2.5.2. Graph DB Structure
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+16
+
+2.5.2.1. Graph Nodes
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+17
+
+2.5.2.2. Graph Relationship
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+17
+
+2.5.2.3. Graph Examples
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+17
+
+2.6. Distributed Database Design
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+18
+
+2.6.1. Replicas
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+18
+
+2.6.2. Sharding
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+20
+
+2.6.3. Handling the inter database consistency
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ 21
+
+3. Dataset and Data Retrieval
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+22
+
+4. Implementation
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+24
+
+4.1. Spring
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+24
+
+4.2. Model
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+24
+
+4.2.1. MongoDB Models
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+25
+
+4.2.2. Neo4j Models
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+27
+
+4.3. Repository
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+28
+
+4.4. Service
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+29
+
+4.5. Controller
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+30
+
+4.6. Exception handler
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+31
+
+4.7. RESTful API Endpoints
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+31
+\end{quote}
+
+2
+
+\begin{quote}
+My Akiba
+
+5. Most relevant queries
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+33
+
+5.1. MongoDB queries
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+33
+
+5.2. Neo4j queries
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+35
+
+5.3. Indexes
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+38
+
+5.3.1. MongoDB indexes
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+38
+
+5.3.2. Neo4j indexes
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+39
+\end{quote}
+
+3
+
+\begin{quote}
+My Akiba
+
+\textbf{1.Introduction}
+
+My Akiba is an application that allows its users to keep track of their
+read manga and watched anime. It provides a large catalogue of both
+media allowing users to find new anime or manga to watch or read by also
+providing them with reviews from other users and the scores given to
+each media.
+
+This application also requires an administrator, he plays a pivotal role
+in maintaining Akiba's ecosystem. He can manage the catalogue by adding,
+updating, or removing media entries, moderate reviews, and access
+detailed user and media analytics. These analytics enable administrators
+to identify user trends, influencers, and popular media, as well as
+oversee system performance.
+
+By integrating these diverse functionalities, My Akiba represents a
+user-centric environment where fans can seamlessly track their favourite
+content, connect with users with similar tastes, and stay informed about
+the latest trends in the world of manga and anime.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+4
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{2.Design}
+
+\textbf{2.1. Actors}
+
+In \textbf{My Akiba} thereare three main actors:
+
+•The Unregistered User\\
+•The Registered User\\
+•The Administrator
+
+Both Unregistered User and Registered User are the end-users of our
+application. The first one has limited access to the functionalities,
+while the second one can use the application in a more meaningful way,
+creating lists, reviewing and scoring the media. The Administrators have
+the role of managing both registered users in the application and media
+in the catalogue.
+
+\textbf{2.2. Mockups}
+
+\textbf{2.2.1.} \textbf{Unregistered user view}
+\end{quote}
+
+\includegraphics[width=5.19861in,height=3.69722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image2.png}
+
+\begin{quote}
+Main page where the user can choose to browse manga or anime or login to
+access other functionalities.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+5
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\includegraphics[width=5.20139in,height=3.69722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image3.png}
+
+\begin{quote}
+Users can search for a media by its name.
+\end{quote}
+
+\includegraphics[width=5.20139in,height=3.69722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image4.png}
+
+\begin{quote}
+Each media has its info and reviews displayed in a page.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+6
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{2.2.2.} \textbf{Registered user view}
+\end{quote}
+
+\includegraphics[width=5.19861in,height=3.69583in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image5.png}
+
+\begin{quote}
+Registered users can browse among media recommended for them.
+\end{quote}
+
+\includegraphics[width=5.19861in,height=3.69722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image6.png}
+
+\begin{quote}
+Personal user profile.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+7
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\includegraphics[width=5.19861in,height=3.69583in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image7.png}
+
+\begin{quote}
+Personal user lists, divided by the user progress for each media.
+\textbf{2.2.3.} \textbf{Administrator view}
+\end{quote}
+
+\includegraphics[width=5.19861in,height=3.69583in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image8.png}
+
+\begin{quote}
+Main page with all the functionalities offered to the administrator.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+8
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\includegraphics[width=5.19861in,height=3.69583in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image9.png}
+
+\begin{quote}
+List of the analytics available.
+
+\textbf{2.3. Requirements}
+
+\textbf{2.3.1.} \textbf{Functional requirements}
+
+\textbf{1.} \textbf{Unregistered user}
+
+\textbf{1.1. Browse}
+
+1.1.1. The system must allow an unregistered user to browse the list of
+
+anime and manga.
+
+1.1.2. The system must allow an unregistered user to see details of a
+
+particular anime or manga.
+
+1.1.3. The system must allow an unregistered user to perform a text
+search
+
+on manga or anime.
+
+\textbf{1.2. Registration}
+
+1.2.1. The system must allow an unregistered user to register.
+
+\textbf{2.} \textbf{Registered user}
+
+\textbf{2.1. Account management}
+
+2.1.1. The system must allow a registered user to login.
+
+2.1.2. The system must allow a registered user to delete its account.
+
+2.1.3. The system must allow a registered user to update its personal
+
+information.
+
+\textbf{2.2. Browse}
+
+2.2.1. The system must allow a registered user to browse the list of
+anime
+
+and manga.
+\end{quote}
+
+9
+
+\begin{quote}
+My Akiba
+
+2.2.2. The system must allow a registered user to see details of a
+particular anime or manga.
+
+2.2.3. The system must allow a registered user to perform a text search
+on manga or anime.
+
+2.2.4. The system must allow a registered user to browse other
+registered users.
+
+2.2.5. The system must allow a registered user to find other registered
+users by username.
+
+\textbf{2.3.} \textbf{Lists management}\\
+2.3.1. The system must offer 3 lists, both for manga and anime (6 lists
+in total):
+
+• \emph{Planned} list
+
+• \emph{In Progress} list
+
+• \emph{Completed} list\\
+2.3.2. The system must allow a registered user to add a media to the
+corresponding \emph{Planned} list.
+
+2.3.3. The system must allow a registered user to update the number of
+watched episodes of an anime. If the number of watched episodes is
+higher than zero, the anime is put in the \emph{In Progress} list of
+anime. If the user has seen all the episode, the anime is put in the
+\emph{Completed} list of anime.
+
+2.3.4. The system must allow a registered user to update the number of
+read chapters of a manga. If the number of read chapters is higher than
+zero, the manga is put in the \emph{In Progress} list of manga. If the
+user has read all the chapters, the manga is put in the \emph{Completed}
+list of manga.
+
+2.3.5. The system must allow a registered user to remove a manga or
+anime from any list.
+
+\textbf{2.4.} \textbf{Social features}\\
+2.4.1. The system must allow a registered user to follow another
+registered user.
+
+2.4.2. The system must allow a registered user to unfollow another
+registered user.
+
+2.4.3. The system must allow a registered user to see the list of
+followed users.
+
+2.4.4. The system must allow a registered user to see the list of their
+followers.
+
+2.4.5. The system must allow a registered user to specify their privacy
+status.
+
+The privacy status tells who can see the lists of the user. The possible
+values are:
+
+• Nobody can see my personal lists.
+
+• Only registered users that follow me can see my personal lists.
+
+• All registered users can see my personal lists.
+
+Personal lists mean the followers, following, anime and manga lists.
+
+10\\
+My Akiba
+
+2.4.6. The system must allow a registered user to see non-personal
+details of a registered user.
+
+2.4.7. The system must allow a registered user to see the lists of a
+registered user, according to its privacy status.
+
+\textbf{2.5.} \textbf{Feedback}\\
+2.5.1. The system must allow a registered user to review a media. The
+review must have a vote from 1 to 10, and optionally a comment.
+
+2.5.2. The system must allow a registered user to delete its own
+reviews. 2.5.3. The system must allow a registered user to see the list
+of reviews for a media.
+
+\textbf{2.6.} \textbf{Recommendations}\\
+2.6.1. The system must offer a registered user a list of the highest
+rated anime or manga, globally and for each genre.
+
+2.6.2. The system must offer a registered user a list of registered
+users with similar tastes.
+
+2.6.3. The system must offer a registered user a list of manga or anime
+popular among followed users.
+
+\textbf{3.} \textbf{Administrator}\\
+\textbf{3.1.} \textbf{Browse}\\
+The system must allow an administrator to browse the list of anime
+3.1.1.
+
+and manga.
+
+3.1.2. The system must allow an administrator to see details of a
+particular anime or manga.
+
+3.1.3. The system must allow an administrator to perform a text search
+on manga or anime.
+
+3.1.4. The system must allow an administrator to browse registered
+users. 3.1.5. The system must allow an administrator to find other
+registered users by username.
+
+\textbf{3.2.} \textbf{User management}\\
+The system must allow an administrator to see all details of a 3.2.1.
+
+registered user.
+
+3.2.2. The system must allow an administrator to see the lists of a
+registered user, independently of its privacy status.
+
+\textbf{3.3.} \textbf{Catalogue management}\\
+The system must allow an administrator to add an anime or manga. 3.3.1.
+
+3.3.2. The system must allow an administrator to update an anime or
+manga information.
+
+3.3.3. The system must allow an administrator to delete an anime or
+manga. 3.3.4. The system must allow an administrator to delete a review.
+
+\textbf{3.4.} \textbf{Analytics}\\
+3.4.1. The system must offer an administrator analytics about users
+namely:
+
+• For each year, see the month with most registrations.
+
+• Find communities.
+
+• Find users that are influencers.
+
+11\\
+My Akiba
+
+3.4.2. The system must offer an administrator analytics about anime and
+
+manga namely:
+
+• See anime/manga present more in each list.
+
+• For a media, see how many users have it in their planned, in
+\end{quote}
+
+progress and completed lists.
+
+\begin{quote}
+• Retrieve a list of the most controversial media for each genre.
+
+• Retrieve a list of media that are going worse than usual.
+
+• Retrieve a list of media that are going better than usual.
+
+\textbf{2.3.2.} \textbf{Non-Functional Requirements}
+
+\textbf{1.} \textbf{Product requirements}\\
+1.1. The system must be capable of returning to the user quick
+responses. 1.2. The system must be highly available. That is, there
+should not be down time.
+
+The system should be able to scale to accommodate an increase in user
+1.3.
+
+traffic, for instance when a new episode of a popular anime is released,
+without any degradation of the response time and availability.
+
+\textbf{2.} \textbf{Implementation requirements}\\
+2.1. The system must be developed using Object-Oriented Programming
+languages.
+
+2.2. The system must expose its functionalities by means of RESTful
+APIs, according to OpenAPI Specification.
+
+\textbf{3.} \textbf{Security requirements}\\
+3.1. The system must use a basic authentication protocol to secure
+access. The system must encrypt users' passwords. 3.2.
+
+12\\
+My Akiba
+\end{quote}
+
+\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image15.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image16.png}\includegraphics[width=0.94444in,height=0.10724in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image17.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image18.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image19.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image20.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image21.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image22.png}\includegraphics[width=0.94444in,height=0.10724in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image23.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image24.png}\includegraphics[width=1.27917in,height=0.25999in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image25.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image26.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image27.png}\includegraphics[width=0.94444in,height=0.10724in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image28.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image29.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image30.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image31.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image32.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image33.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image34.png}\includegraphics[width=0.94444in,height=0.10724in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image35.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image36.png}\includegraphics[width=0.94444in,height=0.10724in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image37.png}\includegraphics[width=0.94444in,height=0.1107in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image38.png}\includegraphics[width=1.19722in,height=0.11073in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image39.png}\includegraphics[width=1.53055in,height=0.14197in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image40.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image41.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image42.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image43.png}\includegraphics[width=0.36528in,height=0.10924in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image44.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image45.png}\includegraphics[width=0.36528in,height=0.10683in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image46.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image47.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image48.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image49.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image50.png}\includegraphics[width=0.36528in,height=0.10683in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image51.png}\includegraphics[width=0.36528in,height=0.11027in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image52.png}\includegraphics[width=0.26389in,height=\textheight]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image53.png}\includegraphics[width=5.30556in,height=5.59722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image54.png}
+
+\begin{quote}
+\textbf{2.4. UML Class Diagram}
+
+\includegraphics[width=0.94444in,height=0.10694in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image10.png}
+
+\includegraphics[width=0.94444in,height=0.10694in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image11.png}
+
+\includegraphics[width=0.94444in,height=0.10694in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image12.png}
+
+\includegraphics[width=0.94444in,height=0.10694in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image13.png}
+
+\includegraphics[width=0.94444in,height=0.10694in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image14.png}
+
+\textbf{2.5. Data Models}
+
+\textbf{2.5.1.} \textbf{Document DB Collections}\\
+The document DB has been used to store the data of the API creating the
+collections:
+
+•Users\\
+•Anime\\
+•Manga\\
+•Month\_analytics
+
+The \textbf{Users} collection stores all documents related to the
+Registered Users and the Administrators. It stores personal information
+provided at the registration and other useful details, some of the main
+attributes that can be found in such documents are:
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+13
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+•\emph{createdAt}: the timestamp when the account was created.
+
+•\emph{privacyStatus}: privacy level chosen by the user for the
+visibility of their profile and lists:\\
+o"NOBODY": Profile is not visible to anyone.
+
+o"FOLLOWERS": Profile is visible to followers only.
+
+o"ALL": Profile is visible to everyone.
+
+•\emph{followers}: the array of users' ids that follow this account,
+using the document linking to connect a user to its followers.
+
+The \textbf{Anime} collection stores the documents providing information
+about the anime media, allowing a performant access to all the data a
+user may be interested in for all the anime present in the database.
+Some attributes related to the anime documents are:
+
+•\emph{episodes}: the current number of episodes released.
+
+•\emph{duration}: the mean duration of the episodes of an anime, in
+seconds.
+
+•\emph{source}: the original source of the anime, if it is an original,
+a transposition of a manga or other writings.
+
+The \textbf{Manga} collection stores the documents providing information
+about the manga media, allowing a performant access to all the data a
+user may be interested in for all the manga present in the database.
+Some attribute related to the manga documents are:
+
+•\emph{chapters}: the current number of released chapters of a manga.
+
+•\emph{authors:} the list of the authors that have participated in the
+writing of a manga.
+
+The \textbf{anime} and \textbf{media documents} are stored in different
+collections for a faster retrieval and there is no case where they need
+to be retrieved together, however their structures share some common
+elements:
+
+•\emph{status}: providing information about the release status of the
+media, allowing the user, and the system to know if it's ``ONGOING'' or
+``COMPLETE''.
+
+•\emph{sumScores}: the sum of the ratings given by the users to the
+media in a range from 1 to 10.
+
+•\emph{numScores}: the number of the scores. With the previous attribute
+they allow to calculate the mean score given to the media without
+recalculating it every time a new score is added.
+
+•\emph{type}: provides information about the type of media released. If
+it is serialised, a movie or a special episode for an anime; if it is a
+light novel or a manga for the manga media.
+
+•\emph{reviews}: using document embedding we find in this attribute the
+documents related to the reviews, containing information on the reviewer
+(\emph{userId} and \emph{username}), the \emph{score} given to the
+media, the \emph{timestamp} of the review and, optionally, a
+\emph{comment} provided by the user.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+14
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+The \textbf{Month Analytics} collection stores the data generated by
+analytics provided to the administrator, specifically it keeps, for each
+year, the month with most registrations to the application, allowing the
+system to retrieve such data directly from the database and not execute
+the count each time the analytic is requested.
+
+\textbf{2.5.1.1.} \textbf{Document Examples}
+
+\textbf{User document}
+\end{quote}
+
+\includegraphics[width=4.77361in,height=2.64722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image55.png}
+
+\begin{quote}
+\textbf{Anime document}
+\end{quote}
+
+\includegraphics[width=2.58472in,height=4.13194in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image56.png}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+15
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Manga document}
+\end{quote}
+
+\includegraphics[width=2.86805in,height=4.13333in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image57.png}
+
+\begin{quote}
+\textbf{Month Analytics document}
+\end{quote}
+
+\includegraphics[width=2.67639in,height=2.28333in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image58.png}
+
+\begin{quote}
+\textbf{2.5.2.} \textbf{Graph DB Structure}\\
+This database choice has been selected to manage the social features of
+the system, meaning the relationship between users in a
+follower-followed pattern, and to keep track of the different lists
+available to the users.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+16
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{2.5.2.1.} \textbf{Graph Nodes}\\
+In the graph database there are three kinds of nodes:
+
+•\textbf{User} nodes with only information regarding their \emph{id},
+\emph{username} and \emph{privacyStatus}. •\textbf{Anime} nodes having
+information about \emph{id}, \emph{name}, \emph{status}, \emph{episodes}
+and \emph{genres} of the media.
+
+•\textbf{Manga} nodes having the information about \emph{id},
+\emph{name}, \emph{status}, \emph{chapters} and \emph{genres} of the
+media.
+
+\textbf{2.5.2.2.} \textbf{Graph Relationship}\\
+The relations between the nodes can be of two types:
+
+•\textbf{:FOLLOW}: relationship between two different User nodes\\
+•\textbf{:LIST\_ELEMENT}: relationship between a User node and an Anime
+or Manga node. This arch has the attribute \emph{progress} to allow a
+user to keep track of their progress related to the media, and the
+system to define the type of list the media belongs to.
+
+\textbf{2.5.2.3.} \textbf{Graph Examples}\\
+\textbf{:User -{[}:FOLLOW{]}→ :User}
+\end{quote}
+
+\includegraphics[width=5.12361in,height=3.74028in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image59.png}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+17
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{:User -{[}:LIST\_ELEMENT\{progress\}{]}→ :Anime} (orange)
+\textbf{:User -{[}:LIST\_ELEMENT\{progress\}{]}→ :Manga} (blue)
+\end{quote}
+
+\includegraphics[width=4.7625in,height=3.73889in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image60.png}
+
+\begin{quote}
+\textbf{2.6. Distributed Database Design}
+
+According to the non-functional requirements written in paragraph 2.2.2.
+our system must ensure High Availability and Partition Tolerance
+allowing quick responses to users' requests. Considering the CAP theorem
+our application has been developed according to the AP solution
+compromising in the consistency side of the theorem, implementing
+eventual consistency. For this objective the fundamental aspect of the
+design stands in the data distribution and replication approach.
+
+\textbf{2.6.1.} \textbf{Replicas}
+
+Our Mongo DB replica set is made up of a cluster of three nodes provided
+for the project. Out of these nodes we deploy three replicas only for
+the document DB, and we leave the replication of the graph DB,
+implemented with Neo4j, for future improvements, keeping only one
+replica in this project. The result is 3 replicas for MongoDB and 1
+replica for Neo4j.
+
+The replica set is made of one primary node and two secondary nodes. The
+nodes are configured with different priorities, one with priority 5,
+making it the most likely to become the primary node when the election
+starts and two with a lower priority of 2 and 1, which will be the
+secondary nodes. This last node, with the lower priority value, is also
+the node in which we have installed the Neo4j service; assigning it the
+lowest
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+18
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+priority ensures that it is selected as the primary node for MongoDB
+only as a last resort, thereby minimizing its workload under normal
+circumstances.
+\end{quote}
+
+\includegraphics[width=5.35139in,height=3.00694in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image61.png}
+
+\begin{quote}
+\textbf{Read Operations} (read preference: nearest)
+
+Given the high volume of read requests expected in our system and the
+requirement of having a quick response to users' requests we chose to
+implement the queries to the Mongo DB replica set with the reading
+preference set to \emph{nearest}, retrieving the data from the nearest
+replica in terms of latency. This choice also helps to balance the
+database workload, preventing bottlenecks on the primary node and
+ensuring smoother operation during peak usage times. Additionally, this
+approach improves scalability by leveraging secondary nodes for read
+operations, making the system capable of handling a growing user base.
+
+\textbf{Write Operations} (write concern: majority)
+
+Considering the functionalities of our application the write operation
+has a high volume, even if much lower than the read one, especially in
+the context of users lists, and their update. Even with these
+considerations we have thought that in these exceptional circumstances
+(having only three replicas) the choice of \emph{majority} as the write
+concern is the best trade off, ensuring a strong consistency, waiting
+for the write operation to be executed on two replicas. This choice,
+considering also the setting for the read operations, guarantees that
+most reads (even from secondaries) reflect the most recent data. The
+slightly increasing write latency shouldn't be an issue considering the
+limited number of replicas used. This choice can be revaluated with an
+increase in the number of replicas, limiting the number of
+acknowledgments waited to end the operation.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+19
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Operations Volumes}
+
+What follows is a table with an estimated number of occurrences for each
+of the main operations provided by the application. The values have been
+calculated by estimating 100.000 active users per day.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{Action}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\%
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{\# Daily}\\
+\textbf{occurrences}
+\end{quote}\strut
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{MongoDB}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{Neo4j}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{Daily total}
+\end{quote}
+\end{minipage} \\
+\midrule()
+\endhead
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Register user
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0.01
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+20
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Login User
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+100
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+100000
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+100000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Browse Users
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10000
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Find User
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1.5
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1500
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1500
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Update User Info
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0.9
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+900
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+2
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+90000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Browse List
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+150\\
+x21\strut
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+150000 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+150000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Add Media to List
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5000 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Update List Progress
+\end{quote}
+\end{minipage} & 20 x21 & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+2000 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+4000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Remove From List
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0.5
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+500
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+500
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Follow a User
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3000
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+6000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Unfollow User
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1000
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+2000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Browse Followers
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5000
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Post Review
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1000
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+2
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+2000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Browse Media
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+120\\
+x21\strut
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+120000 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+240000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Find Media
+\end{quote}
+\end{minipage} & 50 x21 & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+50000 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+100000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Media\\
+Recommendation
+\end{quote}\strut
+\end{minipage} & 40 x21 & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+40000 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+80000
+\end{quote}
+\end{minipage} \\
+User Recommendation & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3000
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3000
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Find User (ADMIN)
+\end{quote}
+\end{minipage} & & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Run Analytics
+\end{quote}
+\end{minipage} & & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+2
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+30
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Add Media
+\end{quote}
+\end{minipage} & & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+50 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+200
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Update Media Info
+\end{quote}
+\end{minipage} & & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+40
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Delete Media
+\end{quote}
+\end{minipage} & & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+5 x21
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+20
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+Delete Review
+\end{quote}
+\end{minipage} & & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+20
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+20
+\end{quote}
+\end{minipage} \\
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+1With the consideration of having two types of media some operations
+must be considered twice
+
+\textbf{2.6.2.} \textbf{Sharding}
+
+We thought carefully about how to shard our data and decided to use
+document IDs as the shard key, along with hashing as the partition
+algorithm. This approach ensures that the data is distributed evenly
+across shards and avoids performance bottlenecks. We also considered
+using other fields. However, most searches are based on document IDs, so
+using another field would have added an extra step to find the sharding
+key. This would have made queries slower and unnecessarily complicated
+without providing real benefits.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+20
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\includegraphics[width=0.13194in,height=0.11672in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image62.png}\includegraphics[width=0.13194in,height=0.11672in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image62.png}\includegraphics[width=5.90278in,height=1.98611in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image63.png}\includegraphics[width=0.86806in,height=0.23863in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image64.png}\includegraphics[width=0.86805in,height=0.23863in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image65.png}\includegraphics[width=0.86805in,height=0.23863in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image66.png}\includegraphics[width=0.86806in,height=0.23863in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image67.png}\includegraphics[width=0.86944in,height=0.23901in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image68.png}\includegraphics[width=0.10417in,height=0.11979in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image69.png}\includegraphics[width=0.10278in,height=0.11819in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image69.png}\includegraphics[width=0.10278in,height=0.11819in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image69.png}\includegraphics[width=0.72083in,height=0.23537in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image70.png}\includegraphics[width=0.35417in,height=0.12722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image71.png}\includegraphics[width=0.35278in,height=0.12673in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image72.png}\includegraphics[width=0.35417in,height=0.12847in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image73.png}\includegraphics[width=0.13194in,height=0.11672in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image62.png}
+
+\begin{quote}
+\textbf{2.6.3.} \textbf{Handling the inter database consistency}
+
+Having two distinct types of databases involves the presence of
+redundant data, this leads to the need of a control over the operations
+that interact with data in both databases, such as user registration or
+updates in the media information, handling the consistency between them.
+This consistency is managed using retriable spring functions: the
+operation is firstly tried on Neo4j DB, the most likely to fail having
+only one replica node, if the operation succeed then the operation
+occurs in MongoDB and if there are no issues the function returns a
+success response to the user. If any of the two phases fails the
+operation is retried for a limited number of times (3) after a fixed
+backoff time. If the number of retries reaches a fixed limit, then the
+operation will fail and return an error response to the user. This
+setting implies that if the operation in MongoDB fails there are no
+rollbacks in the Neo4j DB, leading to an inconsistency in the database.
+However, the chances of this case occurring are very slim due to the
+presence of three nodes handling this database replicas. When the
+operation fails on MongoDB the retry starts from the beginning of the
+function retrying also the operation on Neo4j, this will not be an issue
+having the write function as idempotent.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+21
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{3.Dataset and Data Retrieval}
+
+The focus of this application is handling large scale of data and
+managing them in the best way possible, to do so it is mandatory to
+procure the raw material itself: data.
+
+For this reason, we opted for the retrieval of what we needed from one
+of the most famous web sites in the field of anime and manga catalogues
+providers: MyAnimeList.
+
+This allowed us to obtain all data we needed for our application,
+starting from users' general information, their lists with the score
+associated with the media and the media information themselves. With
+this objective we wrote a script to gather, process, and organize user,
+manga and anime data into a final dataset suitable for storage and
+further analysis. Given the high number of resources needed and the time
+required, we could retrieve only a little fraction of the entire
+database present. This lack of completeness has been considered when
+creating the final databases assuring the consistency of the data, if a
+user has a media in one of the lists or a score associated to it, the
+media will be present in the database.
+
+The initial step involves retrieving club (a community in the web
+application) information from the website, allowing us to retrieve users
+with similar tastes generating a more interesting dataset. Next, we
+focus on gathering usernames from the clubs using the Jikan API, an
+unofficial and open-source API for the MyAnimeList. It iterates through
+the club ids, fetching member usernames and saving them to a file. The
+usernames are then shuffled and assigned new IDs, creating a users.csv
+file that maps usernames to unique user Ids.
+
+For both media data, we retrieve the lists for each user exploiting the
+official MyAnimeList API. We fetch users' lists details saving them in
+individual user files. Additionally, we compile a list of unique media
+IDs from the users' lists, ensuring that all relevant media are included
+in the final dataset. At the end we retrieve detailed information for
+each unique media. This detailed media data is saved to a csv file for
+each type of media (one for manga and another for anime). At the end we
+also retrieve reviews for both manga and anime, scraping reviews from
+the Jikan API and saving them to individual files, processing the
+reviews and scores and preparing them for inclusion in the final
+dataset. The followers\textquotesingle{} array in the users' information
+has been generated randomly by sampling a random number of users
+(between 0 and 50).
+
+Finally, we combine all retrieved data into a cohesive dataset suitable
+for MongoDB import, processing manga and anime files, calculating the
+number of scores and sum of scores and serializing reviews as JSON. The
+same operation is repeated for what needed in the Neo4j database,
+creating a csv file for each type of node and another file for every
+kind of relationship between them.
+
+At the end of the script we obtain the following files for mongo import:
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\emph{users\_collection.csv}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+828 kB
+\end{minipage} &
+\multirow{3}{*}{\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+22
+\end{quote}
+\end{minipage}} \\
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\emph{anime\_collection.csv}
+\end{quote}
+\end{minipage} &
+\multirow{2}{*}{\begin{minipage}[b]{\linewidth}\raggedright
+13 MB
+\end{minipage}} \\
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+•\emph{manga\_collection.csv} 14MB
+
+The files obtained for the creation of the database with Neo4j are the
+following:
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\emph{user\_nodes.csv}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+76 kB
+\end{minipage} &
+\multirow{4}{*}{\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+23
+\end{quote}
+\end{minipage}} \\
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\emph{anime\_nodes.csv}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+1.3 MB
+\end{minipage} \\
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\emph{manga\_nodes.csv}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+2 MB
+\end{minipage} \\
+\multicolumn{2}{@{}>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}}{%
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\emph{follow\_relationship.csv} 1.4 MB •\emph{anime\_relationship.csv}
+16.4 MB •\emph{manga\_relationship.csv} 3.1 MB
+
+My Akiba
+\end{quote}
+\end{minipage}} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{4.Implementation}
+
+My Akiba system has been implemented following all the requirements and
+design listed and using the most recent technologies available. The
+application is implemented using the Spring framework, while using the
+Controller-Service-Repository structure to organise the code.
+
+\textbf{4.1. Spring}
+
+The project has been built using the Spring framework for the
+initialisation and to establish the connection between the server and
+the databases. It is a tool that simplifies and accelerates the
+development of web applications and microservices through three main
+features: automatic configuration, the adoption of a declarative
+approach to configuration, and the ability to create standalone
+applications.
+
+Another useful feature used of the Spring framework is the Spring
+Security token management to allow a more fluid and persistent login of
+the users to the system, handling the registration and the login via a
+JWT (JSON Web Token), to be included in any further request's header
+once logged. This security management is handled with a filter chain,
+allowing some requests to proceed without checking the authorisation if
+it's not needed (registration, login and browsing media), and using the
+token provided in the header to permit the others. This implementation
+allows to perform the security check and authorization management
+requested in the non-functional requirements.
+\end{quote}
+
+\includegraphics[width=5.89722in,height=1.45278in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image74.png}
+
+\begin{quote}
+\textbf{4.2. Model}
+
+The models for this application are divided into two main types: the
+MongoDB models and the Neo4j ones.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+24
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{4.2.1.} \textbf{MongoDB Models}
+
+\textbf{User Model}
+\end{quote}
+
+\includegraphics[width=2.80139in,height=3.76805in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image75.png}
+
+\begin{quote}
+\textbf{User Principal Model}
+\end{quote}
+
+This class implements the native user class used by Spring Security for
+the management
+
+\begin{quote}
+of authorizations.
+\end{quote}
+
+\includegraphics[width=3.76528in,height=3.7375in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image76.png}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+25
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Media Model}\\
+This abstract class implements the abstract entity of the media
+including all common attributes between the two types.
+\end{quote}
+
+\includegraphics[width=2.27778in,height=4.37083in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image77.png}
+
+\begin{quote}
+\textbf{Anime Model}
+\end{quote}
+
+\includegraphics[width=3.08194in,height=1.91667in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image78.png}
+
+\begin{quote}
+\textbf{Manga Model}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+26
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\includegraphics[width=3.18472in,height=1.18333in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image79.png}
+
+\begin{quote}
+\textbf{Month Analytics Model}
+\end{quote}
+
+\includegraphics[width=2.07361in,height=2.32639in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image80.png}
+
+\begin{quote}
+\textbf{4.2.2.} \textbf{Neo4j Models}\\
+\textbf{User Model}
+\end{quote}
+
+\includegraphics[width=2.61667in,height=1.93472in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image81.png}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+27
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Anime Model}
+\end{quote}
+
+\includegraphics[width=2.23194in,height=3.14583in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image82.png}
+
+\begin{quote}
+\textbf{Manga Mongo}
+\end{quote}
+
+\includegraphics[width=2.24583in,height=2.79028in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image83.png}
+
+\begin{quote}
+\textbf{4.3. Repository}
+
+The repository modules extended by Spring Data classes provide an
+abstraction layer for database operations, simplifying the
+implementation of the API. In our application we use repositories for
+both MongoDB and Neo4j using simple queries for the databases management
+and users' requests and more complex ones for analytics and
+recommendation functionalities, these last ones will be taken up and
+explored in depth in the next chapter.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+28
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{4.4. Service}
+
+The service layer acts as an intermediary between the controller and
+repository layers in the implementation of an application, representing
+its core functionalities and main business logic implementations. It
+encapsulates business logic and orchestrates interactions with
+repositories, ensuring a clean separation of concerns. Additionally, the
+service modules allow better management of transactions and error
+handling, making the system more robust and maintainable.
+
+\textbf{Auth Service}
+
+This module implements the main functionalities regarding user
+registration and login. It verifies user credentials, generates JWT
+tokens upon successful login, and ensures secure password storage
+through encryption. During registration, it creates new user entries in
+both MongoDB and Neo4j, ensuring consistency across data layers.
+
+\textbf{User Service}
+
+This module implements all the requirements related to the user,
+starting from his own profile, his lists and the social relationship
+with those he follows. This service manages user-related operations. It
+supports user CRUD operations such as retrieving, updating, and deleting
+user data. Additionally, it handles user lists (media tracking),
+enabling users to add, modify, or remove media. It also manages social
+features like following or unfollowing users and fetching followers or
+following lists while respecting privacy settings.
+
+\textbf{MyUserDetails Service}
+
+The MyUserDetailsService module combined with the UserPrincipal model
+integrates with Spring Security to load user details for authentication
+purposes. It retrieves users either by email or ID from MongoDB and
+wraps them in a UserPrincipal for use within the security context.
+
+\textbf{Media Service}
+
+This service manages CRUD operations for media entities, including anime
+and manga. It supports searching and browsing media with pagination,
+retrieving detailed information, adding new media entries, updating
+existing ones, and deleting media. Additionally, it enables users to
+post and delete reviews, ensuring media ratings are updated dynamically.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+29
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Analytics Service}
+
+This module provides the Administrator functionalities for generating
+insights and analytics from the data. It includes methods to identify
+trends, such as the month with the most registrations, controversial or
+trending media, and media with improving or declining popularity. It
+also analyses user interactions to determine influential users and
+provides statistics on media appearances in user lists.
+
+\textbf{Recommendation Service}
+
+This service provides the users useful information and focuses on
+generating personalized recommendations. It identifies users with
+similar tastes, suggests popular media among a user\textquotesingle s
+follows, and provides top-rated media based on genres and user
+interactions.
+
+\textbf{4.5. Controller}
+
+\textbf{Auth Controller}
+
+This module handles user authentication processes, including
+registration and login. It validates user input during registration,
+securely creates new user accounts, and allows users to log in by
+providing credentials. This controller uses the Auth Service to manage
+authentication tasks.
+
+\textbf{User Controller}
+
+This controller maps user-related operations such as browsing users,
+retrieving user details, updating user information, and deleting users.
+It also handles user media lists, allowing users to add, modify, and
+remove media from their lists, as well as managing user follow and
+unfollow actions. This controller interacts with the User Service to
+comply with all requests.
+
+\textbf{Media Controller}
+
+This controller handles operations related to the media catalogue
+mapping all HTTP requests directed to the media objects. This controller
+requires the Media Service to provide the needed output to the user.
+
+\textbf{Admin Controller}
+
+The Admin Controller provides administrative functionalities by mapping
+the Admin HTTP requests, including adding, updating, and deleting media,
+as well as deleting reviews. It also allows administrators to retrieve
+user details and access various
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+30
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+analytics. This controller connects with the User, Media and Analytics
+Services to provide a quick response to the requests.
+
+\textbf{Recommendation Controller}
+
+This module relies on the Recommendation Service to map the users'
+requests concerning recommendation functionalities.
+
+\textbf{4.6. Exception handler}
+
+Our application includes a Global Exception Handler. By centralizing
+exception handling logic we can make the code cleaner and more
+maintainable, assuring also a better management and collection of all
+possible exceptions. It ensures consistent error responses across the
+application and reduces the need for repetitive try-catch blocks in
+individual controllers.
+
+\textbf{4.7. RESTful API Endpoints}
+
+\textbf{Auth Endpoints}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\\
+•
+\end{quote}\strut
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+POST /api/auth/register\\
+POST /api/auth/login
+\end{quote}\strut
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{User Endpoints}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+•
+\end{minipage} &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+GET /api/users
+\end{quote}
+\end{minipage}} \\
+\midrule()
+\endhead
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user/\{id\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+PATCH /api/user/\{id\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+DELETE /api/user/\{id\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user/lists/\{mediaType\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user/\{userId\}/lists/\{mediaType\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+POST /api/user/lists/ \{mediaType\}/\{mediaId\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+PATCH /api/user/lists/ \{mediaType\}/\{mediaId\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+DELETE /api/user/lists/ \{mediaType\}/\{mediaId\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user/followers
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user/\{userId\}/followers
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user/following
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/user/\{userId\}/following
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+POST /api/user/follow/\{userId\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+DELETE /api/user/follow/\{userId\}
+\end{quote}
+\end{minipage}} \\
+\multicolumn{2}{@{}>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage}} & 31 \\
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Media Endpoints}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\\
+•\\
+•\\
+•
+\end{quote}\strut
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+GET /api/media/\{mediaType\}\\
+GET /api/media/\{mediaType\}/\{mediaId\}\\
+POST /api/media/\{mediaType\}/\{mediaId\}/review\\
+DELETE /api/media/\{mediaType\}/\{mediaId\}/review/\{reviewId\}
+\end{quote}\strut
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Admin Endpoints}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+•\\
+•\\
+•\\
+•\\
+•\\
+•\\
+•\\
+•\\
+•\\
+•\\
+•\\
+•\\
+•
+\end{quote}\strut
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+POST /api/admin/media\\
+PATCH /api/admin/media/\{mediaId\}\\
+DELETE /api/admin/media/\{mediaType\}/\{mediaId\}\\
+DELETE /api/admin/reviews/\{mediaType\}/\{mediaId\}/review/\{reviewId\}
+GET /api/admin/user/\{userId\}\\
+GET /api/admin/analytics/monthlyregistrations\\
+GET /api/admin/analytics/controversial/\{mediaType\}\\
+GET /api/admin/analytics/declining/\{mediaType\}\\
+GET /api/admin/analytics/improving/\{mediaType\}\\
+GET /api/admin/analytics/scc\\
+GET /api/admin/analytics/influencers\\
+GET /api/admin/analytics/listcounter/\{mediaType\}\\
+GET /api/admin/analytics/mediainlists/\{mediaType\}/\{mediaId\}
+\end{quote}\strut
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{Recommendation Endpoints}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+•
+\end{minipage} &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+GET /api/recommendations/similar-users
+\end{quote}
+\end{minipage}} \\
+\midrule()
+\endhead
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/recommendations/popular-among-follows/\{mediaType\}
+\end{quote}
+\end{minipage}} \\
+• &
+\multicolumn{2}{>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}@{}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+GET /api/recommendations/top10media/\{mediaType\}
+\end{quote}
+\end{minipage}} \\
+\multicolumn{2}{@{}>{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.6667} + 2\tabcolsep}}{%
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage}} & 32 \\
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{5.Most relevant queries}
+
+\textbf{5.1. MongoDB queries}
+
+Most relevant queries in mongoDB are implemented using aggregation
+pipelines. The first three queries are for analytics, while the last one
+is for recommendations.
+
+\textbf{Month with most registrations for each year}
+
+For each year, the admin can see the month with most user registrations.
+To speed up computation, data of past years are saved in the
+\emph{month\_analytics} collection. The service method finds the last
+year present in the collection and calculates only the data yet to be
+computed. The result of the aggregation is then saved in the collection
+and all the documents inside are returned.
+
+The aggregation does the following:
+
+1.Match: keep only users of years that weren\textquotesingle t already
+computed. 2.Group: group by year and month, count the total users for
+each month. 3.Sort: sort by year and users count.
+
+4.Group: group by year and keep the month with most registrations.
+\end{quote}
+
+\includegraphics[width=5.90556in,height=2.09444in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image84.png}
+
+\includegraphics[width=5.90556in,height=0.98889in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image85.png}
+
+\begin{quote}
+\textbf{Most controversial media for each genre}
+
+An admin can be interested in finding the most controversial media, that
+is, anime or manga with most variance in the scores.
+
+1.AddFields: calculate the variance of the scores.
+
+2.Unwind: unwind genres array.
+
+3.Sort: sort by genres and variance.
+
+4.Group: group by genre and keep the media with highest variance.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+33
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\includegraphics[width=5.90556in,height=1.69722in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image86.png}
+
+\begin{quote}
+\textbf{Top declining/improving media}
+
+Declining or improving means that the media is going worse or better
+than usual. To do so, the average score of the 5 most recent reviews is
+compared with the total average score.
+
+1.AddFields: calculate the total average score and keep the 5 most
+recent reviews. 2.AddFields: calculate recent average score.
+
+3.Match: keep media with a declining/improving average score.
+4.AddFields: calculate the average score difference to return. 5.Sort:
+sort by this difference.
+
+6.Limit: keep only the top 10.
+\end{quote}
+
+\includegraphics[width=5.90556in,height=2.11528in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image87.png}
+
+\begin{quote}
+\textbf{Top 10 media by average score}
+
+A user can be interested in knowing the top 10 media overall or for each
+genre.
+
+1.Match: if a genre is specified, keep only media that have it in the
+genres array. 2.AddFields: calculate the average score.\\
+3.Sort: sort by this.
+
+4.Limit: keep only the top 10.
+\end{quote}
+
+\includegraphics[width=5.90556in,height=0.82361in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image88.png}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+34
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\textbf{5.2. Neo4j queries}
+\end{quote}
+
+The graph is mostly used for recommendations. However, it can give to
+the admin
+
+\begin{quote}
+insight about followers and media lists relationships.
+\end{quote}
+
+Most of the analytics are graph traversals, but since they are invoked
+sporadically by the
+
+\begin{quote}
+admin, they don\textquotesingle t degrade the performance of the system.
+
+\textbf{Get users with similar tastes}
+\end{quote}
+
+\emph{Domain-specific query}: given a user, find users that have similar
+lists. That is, that have
+
+\begin{quote}
+a lot of media in common.
+\end{quote}
+
+\emph{Graph-centric query}: given a User node, find other User nodes
+with the highest Jaccard
+
+\begin{quote}
+similarity.
+\end{quote}
+
+To find the similarity between users, we used the Graph Data Science
+(GDS) plugin. To
+
+speed up the computation, we project only the nodes and relationships
+that the plugin
+
+\begin{quote}
+method will use.
+\end{quote}
+
+\includegraphics[width=5.90556in,height=4.74028in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image89.png}
+
+\begin{quote}
+\textbf{Get popular media among followed users}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+35
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\emph{Domain-specific query}: given a user, find most present media in
+followed users\textquotesingle{} list. \emph{Graph-centric query}: given
+a User node, find most present Anime or Manga nodes connected to
+followed User nodes.
+\end{quote}
+
+\includegraphics[width=5.90556in,height=1.50972in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image90.png}
+
+\begin{quote}
+\textbf{Find influencers (graph traversal)}\\
+\emph{Domain-specific query}: find most followed users.
+
+\emph{Graph-centric query}: calculate the in-degree centrality for each
+User node, using FOLLOW edges.
+
+As a measure of centrality, we decided to use the in-degree centrality,
+which is known to be a simple but good indicator of influence.
+\end{quote}
+
+\includegraphics[width=5.90556in,height=1.875in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image91.png}
+
+\begin{quote}
+\textbf{Find Strongly Connected Components (graph traversal)}
+\emph{Domain-specific query}: find users\textquotesingle{} community.
+
+\emph{Graph-centric query}: using FOLLOW edges, apply a community
+detection algorithm to find well connected User nodes.
+
+We define a community as a set of Strongly Connected Component (SCC).
+From the Graph Data Science documentation: \emph{"The Strongly Connected
+Components (SCC) algorithm finds maximal sets of connected nodes in a
+directed graph. A set is considered a strongly connected component if
+there is a directed path between each pair of nodes within the set."}
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+36
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\includegraphics[width=5.6875in,height=4.31389in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image92.png}
+
+\begin{quote}
+\textbf{Media present more in each list (graph traversal)}\\
+\emph{Domain-specific query}: for each media list, find the 10 most
+present media.
+
+\emph{Graph-centric query}: categorize each LIST\_ELEMENT in a list
+type. Then, for each Anime or Manga node count the list of different
+types.
+\end{quote}
+
+\includegraphics[width=5.90556in,height=2.14583in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image93.png}
+
+\begin{quote}
+\textbf{How many times a media is in each list}\\
+\emph{Domain-specific query}: given a media, find in how many lists it
+is, for each list type.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+37
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+\emph{Graph-centric query}: given a Manga or Anime node, categorize the
+incoming LIST\_ELEMENT edges.
+
+\includegraphics[width=5.84167in,height=1.96528in]{vertopal_0e8d775b73ec4aa4b84f64c3e5a8b025/media/image94.png}
+
+\textbf{5.3. Indexes}
+
+\textbf{5.3.1.} \textbf{MongoDB indexes}
+
+In this paragraph, we discuss the possible indexes that could improve
+the performance of read operations for each collection. Afterward, each
+index will be taken into analysis to decide whether it should be added.
+
+\textbf{User collection}
+
+•\textbf{Email}\\
+This index is fundamental to speed up the login and the registration.
+
+•\textbf{Username}\\
+This index would help with the registration, but most importantly it
+would improve the performance of users browsing, which uses a regex on
+the username. To confirm our decision to add this index, we performed a
+test with and without the index while browsing users with a regex.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{Without index}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{With index}
+\end{quote}
+\end{minipage} \\
+\midrule()
+\endhead
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{nReturned}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{executionTimeMillis}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+23
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+13
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{totalKeysExamined}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3510
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{totalDocsExamined}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3510
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1
+\end{quote}
+\end{minipage} \\
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+• \textbf{CreatedAt}\\
+This index would speed up the computation of the \emph{"Month with most}
+\emph{registrations for each year}" aggregation. Moreover, without this
+index, the \emph{month\_analytics} collection would be useless, since
+all the users documents must be scanned for the aggregation. To confirm
+our decision to add this index, we performed a test with and without the
+index while executing the aggregation.
+
+38\\
+My Akiba
+
+The aggregation was executed with
+\{\textquotesingle createdAt\textquotesingle:\{\textquotesingle\$gte\textquotesingle:
+ISODate("2020-01-
+
+01T00:00:00.000Z")\}\}.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{Without index}
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+\textbf{With index}
+\end{quote}
+\end{minipage} \\
+\midrule()
+\endhead
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{nReturned}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+60
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+60
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{executionTimeMillis}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+123
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+10
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{totalKeysExamined}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+1029
+\end{quote}
+\end{minipage} \\
+\begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+\textbf{totalDocsExamined}
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+3510
+\end{quote}
+\end{minipage} & \begin{minipage}[t]{\linewidth}\raggedright
+\begin{quote}
+0
+\end{quote}
+\end{minipage} \\
+\bottomrule()
+\end{longtable}
+
+\begin{quote}
+•\textbf{Followers}\\
+This index would improve the check on followers when the privacyStatus
+is on FOLLOWERS. Nevertheless, it would slow down the follow and
+unfollow write operation.
+
+Since there are 1500 find on a user, of which only about a third will be
+with privacyStatus=FOLLOWERS, and since there are 4000 follow and
+unfollow daily, it is not worth adding the index.
+
+\textbf{Anime and Manga collections}
+
+•\textbf{Name}\\
+As the index on the user\textquotesingle s name, this index would speed
+up the browse on anime or manga. Performance tests are similar to the
+ones on users' name.
+
+\textbf{5.3.2.} \textbf{Neo4j indexes}
+
+Since all neo4j queries that compute starting from a certain node (User,
+Anime or Manga) find it using the \emph{id} property, we created indexes
+for the id field for each type of node.
+\end{quote}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\begin{quote}
+My Akiba
+\end{quote}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+39
+\end{minipage} \\
+\midrule()
+\endhead
+\bottomrule()
+\end{longtable}
+
+\end{document}

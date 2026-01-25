@@ -1,0 +1,631 @@
+\chapter{Implementation}
+
+The \textbf{LargeB\&B} system has been implemented following all the requirements and design specifications listed in the previous chapters, utilizing modern and scalable technologies. The application is built using the Spring Boot framework, following the Controller-Service-Repository architectural pattern to organize the code structure and ensure separation of concerns.
+
+\section{Spring Boot Framework}
+
+The project has been developed using the Spring Boot framework for application initialization and to establish connections between the server and the databases. Spring Boot is a powerful tool that simplifies and accelerates the development of web applications and microservices through three main features: automatic configuration, adoption of a declarative approach to configuration, and the ability to create standalone applications.
+
+The backend is built with \textbf{Spring Boot 3.2.0}, providing:
+
+\begin{itemize}
+    \item \textbf{Dependency Injection}: Automatic management of component dependencies through the IoC (Inversion of Control) container
+    \item \textbf{Auto-configuration}: Simplified configuration of database connections and services with minimal XML or annotation configuration
+    \item \textbf{RESTful API}: Native support for building REST APIs with embedded Tomcat server
+    \item \textbf{Security}: Integrated Spring Security for authentication and authorization management
+\end{itemize}
+
+\subsection{Spring Security and JWT Authentication}
+
+A particularly useful feature leveraged from the Spring framework is the Spring Security token management system, which enables a more fluid and persistent user login experience. The system handles registration and authentication via JWT (JSON Web Token), which must be included in the header of any subsequent request after successful login.
+
+This security management is implemented using a filter chain, allowing certain requests to proceed without authorization checks when not needed (such as property browsing, registration, and login), while requiring the JWT token in the request header for protected operations. This implementation fulfills the security check and authorization management requirements specified in the non-functional requirements.
+
+The JWT tokens are configured with a 1-hour expiration time and are signed using the HS512 algorithm, ensuring both security and stateless session management across the distributed system.
+
+\subsection{Polyglot Persistence Architecture}
+
+LargeB\&B implements a \textbf{polyglot persistence} approach, utilizing three different database systems, each optimized for specific use cases:
+
+\begin{itemize}
+    \item \textbf{MongoDB} (Port 27017): Document-oriented NoSQL database for operational data storage including users, properties, rooms, reservations, reviews, messages, and notifications
+    \item \textbf{Neo4j} (Port 7687): Graph database specifically designed for collaborative filtering and recommendation system algorithms
+    \item \textbf{Redis} (Port 6379): In-memory key-value store used for caching trending properties and high-performance data retrieval
+\end{itemize}
+
+This architectural choice allows each database to handle the workload it is best suited for, maximizing performance and scalability while maintaining data consistency across the platform.
+
+\section{Model Layer}
+
+The models for this application are divided into three main categories: MongoDB models, Neo4j models, and utility classes. The model layer defines the domain entities and their mapping to the respective databases, representing the core business logic following the MVC (Model-View-Controller) pattern.
+
+\subsection{MongoDB Models}
+
+MongoDB models use the \texttt{@Document} annotation to map Java classes to MongoDB collections. All models leverage Lombok annotations (\texttt{@Data}, \texttt{@NoArgsConstructor}, \texttt{@AllArgsConstructor}, \texttt{@Builder}) to reduce boilerplate code and improve maintainability.
+
+\subsubsection{User Models}
+
+The user hierarchy is implemented using object-oriented inheritance, with \texttt{RegisteredUser} serving as an abstract base class containing common attributes shared by all user types.
+
+\textbf{RegisteredUser Model (Abstract Base Class)}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "users")
+public abstract class RegisteredUser {
+    @Id
+    private String id;
+    
+    private String username;
+    private String email;
+    private String password;
+    private LocalDate birthdate;
+    private String name;
+    private String surname;
+    private String phoneNumber;
+    private String role; // "CUSTOMER" or "MANAGER"
+}
+\end{minted}
+
+This abstract class defines the common structure for all registered users in the system, storing essential information such as credentials, personal data, and role-based access control identifiers.
+
+\textbf{Customer Model}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Customer extends RegisteredUser {
+    private PaymentMethod paymentMethod;
+    private Set<String> favoredPropertyIds;
+}
+\end{minted}
+
+The Customer class extends RegisteredUser with customer-specific attributes including payment method details and a set of favorite property IDs for quick access to preferred accommodations.
+
+\textbf{Manager Model}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Manager extends RegisteredUser {
+    private String iban;
+    private String vatNumber;
+    private BillingAddress billingAddress;
+}
+\end{minted}
+
+The Manager class is similarly structured but includes business-specific attributes such as IBAN for receiving payments, VAT number for tax purposes, and billing address information.
+
+\subsubsection{Property Model}
+
+The Property model demonstrates advanced MongoDB features including embedded documents, compound indexes for query optimization, text indexes for full-text search capabilities, and geospatial indexes for location-based queries.
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "properties")
+@CompoundIndexes({
+    @CompoundIndex(name = "location_idx", 
+                   def = "{'city': 1, 'region': 1, 'country': 1}"),
+    @CompoundIndex(name = "room_capacity_idx", 
+                   def = "{'rooms.capacityAdults': 1, 'rooms.capacityChildren': 1}"),
+    @CompoundIndex(name = "rating_sort_idx", 
+                   def = "{'ratingStats.value': -1}")
+})
+public class Property {
+    @Id
+    private String id;
+    
+    @TextIndexed(weight = 3)
+    private String name;
+    
+    @TextIndexed
+    private String description;
+    
+    @TextIndexed
+    private String city;
+    
+    @Indexed
+    private String managerId;
+    
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+    private List<Double> coordinates; // [longitude, latitude]
+    
+    private List<String> amenities;
+    private List<String> photos;
+    private String country;
+    private String region;
+    
+    // Embedded documents
+    private List<Room> rooms;
+    private List<PointOfInterest> pois;
+    private RatingStats ratingStats;
+}
+\end{minted}
+
+Key design decisions for the Property model:
+
+\begin{itemize}
+    \item \textbf{Embedded Rooms}: Rooms are embedded within properties as a list rather than stored as separate documents. This design choice enables atomic updates and faster retrieval of complete property information in a single query.
+    \item \textbf{Text Indexes}: Full-text search is enabled on property names (weight=3 for higher relevance), descriptions, and city names, allowing users to search properties using natural language queries.
+    \item \textbf{Geospatial Index}: A 2dsphere index on coordinates supports proximity queries for "find properties near me" functionality, calculating distances using spherical geometry.
+    \item \textbf{Compound Indexes}: Multiple compound indexes optimize common filter combinations such as location hierarchy (country/region/city), room capacity searches, and rating-based sorting.
+\end{itemize}
+
+\subsubsection{Room Model}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Room {
+    private String id;
+    private String name;
+    private String description;
+    private Integer capacityAdults;
+    private Integer capacityChildren;
+    private Double pricePerNightAdults;
+    private Double pricePerNightChildren;
+    private List<String> photos;
+}
+\end{minted}
+
+Rooms are designed as embedded documents within the Property model, storing detailed information about each accommodation unit including capacity constraints and pricing structure.
+
+\subsubsection{Reservation Model}
+
+The Reservation model includes critical compound indexes specifically designed for efficient availability checking operations.
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "reservations")
+@CompoundIndex(name = "room_availability_idx", 
+               def = "{'roomId': 1, 'dates.checkIn': 1, 'dates.checkOut': 1}")
+public class Reservation {
+    @Id
+    private String id;
+    
+    private Integer adults;
+    private Integer children;
+    private String status;
+    
+    @Indexed
+    private String userId;
+    
+    @Indexed
+    private String roomId;
+    
+    private ReservationDates dates;
+    
+    @CreatedDate
+    private LocalDateTime createdAt;
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReservationDates {
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate checkIn;
+        
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate checkOut;
+    }
+}
+\end{minted}
+
+The compound index on \texttt{roomId}, \texttt{checkIn}, and \texttt{checkOut} is critical for efficiently querying room availability with the question: "Is Room X available between Date A and Date B?" This index prevents the need for full collection scans and ensures sub-millisecond response times for availability queries.
+
+\subsubsection{Review Model}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "reviews")
+public class Review {
+    @Id
+    private String id;
+    
+    private String userId;
+    private String username;
+    
+    @Indexed
+    private String propertyId;
+    
+    private Double rating;
+    private Double cleanliness;
+    private Double communication;
+    private Double location;
+    private Double value;
+    
+    private String comment;
+    private LocalDateTime creationDate;
+}
+\end{minted}
+
+Reviews are stored in a separate collection rather than embedded in properties to enable flexible querying, pagination, and independent scaling. The indexed \texttt{propertyId} field allows efficient retrieval of all reviews for a specific property.
+
+\subsubsection{Message Model}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "messages")
+public class Message {
+    @Id
+    private String id;
+    
+    @Indexed
+    private String senderId;
+    
+    @Indexed
+    private String receiverId;
+    
+    private String text;
+    private LocalDateTime timestamp;
+    private Boolean isRead;
+}
+\end{minted}
+
+The Message model supports the chat functionality between customers and property managers, with indexes on both sender and receiver IDs to optimize conversation retrieval.
+
+\subsubsection{Notification Model}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "notifications")
+public class Notification {
+    @Id
+    private String id;
+    
+    @Indexed
+    private String userId;
+    
+    private String type;
+    private String message;
+    private LocalDateTime timestamp;
+    private Boolean isRead;
+}
+\end{minted}
+
+\subsection{Neo4j Models}
+
+Neo4j models use the \texttt{@Node} annotation to define graph vertices and \texttt{@Relationship} annotations to define edges. The graph database is specifically optimized for social features and collaborative filtering algorithms.
+
+\subsubsection{User Node}
+
+\begin{minted}[fontsize=\small]{java}
+@Node("User")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserNode {
+    @Id
+    @GeneratedValue
+    private Long graphId;
+    
+    private String userId;
+    private String username;
+    private String privacyStatus;
+}
+\end{minted}
+
+The UserNode represents users in the graph database with a minimal set of attributes necessary for relationship traversal and recommendation algorithms.
+
+\subsubsection{Property Node}
+
+\begin{minted}[fontsize=\small]{java}
+@Node("Property")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PropertyNode {
+    @Id
+    @GeneratedValue
+    private Long graphId;
+    
+    private String propertyId;
+    private String name;
+    private String city;
+}
+\end{minted}
+
+PropertyNode stores essential property information in the graph for efficient traversal during recommendation queries.
+
+\subsubsection{Booking Relationship}
+
+\begin{minted}[fontsize=\small]{java}
+@RelationshipProperties
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class BookedRelationship {
+    @Id
+    @GeneratedValue
+    private Long id;
+    
+    private LocalDate date;
+    
+    @TargetNode
+    private PropertyNode property;
+}
+\end{minted}
+
+The BOOKED relationship connects users to properties they have reserved, storing the booking date as a relationship property. This graph structure enables powerful collaborative filtering queries such as: "Users who booked property X also frequently booked properties Y and Z."
+
+\subsection{Utility Classes}
+
+\subsubsection{PaymentMethod}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentMethod {
+    private String id;
+    private String gatewayToken;
+    private String cardType;
+    private String last4Digits;
+    private String expiryDate;
+    private String cardHolderName;
+}
+\end{minted}
+
+The PaymentMethod class implements secure payment information storage using tokenization. Actual card numbers are never stored; instead, a gateway token is used to represent the payment method, adhering to PCI DSS compliance standards.
+
+\subsubsection{RatingStats}
+
+\begin{minted}[fontsize=\small]{java}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RatingStats {
+    private Double cleanliness;
+    private Double communication;
+    private Double location;
+    private Double value;
+}
+\end{minted}
+
+RatingStats aggregates multiple rating dimensions for properties, allowing users to evaluate accommodations across different quality criteria.
+
+\section{Repository Layer}
+
+The repository modules, extended by Spring Data classes, provide an abstraction layer for database operations, significantly simplifying the implementation of data access logic. In our application, we utilize repositories for MongoDB, Neo4j, and Redis, employing both simple queries for basic CRUD operations and more complex queries for analytics and recommendation functionalities. The advanced queries will be explored in greater depth in subsequent sections.
+
+\subsection{MongoDB Repositories}
+
+Spring Data MongoDB provides automatic query generation based on method naming conventions, eliminating the need for manual query implementation in most cases. The framework parses method names and generates the appropriate MongoDB queries automatically.
+
+Our MongoDB repositories handle operations for users, properties, reservations, reviews, messages, and notifications. For instance, queries like \texttt{findByEmail}, \texttt{findByManagerId}, or \texttt{findByStatus} are automatically implemented by Spring Data based on their method signatures.
+
+For more complex operations that cannot be expressed through method naming, custom queries are defined using the \texttt{@Query} annotation with MongoDB query syntax. An example is the \texttt{findConflictingReservations} method, which checks for booking conflicts using date range comparisons with \texttt{\$or} and \texttt{\$lte}/\texttt{\$gte} operators.
+
+\subsection{Neo4j Repositories}
+
+Neo4j repositories leverage Cypher queries for graph traversals and pattern matching. These repositories are essential for implementing the recommendation system, allowing complex multi-hop graph queries to discover relationships between users and properties.
+
+The repositories support operations such as finding all properties booked by a specific user, identifying users with similar booking patterns, and calculating collaborative filtering scores based on shared preferences. Custom Cypher queries are defined using the \texttt{@Query} annotation to express complex graph traversal logic.
+
+\subsection{Redis Operations}
+
+Redis operations are handled through \texttt{RedisTemplate}, providing high-performance caching and sorted set operations. The primary use case is maintaining a sorted set of trending properties based on view counts, enabling real-time ranking and retrieval of popular accommodations.
+
+\section{Service Layer}
+
+The service layer acts as an intermediary between the controller and repository layers, representing the core functionalities and main business logic implementations of the application. It encapsulates complex business rules, orchestrates interactions with multiple repositories, and ensures a clean separation of concerns. Additionally, the service modules enable better transaction management and error handling, making the system more robust and maintainable.
+
+\subsection{Authentication Services}
+
+\subsubsection{LoginService}
+
+This service implements the main functionalities regarding user authentication. It verifies user credentials against the database, validates passwords using BCrypt hashing, and generates JWT tokens upon successful authentication. The JWT token contains the user's email and role information, which is used throughout the application for authorization decisions.
+
+\subsubsection{RegistrationService}
+
+The RegistrationService manages user registration processes for both customers and managers. It validates that email addresses are unique, encrypts passwords using BCrypt before storage, and creates user entries in MongoDB. During customer registration, it also initializes empty sets for favored properties. For managers, it additionally validates business information such as VAT numbers and IBAN codes.
+
+\subsection{PropertyService}
+
+This service implements all property-related operations including advanced search, filtering, and geospatial queries. It supports multi-criteria searches combining city filters, price ranges, amenity requirements, and room capacity constraints. The service uses MongoDB's aggregation framework and query builders to construct dynamic queries based on user-provided search parameters.
+
+For geospatial functionality, the service implements proximity-based searches using MongoDB's \texttt{\$nearSphere} operator, which calculates distances on a spherical surface and returns properties within a specified radius. Each property view is also tracked by incrementing a counter in Redis, contributing to the trending properties ranking.
+
+\subsection{ReservationService}
+
+The ReservationService manages the complete booking lifecycle including availability checking, price calculation, payment processing, and reservation creation. It orchestrates operations across multiple data sources to ensure transactional consistency.
+
+The availability checking mechanism queries existing reservations to identify date conflicts using the optimized compound index on room ID and dates. Price calculations account for the number of adults, children, and night count, applying per-person pricing models. Payment processing integrates with the payment gateway using tokenized payment methods, ensuring PCI compliance. Upon successful payment, the service creates a confirmed reservation record and updates all relevant statistics.
+
+\subsection{ReviewService}
+
+This service manages CRUD operations for property reviews. It allows customers who have completed stays to post reviews with ratings across multiple dimensions (cleanliness, communication, location, value). Upon review submission, the service automatically recalculates and updates the property's aggregate rating statistics, ensuring that displayed ratings always reflect the latest feedback.
+
+\subsection{MessageService}
+
+The MessageService facilitates real-time messaging between customers and property managers. It supports sending messages, retrieving conversation histories, and marking messages as read. The service implements privacy controls to ensure users can only access their own conversations.
+
+\subsection{NotificationService}
+
+This service manages the notification system, creating notifications for important events such as booking confirmations, review responses, and message receipts. It provides endpoints for retrieving unread notifications and marking them as read, supporting the real-time notification requirements.
+
+\subsection{AnalyticsService}
+
+The AnalyticsService provides comprehensive business intelligence for property managers. It generates detailed analytics including:
+
+\begin{itemize}
+    \item Revenue calculations aggregating all confirmed reservations for a property within a specified time period
+    \item Occupancy rate analysis measuring the percentage of nights booked versus available across all rooms
+    \item Reservation trends showing booking patterns over time
+    \item Rating evolution tracking changes in review scores
+    \item Comparative performance metrics benchmarking against similar properties
+\end{itemize}
+
+The service implements complex aggregation pipelines using MongoDB's aggregation framework to compute these metrics efficiently, even across large datasets.
+
+\subsection{RecommendationService}
+
+This service provides personalized recommendations using a hybrid approach combining collaborative filtering and content-based filtering algorithms.
+
+The collaborative filtering component uses Neo4j graph traversals to identify users with similar booking histories and recommend properties those similar users have booked. It employs Cypher queries to find multi-hop paths in the user-property booking graph, calculating similarity scores based on overlapping bookings.
+
+The content-based filtering component analyzes property attributes, particularly amenities, to recommend similar properties. It calculates similarity scores by counting common amenities and attributes, ranking properties by their similarity to ones the user has previously booked or favorited.
+
+The hybrid approach combines results from both algorithms, providing diverse and relevant recommendations that account for both social proof (what similar users like) and property characteristics (what matches the user's preferences).
+
+\subsection{FavoredPropertyService}
+
+This service manages users' favorite property lists, allowing customers to add properties to their favorites for quick access and receive notifications about price changes or availability. It ensures that favorites are synchronized between MongoDB (for quick access) and potentially used in recommendation algorithms.
+
+\section{Controller Layer}
+
+Controllers expose RESTful API endpoints and handle HTTP request/response mapping, serving as the entry point for client requests. They validate incoming data, delegate business logic to appropriate services, and format responses according to REST conventions.
+
+\subsection{AuthController}
+
+This controller handles user authentication processes, mapping HTTP requests for registration and login endpoints. It validates user input during registration using Spring Validation annotations, delegates authentication logic to the AuthService, and returns JWT tokens upon successful login. The controller implements proper HTTP status codes (200 for successful login, 201 for registration, 401 for authentication failures).
+
+\subsection{PropertyController}
+
+The PropertyController manages all property-related operations accessible to end users. It provides endpoints for:
+
+\begin{itemize}
+    \item Browsing properties with pagination support
+    \item Searching properties with multiple filter criteria (city, price range, amenities, room capacity)
+    \item Retrieving detailed property information including embedded rooms and points of interest
+    \item Geospatial queries for finding nearby properties based on coordinates and radius
+    \item Fetching trending properties based on view counts from Redis
+    \item Text search using full-text indexes on property names and descriptions
+\end{itemize}
+
+All GET endpoints are publicly accessible without authentication, supporting the browse-before-booking user flow.
+
+\subsection{ManagerController}
+
+This controller provides protected endpoints for property management operations, restricted to users with the MANAGER role. It handles:
+
+\begin{itemize}
+    \item Creating new property listings with validation of all required fields
+    \item Updating existing property information including rooms, amenities, and photos
+    \item Managing property availability and pricing
+    \item Accessing analytics dashboards with revenue and occupancy metrics
+    \item Viewing and responding to customer reviews
+    \item Managing booking requests and reservations
+\end{itemize}
+
+All requests require a valid JWT token in the Authorization header, and the controller verifies that managers can only modify their own properties.
+
+\subsection{ReservationController}
+
+This controller maps reservation-related operations for customers, including creating new bookings, viewing reservation history, modifying existing reservations, and canceling bookings. It enforces business rules such as cancellation policies and ensures customers can only access their own reservation data.
+
+\subsection{ReviewController}
+
+The ReviewController handles review submission, retrieval, and deletion. It allows authenticated customers who have completed stays to post reviews, enforces one-review-per-stay policies, and provides endpoints for browsing reviews with pagination and filtering by rating.
+
+\subsection{MessageController}
+
+This controller manages the messaging system, providing endpoints for sending messages between customers and managers, retrieving conversation threads, and marking messages as read. It implements real-time updates using polling or WebSocket connections for instant message delivery.
+
+\subsection{RecommendationController}
+
+This module relies on the RecommendationService to map users' requests concerning recommendation functionalities. It provides personalized property suggestions based on user history, similar user preferences, and property attributes. The controller supports both authenticated recommendations (using user history) and anonymous recommendations (based on current search context).
+
+\subsection{NotificationController}
+
+The NotificationController manages notification delivery, providing endpoints for retrieving unread notifications, marking notifications as read, and configuring notification preferences. It supports real-time notification updates for critical events.
+
+\section{Exception Handler}
+
+The application includes a Global Exception Handler implemented using the \texttt{@ControllerAdvice} annotation. By centralizing exception handling logic, the code becomes cleaner and more maintainable while ensuring consistent error responses across the entire application. This approach reduces the need for repetitive try-catch blocks in individual controllers and provides a unified error response format.
+
+The exception handler catches various exception types including:
+
+\begin{itemize}
+    \item \texttt{IllegalArgumentException}: For invalid input parameters, returning 400 Bad Request
+    \item \texttt{SecurityException}: For unauthorized access attempts, returning 403 Forbidden
+    \item \texttt{EntityNotFoundException}: For missing resources, returning 404 Not Found
+    \item \texttt{IllegalStateException}: For business rule violations, returning 409 Conflict
+    \item Generic \texttt{Exception}: For unexpected errors, returning 500 Internal Server Error with sanitized messages
+\end{itemize}
+
+All error responses follow a consistent structure including timestamp, status code, error message, and request path, facilitating debugging and client-side error handling.
+
+\section{API Documentation}
+
+The application uses SpringDoc OpenAPI (version 2.3.0) for automatic API documentation generation. The interactive documentation is accessible at \texttt{http://localhost:8080/swagger-ui.html} when the application is running.
+
+The Swagger UI provides:
+
+\begin{itemize}
+    \item Interactive endpoint testing with request/response examples
+    \item Complete API schema documentation with all DTOs and models
+    \item Authentication flow demonstration including JWT token usage
+    \item Request parameter descriptions and constraints
+    \item Response status code explanations
+    \item Example payloads for all endpoints
+\end{itemize}
+
+This auto-generated documentation remains synchronized with the codebase, eliminating the risk of outdated API documentation and significantly improving developer experience for frontend integration.
+
+\section{Data Population Scripts}
+
+The project includes comprehensive Python scripts for generating realistic datasets and populating all three databases with test data, ensuring the application can be thoroughly tested with production-like data volumes.
+
+\subsection{Dataset Generation}
+
+The \texttt{createDataset.py} script generates synthetic data using the Faker library combined with real Airbnb data sourced from InsideAirbnb open datasets. This hybrid approach ensures data realism while maintaining privacy.
+
+The script generates:
+
+\begin{itemize}
+    \item 30,000 customer accounts with realistic names, emails, and payment methods
+    \item 1,000 manager accounts with business information
+    \item 2,000 property listings with actual geographic coordinates and amenities from real Airbnb data
+    \item 100,000 reviews with varying ratings and realistic text comments
+    \item 30,000 reservations spanning past and future dates
+    \item Message conversations and notification records
+\end{itemize}
+
+Data generation maintains referential integrity, ensuring all foreign key relationships are valid and realistic patterns emerge (e.g., popular properties have more reviews, users favor properties they've booked).
+
+\subsection{MongoDB Population}
+
+The \texttt{populateMongoDB.py} script imports the generated JSON data into MongoDB with appropriate transformations:
+
+\begin{itemize}
+    \item Converting date strings to proper DateTime objects
+    \item Transforming coordinate arrays into GeoJSON Point geometries for spatial indexing
+    \item Embedding room documents within property documents
+    \item Creating all specified indexes including compound, text, and geospatial indexes
+    \item Validating data integrity before insertion
+\end{itemize}
+
+The script uses batch insertion for performance, processing 1,000 documents at a time to minimize network round trips and maximize throughput.
+
+\subsection{Neo4j Population}
+
+The \texttt{populateNeo4j.py} script creates the graph structure in Neo4j:
+
+\begin{itemize}
+    \item Creating User and Property nodes with unique constraints
+    \item Establishing BOOKED relationships between users and properties based on reservation data
+    \item Adding relationship properties such as booking dates
+    \item Building indexes on node properties for query optimization
+\end{itemize}
+
+The script uses Cypher's \texttt{MERGE} operation to ensure idempotency, allowing it to be run multiple times without creating duplicate nodes. Batch processing with \texttt{UNWIND} statements significantly improves import performance for large datasets.
+
+\subsection{Data Consistency}
+
+All population scripts maintain consistency across the three databases by using the same generated IDs. This ensures that a property with a specific ID in MongoDB corresponds to the same property node in Neo4j, enabling seamless cross-database queries and operations in the application layer.
