@@ -1,0 +1,140 @@
+\chapter{Dataset and Data Modelling}
+\section{Dataset}
+The dataset was created using \textbf{Airbnb} to obtain public data (properties, rooms, etc.), and \textbf{Faker} to generate private data (user and manager information, reservations, etc.), its size is about 172MB. Some public data that were not available were also generated using Faker, while points of interest (POIs) were added manually.
+
+\subsection{Airbnb}
+\textit{Airbnb} is an online platform that connects people looking for short-term (or long-term) accommodations with homeowners or private room owners who want to rent out extra space. To obtain public data from this platform, the provided files in \textit{InsideAirbnb} were used: `listings.csv`, which contains information about the properties, and `reviews.csv`, which contains information about the reviews. Specifically, data from 150 properties were collected for several European capitals: Rome, Paris, London, Berlin, Madrid, Lisbon, Vienna, Athens, Budapest, Prague, Oslo, Copenhagen, and Stockholm, with 3 to 5 rooms and 50 reviews collected for each property.
+
+\subsection{Faker}
+Faker is a Python library that generates large amounts of fake but realistic data, such as names, addresses, emails, phone numbers, and more, to populate databases, test applications, and create realistic development environments without using real sensitive data. Using Faker, 150 managers were generated (one per property), along with between 10 and 20 customers per property and one reservation for each customer, and finally the notifications were generated.
+
+\subsection{Points of interest}
+The points of interest are 5 per property and were manually added, with their respective coordinates, and include museums, public parks, monuments, historic districts, castles, and so on.
+
+\subsection{Obtained Datasets}
+The datasets obtained using the previous script are:
+
+\begin{itemize}
+    \item \textbf{customers.json 20.5MB} -- contains all generated customers 
+    \item \textbf{managers.json 1MB} -- contains all generated managers
+    \item \textbf{pois.json 2.7MB} -- contains famous places near the property
+    \item \textbf{properties.json 19.8MB} -- contains all properties with their information (address, city, coordinates, amenities, manager\_id, etc.)
+    \item \textbf{reservations.json 10MB} -- contains all reservations linked to rooms and customers
+    \item \textbf{reviews.json 75.3MB} -- contains all reviews linked to properties
+    \item \textbf{rooms.json 11.6MB} -- contains all rooms linked to properties via \texttt{property\_id}
+    \item \textbf{messages.json 9.6MB} -- contains the messages exchanged between customers and managers
+    \item \textbf{notifications.json 22.3MB} -- contains the notification about reservations and received messages
+    
+\end{itemize}
+% --- INIZIO NUOVA SEZIONE DATA DESIGN ---
+
+\section{Data Modelling Strategy}
+Based on the Analysis Class Diagram and the non-functional requirements of scalability and read-performance, we adopted a \textbf{Polyglot Persistence} architecture. The data layer is designed following a \textit{Query-Driven Approach}, characteristic of NoSQL systems, where data models are optimized for specific access patterns rather than purely for storage efficiency.
+
+\subsection{MongoDB Document Design}
+MongoDB serves as the primary operational database. To maximize performance for the most frequent query---retrieving property details for the booking page---we utilized the \textbf{Embedded Data Model}.
+
+\subsubsection{The "Properties" Collection and Embedding Strategy}
+Contrary to the normalized Relational Model (SQL), where "Rooms" and "Properties" would be stored in separate tables requiring costly JOIN operations, we decided to \textbf{embed} the room information directly within the Property document.
+
+\begin{itemize}
+    \item \textbf{Why Embedding?} A property has a bounded number of rooms (1-to-Few relationship). Since room availability and prices are always accessed together with the property description, embedding them eliminates the need for disk I/O on a second collection, drastically reducing latency.
+    \item \textbf{Subset Pattern for Reviews:} To optimize the initial load time, we applied the \textit{Subset Pattern}. The 5 most recent reviews are embedded in the \texttt{Property} document for immediate display. The full history of reviews is stored in a separate \texttt{reviews} collection, linked via reference.
+\end{itemize}
+
+Below is the JSON structure of the final \texttt{properties} document:
+
+\begin{verbatim}
+{
+  "_id": "bdd640fb-...",
+  "name": "Cozy Flat in Rome",
+  "location": { "city": "Rome", "geo": [12.49, 41.90] },
+  "amenities": ["Wifi", "AC", "Kitchen"],
+  
+  // EMBEDDED ROOMS (1:Few Relationship)
+  "rooms": [
+      {
+          "roomId": "r1",
+          "name": "Master Bedroom",
+          "price": 120.00,
+          "capacity": { "adults": 2 }
+      },
+      {
+          "roomId": "r2",
+          "name": "Single Room",
+          "price": 80.00
+      }
+  ],
+  
+  // SUBSET PATTERN (Top 5 Reviews)
+  "latestReviews": [
+      { "user": "Mario", "rating": 5, "text": "Great!" }
+  ]
+}
+\end{verbatim}
+
+\subsubsection{Other Collections}
+\begin{itemize}
+    \item \textbf{Users:} Stores both Customers and Managers. A unique index on the \texttt{email} field ensures identity integrity.
+    \item \textbf{Reservations:} Uses the \textit{Referencing Pattern}. Since the history of bookings grows indefinitely (Unbounded growth), they are stored in a separate collection referencing \texttt{userId} and \texttt{propertyId}.
+\end{itemize}
+
+\subsection{ETL Process and Data Ingestion}
+The raw dataset obtained from scraping and generation (Section 3.1) was originally structured in a normalized format (JSON files for rooms separate from properties) and contained inconsistencies. To migrate this data into our document-oriented structure, we developed a custom \textbf{ETL (Extract, Transform, Load) script in Python}.
+
+The Python script performs the following critical operations before insertion:
+
+\begin{enumerate}
+    \item \textbf{Data Cleaning:} The script parses the raw JSON files, correcting malformed fields (e.g., the \texttt{amenities} array which contained nested escaped strings) and normalizing date formats to MongoDB \texttt{ISODate}.
+    \item \textbf{Denormalization (Merging):} It reads the \texttt{rooms.json} file into memory and injects each room object into the corresponding parent object in \texttt{properties.json}, effectively transforming the 1:N relationship into an embedded array.
+    \item \textbf{Deduplication:} During the ingestion of \texttt{customers.json} and \texttt{managers.json}, the script enforces uniqueness by checking against a hash set of email addresses, discarding duplicate entries to prevent key collisions in the database.
+    \item \textbf{Subset Calculation:} For each property, the script sorts the associated reviews by date and slices the top 5 to populate the \texttt{latestReviews} field, implementing the Subset Pattern at ingestion time.
+\end{enumerate}
+
+This automated process ensures that the MongoDB database is populated with clean, structured, and query-ready documents, as opposed to a raw import of CSV/JSON tables.
+% --- INIZIO NUOVE SEZIONI NEO4J E REDIS ---
+
+\subsection{Graph Data Modelling (Neo4j)}
+While MongoDB provides excellent performance for document retrieval and geospatial queries (via \texttt{2dsphere} indexes), it lacks the efficiency required to traverse complex, highly connected relationships in real-time. To implement the \textbf{Recommendation Engine} (Collaborative Filtering), we integrated Neo4j as a supplementary Graph Database.
+
+\subsubsection{Nodes and Relationships Strategy}
+Unlike the document model, we do not replicate the full dataset in Neo4j. We adopted a \textbf{Projection Strategy}, storing only the topological structure of the data required for graph algorithms:
+
+\begin{itemize}
+    \item \textbf{Nodes:}
+    \begin{itemize}
+        \item \texttt{(:User)} Contains only \texttt{userId} and minimal metadata (role).
+        \item \texttt{(:Property)} Contains only \texttt{propertyId} and \texttt{city}.
+    \end{itemize}
+    \item \textbf{Relationships:}
+    \begin{itemize}
+        \item \texttt{(:User)-[:BOOKED \{date: ...\}]->(:Property)} represents a confirmed reservation.
+    \end{itemize}
+\end{itemize}
+
+\textbf{Note on Granularity:} In MongoDB, reservations are linked to specific \textit{Rooms}. However, for the recommendation logic ("Users who liked this Property also liked..."), the granularity of the "Room" is too fine. Therefore, during the graph ingestion, we aggregated room-level bookings up to the \textbf{Property} level to create meaningful connections between users and properties.
+
+\subsubsection{Graph Ingestion Script}
+We developed a specific Python script (\texttt{import\_graph.py}) using the Neo4j Bolt driver to populate the graph. The script performs a critical transformation: it maps `room\_id` from the reservation files back to `property\_id` (using a hash map built from `rooms.json`) to correctly establish the \texttt{[:BOOKED]} relationship between Users and Properties.
+
+\subsection{Key-Value Data Modelling (Redis)}
+Redis is employed as a high-performance, in-memory data store to handle transient data and enforce consistency in high-concurrency scenarios. It complements MongoDB by offloading operations that require atomic locking or high-frequency updates.
+
+\subsubsection{Concurrency Control (The Booking Lock)}
+The most critical functional requirement is preventing \textbf{Overbooking} (two users booking the same room simultaneously). Since MongoDB's document locking can be performance-heavy under high load, we implemented a \textbf{Pessimistic Locking} mechanism on Redis:
+
+\begin{itemize}
+    \item \textbf{Key Pattern:} \texttt{lock:room:\{roomId\}:\{date\}}
+    \item \textbf{Mechanism:} When a user attempts to book, the backend executes a \texttt{SET ... NX EX 600} command (Set if Not Exists, with 10 minutes expiration).
+    \item \textbf{Result:} If Redis returns \texttt{OK}, the room is temporarily reserved, and the transaction proceeds to MongoDB. If \texttt{NULL}, the user receives a "Room busy" error immediately, without impacting the primary database.
+\end{itemize}
+
+\subsubsection{Real-Time Analytics features}
+Redis is also utilized for features that require high-write throughput, avoiding write-amplification on MongoDB:
+\begin{itemize}
+    \item \textbf{Trending Properties:} A \texttt{Sorted Set} (\texttt{trending\_properties}) is used to track property views in real-time. The \texttt{ZINCRBY} command increments the score of a property efficiently.
+    \item \textbf{Session \& Scarcity:} Transient counters (e.g., "5 people are viewing this page") are stored as simple keys with short TTL (Time-To-Live), ensuring the data is self-cleaning and does not permanently occupy storage.
+\end{itemize}
+
+% --- FINE NUOVE SEZIONI ---
+% --- FINE NUOVA SEZIONE ---

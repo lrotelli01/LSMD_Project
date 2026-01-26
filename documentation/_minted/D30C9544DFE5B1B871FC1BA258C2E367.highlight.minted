@@ -1,0 +1,16 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@RelationshipProperties}
+\PYG{n+nd}{@Data}
+\PYG{n+nd}{@NoArgsConstructor}
+\PYG{n+nd}{@AllArgsConstructor}
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{k+kd}{class} \PYG{n+nc}{BookedRelationship}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n+nd}{@Id}
+\PYG{+w}{    }\PYG{n+nd}{@GeneratedValue}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{Long}\PYG{+w}{ }\PYG{n}{id}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{date}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@TargetNode}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{PropertyNode}\PYG{+w}{ }\PYG{n}{property}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

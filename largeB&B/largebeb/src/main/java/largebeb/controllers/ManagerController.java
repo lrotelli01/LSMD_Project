@@ -138,8 +138,42 @@ public class ManagerController {
 
     // ==================== ANALYTICS ====================
 
+    /**
+     * Get analytics for a specific property or all properties if propertyId is not provided
+     * @param propertyId Optional - if absent, returns analytics for all manager's properties
+     */
+    @GetMapping("/analytics")
+    public ResponseEntity<?> getAnalytics(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(required = false) String propertyId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        logger.info("[GET] Analytics request - propertyId: {}, startDate: {}, endDate: {}", 
+                    propertyId != null ? propertyId : "ALL", startDate, endDate);
+        
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("Validation Error: startDate cannot be after endDate");
+        }
+        try {
+            if (propertyId != null && !propertyId.isBlank()) {
+                // Analytics for specific property
+                return ResponseEntity.ok(analyticsService.getPropertyAnalytics(token, propertyId, startDate, endDate));
+            } else {
+                // Analytics for all properties
+                return ResponseEntity.ok(analyticsService.getAllPropertiesAnalytics(token, startDate, endDate));
+            }
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
+     * Legacy endpoint - kept for backward compatibility
+     * @deprecated Use GET /api/manager/analytics?propertyId={id} instead
+     */
     @GetMapping("/analytics/property/{propertyId}")
-    public ResponseEntity<?> getPropertyAnalytics(
+    public ResponseEntity<?> getPropertyAnalyticsLegacy(
             @RequestHeader("Authorization") String token,
             @PathVariable String propertyId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -155,8 +189,12 @@ public class ManagerController {
         }
     }
 
+    /**
+     * Legacy endpoint - kept for backward compatibility
+     * @deprecated Use GET /api/manager/analytics instead
+     */
     @GetMapping("/analytics/all")
-    public ResponseEntity<?> getAllPropertiesAnalytics(
+    public ResponseEntity<?> getAllPropertiesAnalyticsLegacy(
             @RequestHeader("Authorization") String token,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
@@ -295,21 +333,44 @@ public class ManagerController {
 
     // ==================== RESERVATIONS VIEW ====================
 
+    /**
+     * Get all reservations with optional date filtering
+     * @param startDate Optional - filter reservations with checkIn >= startDate
+     * @param endDate Optional - filter reservations with checkOut <= endDate
+     */
     @GetMapping("/reservations")
-    public ResponseEntity<?> getAllMyReservations(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getAllMyReservations(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        logger.info("[GET] All reservations - startDate: {}, endDate: {}", startDate, endDate);
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("Validation Error: startDate cannot be after endDate");
+        }
         try {
-            return ResponseEntity.ok(managerReservationService.getAllMyReservations(token));
+            return ResponseEntity.ok(managerReservationService.getAllMyReservations(token, startDate, endDate));
         } catch (Exception e) {
             return handleException(e);
         }
     }
 
+    /**
+     * Get reservations for a specific property with optional date filtering
+     */
     @GetMapping("/reservations/property/{propertyId}")
     public ResponseEntity<?> getPropertyReservations(
             @RequestHeader("Authorization") String token,
-            @PathVariable String propertyId) {
+            @PathVariable String propertyId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        logger.info("[GET] Reservations for property: {} - startDate: {}, endDate: {}", propertyId, startDate, endDate);
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("Validation Error: startDate cannot be after endDate");
+        }
         try {
-            return ResponseEntity.ok(managerReservationService.getPropertyReservations(token, propertyId));
+            return ResponseEntity.ok(managerReservationService.getPropertyReservations(token, propertyId, startDate, endDate));
         } catch (Exception e) {
             return handleException(e);
         }

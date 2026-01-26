@@ -1,0 +1,40 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@Data}
+\PYG{n+nd}{@Builder}
+\PYG{n+nd}{@NoArgsConstructor}
+\PYG{n+nd}{@AllArgsConstructor}
+\PYG{n+nd}{@Document}\PYG{p}{(}\PYG{n}{collection}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{reservations}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n+nd}{@CompoundIndex}\PYG{p}{(}\PYG{n}{name}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{room\PYGZus{}availability\PYGZus{}idx}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+\PYG{+w}{               }\PYG{n}{def}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{}\PYGZsq{}roomId\PYGZsq{}: 1, \PYGZsq{}dates.checkIn\PYGZsq{}: 1, \PYGZsq{}dates.checkOut\PYGZsq{}: 1\PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{k+kd}{class} \PYG{n+nc}{Reservation}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n+nd}{@Id}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{id}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{Integer}\PYG{+w}{ }\PYG{n}{adults}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{Integer}\PYG{+w}{ }\PYG{n}{children}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{status}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@Indexed}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{userId}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@Indexed}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{roomId}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{ReservationDates}\PYG{+w}{ }\PYG{n}{dates}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@CreatedDate}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{LocalDateTime}\PYG{+w}{ }\PYG{n}{createdAt}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@Data}
+\PYG{+w}{    }\PYG{n+nd}{@Builder}
+\PYG{+w}{    }\PYG{n+nd}{@NoArgsConstructor}
+\PYG{+w}{    }\PYG{n+nd}{@AllArgsConstructor}
+\PYG{+w}{    }\PYG{k+kd}{public}\PYG{+w}{ }\PYG{k+kd}{static}\PYG{+w}{ }\PYG{k+kd}{class} \PYG{n+nc}{ReservationDates}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n+nd}{@JsonFormat}\PYG{p}{(}\PYG{n}{shape}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{JsonFormat}\PYG{p}{.}\PYG{n+na}{Shape}\PYG{p}{.}\PYG{n+na}{STRING}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{pattern}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{yyyy\PYGZhy{}MM\PYGZhy{}dd}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{checkIn}\PYG{p}{;}
+
+\PYG{+w}{        }\PYG{n+nd}{@JsonFormat}\PYG{p}{(}\PYG{n}{shape}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{JsonFormat}\PYG{p}{.}\PYG{n+na}{Shape}\PYG{p}{.}\PYG{n+na}{STRING}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{pattern}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{yyyy\PYGZhy{}MM\PYGZhy{}dd}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{checkOut}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

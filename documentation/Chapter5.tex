@@ -1,0 +1,309 @@
+\chapter{Indexes}
+\section{Database Indexing Strategy}
+
+To meet the non-functional requirements regarding performance and the specific functional requirements for filtering and searching, a targeted indexing strategy was designed for both MongoDB and Neo4j.
+
+\subsection{MongoDB Indexing Strategy}
+
+The indexing strategy is implemented directly via Spring Data MongoDB annotations on the entity classes. The following indexes have been defined to optimize specific query patterns required by the system.
+
+\subsubsection{Property Collection}
+The \texttt{properties} collection utilizes a combination of Compound, Text, and Geospatial indexes to handle complex filtering and search requirements.
+
+\begin{itemize}
+    \item \textbf{Location Hierarchy Compound Index}
+    \begin{itemize}
+        \item \textbf{Type:} Compound Index
+        \item \textbf{Fields:} \texttt{\{ "city": 1, "region": 1, "country": 1 \}}
+        \item \textbf{Justification:} Optimizes hierarchical drill-down filtering (e.g., selecting a country, then a region, then a city) without requiring separate indexes for each level.
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/LHCNoIndex.png}
+      \caption{Query results without index}
+      \label{fig:my_label}
+    \end{figure}
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/LHCIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+
+    \item \textbf{Room Capacity Compound Index}
+    \begin{itemize}
+        \item \textbf{Type:} Compound Index
+        \item \textbf{Fields:} \texttt{\{ "rooms.capacityAdults": 1, "rooms.capacityChildren": 1 \}}
+        \item \textbf{Justification:} Critical for the primary search functionality. It allows the database to efficiently filter properties that contain at least one room capable of accommodating the requested number of adults and children.
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/RCCNoIndex.png}
+      \caption{Query results without index}
+      \label{fig:my_label}
+    \end{figure}
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/RCCIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+
+    \item \textbf{Rating Sort Compound Index}
+    \begin{itemize}
+        \item \textbf{Type:} Compound Index
+        \item \textbf{Fields:} \texttt{\{ "ratingStats.value": -1 \}}
+        \item \textbf{Justification:} Optimizes the "Sort by Highest Rated" feature, ensuring that high-rated properties are retrieved efficiently without performing expensive in-memory sorting.
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/RSCNoIndex.png}
+      \caption{Query results without index}
+      \label{fig:my_label}
+    \end{figure}
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/RSCIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+
+    \item \textbf{Text Search Index}
+    \begin{itemize}
+        \item \textbf{Type:} Text Index
+        \item \textbf{Fields:} \texttt{name} (property) (weight: 3), \texttt{name} (room) (weight: 2), \texttt{description} (weight: 1), \texttt{city} (weight: 1)
+        \item \textbf{Justification:} Enables full-text search capabilities with relevance scoring. Matches in the property \texttt{name} are prioritized over matches in the \texttt{description}, improving search relevance for users.
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/TSIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+
+    \item \textbf{Geospatial Index}
+    \begin{itemize}
+        \item \textbf{Type:} 2dsphere
+        \item \textbf{Fields:} \texttt{coordinates}
+        \item \textbf{Justification:} Required to support geospatial queries such as \texttt{\$near} and \texttt{\$geoWithin}, satisfying the requirement to view properties on a map or find POIs nearby.
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/GIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+
+    \item \textbf{Manager Ownership Index}
+    \begin{itemize}
+        \item \textbf{Type:} Single Field Index
+        \item \textbf{Fields:} \texttt{managerId}
+        \item \textbf{Justification:} Ensures fast retrieval of the specific subset of properties owned by a logged-in manager for the dashboard view.
+        \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/MONoIndex.png}
+      \caption{Query results without index}
+      \label{fig:my_label}
+    \end{figure}
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/MOIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Room Embeddings (Indexed on Property)}
+Although rooms are embedded within the Property document, specific fields are indexed to allow filtering properties based on room attributes.
+
+\begin{itemize}
+    \item \textbf{Room Price Compound Index}
+    \begin{itemize}
+        \item \textbf{Type:} Compound Multikey Index
+        \item \textbf{Fields:} \texttt{rooms.pricePerNightAdults} (Asc), \texttt{rooms.pricePerNightChildren} (Asc)
+        \item \textbf{Justification:} Optimizes complex budget queries where users filter by both adult and child prices simultaneously. This is more efficient than separate indexes because it allows the database to narrow down candidate rooms satisfying both price constraints in a single index scan.
+     \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/RPCNoIndex.png}
+          \caption{Query results without index}
+          \label{fig:my_label}
+        \end{figure}
+        \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/RPCIndex.png}
+          \caption{Query results with index}
+          \label{fig:my_label}
+        \end{figure}
+    \end{itemize}
+
+    \item \textbf{Room Type Index}
+    \begin{itemize}
+        \item \textbf{Fields:} \texttt{rooms.roomType}
+        \item \textbf{Justification:} Optimizes searches where users specify a required room configuration (e.g., filtering for "Single", "Double", or "Suite").
+     \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/RTNoIndex.png}
+          \caption{Query results without index}
+          \label{fig:my_label}
+        \end{figure}
+        \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/RTIndex.png}
+          \caption{Query results with index}
+          \label{fig:my_label}
+        \end{figure}
+    \end{itemize}
+
+    \item \textbf{Room Beds Index}
+    \begin{itemize}
+        \item \textbf{Fields:} \texttt{rooms.beds}
+        \item \textbf{Justification:} Accelerates queries where users filter by the specific number of beds required (e.g., distinguishing between a double bed room and a twin room with 2 separate beds).
+     \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/RBNoIndex.png}
+          \caption{Query results without index}
+          \label{fig:my_label}
+        \end{figure}
+        \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/RBIndex.png}
+          \caption{Query results with index}
+          \label{fig:my_label}
+        \end{figure}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Reservation Collection}
+The \texttt{reservations} collection is indexed to support availability checks and user history retrieval.
+
+\begin{itemize}
+    \item \textbf{Availability Check Compound Index}
+    \begin{itemize}
+        \item \textbf{Type:} Compound Index
+        \item \textbf{Fields:} \texttt{\{ "roomId": 1, "dates.checkIn": 1, "dates.checkOut": 1 \}}
+        \item \textbf{Justification:} Critical for data integrity and performance. It allows the system to efficiently check if a specific room is occupied during a given date range before confirming a new booking.
+        \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/ACCNoIndex.png}
+      \caption{Query results without index}
+      \label{fig:my_label}
+    \end{figure}
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/ACCIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+
+    \item \textbf{User History Index}
+    \begin{itemize}
+        \item \textbf{Type:} Single Field Index
+        \item \textbf{Fields:} \texttt{userId}
+        \item \textbf{Justification:} Optimizes the retrieval of booking history for the "My Bookings" page.
+        \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/UHNoIndex.png}
+      \caption{Query results without index}
+      \label{fig:my_label}
+    \end{figure}
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/UHIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+    
+    \item \textbf{Room Lookup Index}
+    \begin{itemize}
+        \item \textbf{Type:} Single Field Index
+        \item \textbf{Fields:} \texttt{roomId}
+        \item \textbf{Justification:} Allows the system (and Managers) to quickly retrieve all reservations associated with a specific room.
+        \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/RLNoIndex.png}
+      \caption{Query results without index}
+      \label{fig:my_label}
+    \end{figure}
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/RLIndex.png}
+      \caption{Query results with index}
+      \label{fig:my_label}
+    \end{figure}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Neo4j Indexing Strategy}
+Neo4j is utilized exclusively for recommendation algorithms (Content-Based and Collaborative Filtering). The indexing strategy focuses on ensuring Data Integrity (Constraints) and optimizing the retrieval of "Anchor Nodes" to start graph traversals.
+
+\begin{itemize}
+    \item \textbf{Property Identity Constraint}
+    \begin{itemize}
+        \item \textbf{Constraint:} \texttt{Property(id) IS UNIQUE}.
+        \item \textbf{Requirements Satisfied:}
+        \begin{itemize}
+             \item \textit{"The system shall recommend alternative properties that share the highest number of amenities..."}
+             \item \textit{"The system must provide personalized recommendations by displaying properties booked by other users..."}
+        \end{itemize}
+        \item \textbf{Justification:} Both recommendation algorithms begin with a specific property currently being viewed (the "Anchor Node"). This constraint ensures $O(1)$ lookup time to locate this starting point in the graph immediately.
+             \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/PINoIndex.png}
+          \caption{Query results without index}
+          \label{fig:my_label}
+        \end{figure}
+        \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/PIIndex.png}
+          \caption{Query results with index}
+          \label{fig:my_label}
+        \end{figure}
+    \end{itemize}
+
+    \item \textbf{User Identity Constraint}
+    \begin{itemize}
+        \item \textbf{Constraint:} \texttt{User(id) IS UNIQUE}.
+        \item \textbf{Requirements Satisfied:}
+        \begin{itemize}
+             \item \textit{"The system must provide personalized recommendations by displaying properties booked by other users..."}
+        \end{itemize}
+        \item \textbf{Justification:} Essential for the Collaborative Filtering algorithm. It ensures that bookings are linked to unique User nodes, allowing the traversal \texttt{(Property A)<-[:BOOKED]-(User)-[:BOOKED]->(Property B)} to function correctly.
+             \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/UINoIndex.png}
+          \caption{Query results without index}
+          \label{fig:my_label}
+        \end{figure}
+        \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/UIIndex.png}
+          \caption{Query results with index}
+          \label{fig:my_label}
+        \end{figure}
+    \end{itemize}
+
+    \item \textbf{Amenity Identity Constraint}
+    \begin{itemize}
+        \item \textbf{Constraint:} \texttt{Amenity(name) IS UNIQUE}.
+        \item \textbf{Requirements Satisfied:}
+        \begin{itemize}
+             \item \textit{"The system shall recommend alternative properties that share the highest number of amenities..."}
+        \end{itemize}
+        \item \textbf{Justification:} Ensures that shared features (e.g., "WiFi", "Pool") are represented as single, unique nodes in the graph. This allows the traversal algorithm to "hop" from the current property to related properties via these shared amenity nodes efficiently.
+             \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/AINoIndex.png}
+          \caption{Query results without index}
+          \label{fig:my_label}
+        \end{figure}
+        \begin{figure}[H]
+          \centering
+          \includegraphics[width=0.5\textwidth]{images/AIIndex.png}
+          \caption{Query results with index}
+          \label{fig:my_label}
+        \end{figure}
+    \end{itemize}
+\end{itemize}
