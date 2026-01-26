@@ -30,6 +30,8 @@ class LargeBnBImporter:
             session.run("CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.userId IS UNIQUE")
             # ID Constraint on Property
             session.run("CREATE CONSTRAINT property_id IF NOT EXISTS FOR (p:Property) REQUIRE p.propertyId IS UNIQUE")
+            # Amenity name constraint
+            session.run("CREATE CONSTRAINT amenity_name IF NOT EXISTS FOR (a:Amenity) REQUIRE a.name IS UNIQUE")
 
     def import_users(self, customers, managers):
         """Imports Users (Customers and Managers)"""
@@ -121,6 +123,111 @@ class LargeBnBImporter:
                 batch = rels[i:i+batch_size]
                 session.run(query, batch=batch)
                 print(f"   - Processed {i + len(batch)} relationships...")
+    
+    def create_additional_bookings(self, properties):
+        """
+        Creates additional BOOKED relationships to enable collaborative filtering.
+        Randomly assigns 2-5 extra properties to 30% of users.
+        """
+        import random
+        
+        print("Creating additional bookings for collaborative filtering...")
+        
+        # Get all user IDs from Neo4j
+        with self.driver.session() as session:
+            result = session.run("MATCH (u:User) RETURN u.userId as userId")
+            user_ids = [record['userId'] for record in result]
+        
+        # Select 30% of users to get additional bookings
+        users_to_boost = random.sample(user_ids, int(len(user_ids) * 0.3))
+        
+        # Get random property IDs
+        property_ids = [p['id'] for p in properties if 'id' in p]
+        
+        query = """
+        UNWIND $batch AS row
+        MATCH (u:User {userId: row.userId})
+        MATCH (p:Property {propertyId: row.propertyId})
+        MERGE (u)-[:BOOKED {date: date(row.date)}]->(p)
+        """
+        
+        additional_rels = []
+        for user_id in users_to_boost:
+            # Each user gets 2-5 additional random bookings
+            num_bookings = random.randint(2, 5)
+            selected_props = random.sample(property_ids, min(num_bookings, len(property_ids)))
+            
+            for prop_id in selected_props:
+                # Random date in 2024
+                month = random.randint(1, 12)
+                day = random.randint(1, 28)
+                date_str = f"2024-{month:02d}-{day:02d}"
+                
+                additional_rels.append({
+                    "userId": user_id,
+                    "propertyId": prop_id,
+                    "date": date_str
+                })
+        
+        batch_size = 1000
+        with self.driver.session() as session:
+            for i in range(0, len(additional_rels), batch_size):
+                batch = additional_rels[i:i+batch_size]
+                session.run(query, batch=batch)
+                print(f"   - Created {i + len(batch)} additional bookings...")
+        
+        print(f"   - Total additional bookings created: {len(additional_rels)}")
+
+    def import_amenities(self, properties):
+        """
+        Creates Amenity nodes and [:HAS] relationships for content-based filtering.
+        Extracts all unique amenities from properties and links them.
+        """
+        print("Importing Amenities and HAS relationships...")
+        
+        # Step 1: Collect all unique amenities
+        all_amenities = set()
+        for prop in properties:
+            amenities = prop.get('amenities', [])
+            if amenities:
+                all_amenities.update(amenities)
+        
+        print(f"   - Found {len(all_amenities)} unique amenities")
+        
+        # Step 2: Create Amenity nodes
+        amenity_query = """
+        UNWIND $batch AS amenityName
+        MERGE (a:Amenity {name: amenityName})
+        """
+        
+        with self.driver.session() as session:
+            session.run(amenity_query, batch=list(all_amenities))
+            print(f"   - Created {len(all_amenities)} Amenity nodes")
+        
+        # Step 3: Create HAS relationships
+        has_query = """
+        UNWIND $batch AS row
+        MATCH (p:Property {propertyId: row.propertyId})
+        UNWIND row.amenities AS amenityName
+        MATCH (a:Amenity {name: amenityName})
+        MERGE (p)-[:HAS]->(a)
+        """
+        
+        data = []
+        for prop in properties:
+            amenities = prop.get('amenities', [])
+            if amenities:
+                data.append({
+                    "propertyId": prop['id'],
+                    "amenities": amenities
+                })
+        
+        batch_size = 500  # Smaller batches because of UNWIND inside UNWIND
+        with self.driver.session() as session:
+            for i in range(0, len(data), batch_size):
+                batch = data[i:i+batch_size]
+                session.run(has_query, batch=batch)
+                print(f"   - Processed HAS relationships for {i + len(batch)} properties...")
 
 def main():
     print("--- STARTING NEO4J IMPORT ---")
@@ -147,8 +254,14 @@ def main():
         importer.import_users(customers, managers)
         importer.import_properties(properties)
         
-        # 5. Import Relationships (using room mapping)
+        # 5. Import Relationships
         importer.import_reservations(reservations, rooms)
+        
+        # 5b. Create additional bookings for collaborative filtering
+        importer.create_additional_bookings(properties)
+        
+        # 6. Import Amenities and HAS relationships (for content-based filtering)
+        importer.import_amenities(properties)
         
     except Exception as e:
         print(f"CRITICAL ERROR: {e}")

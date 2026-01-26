@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Email;
+
 @Data
 public class RegistrationRequestDTO {
     @NotBlank(message = "Email is mandatory")
@@ -24,7 +24,7 @@ public class RegistrationRequestDTO {
     @NotBlank(message = "Phone Number is mandatory")
     private String phoneNumber;
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @NotBlank(message = "Birthdate is mandatory")
+    @NotNull(message = "Birthdate is mandatory")
     private LocalDate birthdate;
 
     // Manager specific fields

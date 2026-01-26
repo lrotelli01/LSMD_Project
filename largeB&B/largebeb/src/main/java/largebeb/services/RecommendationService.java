@@ -49,28 +49,47 @@ public class RecommendationService {
     }
 
     // --- 2. CONTENT-BASED FILTERING (MongoDB) ---
-    public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyId) {
-        Property current = propertyRepository.findById(propertyId).orElse(null);
-        if (current == null || current.getAmenities() == null || current.getAmenities().isEmpty()) {
+public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyId) {
+        
+        // Logica della Query Cypher:
+        // 1. MATCH (p): Trova il nodo della proprietà corrente usando l'ID.
+        // 2. -[:HAS]->(a): Attraversa il grafo per trovare tutti i nodi Amenity collegati (es. Wifi, Pool).
+        // 3. <-[:HAS]-(other): Dai nodi Amenity, torna indietro per trovare ALTRE proprietà che hanno gli stessi servizi.
+        // 4. count(a): Conta quanti servizi hanno in comune. Più alto è il numero, più sono simili.
+        
+        String cypherQuery = """
+            MATCH (p:Property {propertyId: $propId})-[:HAS]->(a:Amenity)<-[:HAS]-(other:Property)
+            WHERE p.propertyId <> other.propertyId
+            RETURN other.propertyId AS recommendedId, count(a) AS matchStrength
+            ORDER BY matchStrength DESC
+            LIMIT 10
+        """;
+
+        // Esecuzione della query su Neo4j
+        Collection<String> recommendedIds = neo4jClient.query(cypherQuery)
+                .bind(propertyId).to("propId")
+                .fetchAs(String.class)
+                .mappedBy((typeSystem, record) -> record.get("recommendedId").asString())
+                .all();
+
+        if (recommendedIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").ne(propertyId));
-        query.addCriteria(Criteria.where("amenities").in(current.getAmenities()));
-        query.limit(10);
-
-        List<Property> candidates = mongoTemplate.find(query, Property.class);
-
-        candidates.sort((p1, p2) -> {
-            long common1 = countCommon(p1.getAmenities(), current.getAmenities());
-            long common2 = countCommon(p2.getAmenities(), current.getAmenities());
-            return Long.compare(common2, common1);
-        });
-
-        return candidates.stream()
-                .limit(5)
-                .map(this::mapToDTO)
+        // Idratazione dei dati (Hybrid Approach):
+        // Neo4j ci dà solo gli ID (velocissimo), ora chiediamo a Mongo i dettagli (Foto, Prezzi, ecc.)
+        List<Property> properties = (List<Property>) propertyRepository.findAllById(recommendedIds);
+        
+        // Trucco tecnico: findAllById NON garantisce l'ordine.
+        // Noi dobbiamo mantenere l'ordine di Neo4j (dalla più simile alla meno simile).
+        // Creiamo una mappa per riordinare la lista.
+        var propertyMap = properties.stream()
+                .collect(Collectors.toMap(Property::getId, p -> p));
+        
+        return recommendedIds.stream()
+                .map(propertyMap::get)           // Prendi l'oggetto dalla mappa nell'ordine giusto
+                .filter(java.util.Objects::nonNull) // Evita crash se Mongo non trova un ID
+                .map(this::mapToDTO)             // Converti in DTO
                 .collect(Collectors.toList());
     }
 
