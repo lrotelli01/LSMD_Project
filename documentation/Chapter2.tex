@@ -1,0 +1,177 @@
+\chapter{Design}
+\section{Requirements}
+\subsection{Functional requirements}
+\subsection{Guest}
+\begin{itemize}
+    \item The system must allow guests to register on the platform.
+\end{itemize}
+
+\subsection{Customer}
+\begin{itemize}
+    \item The system must allow customers to log in.
+    \item The system must allow customers to log out.
+    \item The system must allow customers to delete their account.
+    \item The system must allow customers to book one or more rooms.
+    \item The system must provide a messaging system to communicate with the property manager.
+    \item The system must allow customers to publish their own reviews.
+    \item The system must allow customers to modify their own reviews.
+    \item The system must allow customers to delete their own reviews.
+    \item The system must allow customers to add their payment method
+    \item The system must allow customers to remove their payment method
+    \item The system must allow customers to see their payment method
+    \item The system must allow customers to cancel one or more existing bookings.
+    \item The system must allow customers to modify one or more existing bookings.
+    \item The system must allow customers to mark specific properties as favorites for future reference.
+   \item The system must allow customers to remove specific properties as     favorites.
+    \item The system must allow customers to view their booking history.
+    \item The system must notify the manager when a customer/manager sends a message through the messaging system.
+    \item The system must allow customers to create a pending booking while awaiting payment confirmation.
+    \item The system must allow customers to delete a pending booking.
+    \item The system must notify the customer in case of:
+    \begin{itemize}
+        \item booking confirmation or modification;
+        \item booking cancellation.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Customer and Guest}
+\begin{itemize}
+    \item The system must allow guests to search and view properties managed by hosts.
+    \item The system must allow guests to view a map showing the geographical distribution of properties.
+    \item The system must allow users to view reviews written by other users.
+    \item The system must allow users to filter properties by category.
+    \item The system must allow users to order properties based on star rating.
+    \item The system must allow users to filter properties and rooms by price range.
+    \item The system must allow users to filter rooms by available services.
+    \item The system must provide a view showing rooms offering a specific service.
+    \item The system must provide a view showing properties offering a specific service.
+    \item The system must allow users to view photos related to properties.
+    \item The system must allow users to view detailed room information.
+    \item The system must display room availability in real time.
+    \item The system must display a list of Points of Interest (POIs) located in the proximity of the property on the property detail page.
+    \item The system must provide personalized recommendations by displaying properties booked by other users who also reserved the property currently being viewed.
+    \item The system must display the number of concurrent users currently viewing the same room to the user.
+    \item The system must display the top 10 most visited properties within the last hour.
+    \item The system must display a list of recently viewed rooms to the user.
+    \item The system must recommend alternative properties that share the highest number of amenities with the property currently being viewed.
+
+
+\end{itemize}
+
+\subsection{Manager}
+\begin{itemize}
+    \item The system must allow the manager to add a property.
+    \item The system must allow the manager to delete a property.
+    \item The system must allow the manager to modify property information.
+    \item The system must allow the manager to add a room.
+    \item The system must allow the manager to delete a room.
+    \item The system must allow the manager to modify room information.
+    \item The system must allow the manager to view analytics by period and by property.
+    \item The system must allow the manager to view properties information.
+    \item The system must allow the manager to view analytics starting from the moment a property is added.
+    \item The system must notify the manager with a notification in case of a new message from a customer
+    \item The system must notify the manager with a notification in case of a new reservation from a customer
+    \item The system must notify the manager with a notification if a reservation is removed by a customer.
+    \item The system must notify the manager with a notification if a reservation is modified by a customer
+    \item The system must allow the manager to view the payment status of rooms.
+    \item The system must allow the manager to reply to user reviews.
+    \item The system must allow the Manager to see all bookings for his properties
+    \item The system must display the room occupancy rate within the analytics dashboard for a specific time period.
+    \item The system must display the overall review rating aggregated over a selected time period.
+    \item The system must show the total number of bookings made during a specific time period.
+    \item The system must display the total count of reviews received over a selected time period.
+    \item The system must identify and display the most frequently booked room type for a given time period.
+    \item The system must calculate the average number of guests per room per booking for a specific time period.
+    \item The system must display the total revenue generated over a selected time period.
+    \item The system must list the reviews received during a specific time period.
+
+\end{itemize}
+
+\subsubsection{Admin}
+\begin{itemize}
+    \item The system must allow the admin to delete any review.
+    \item The system must allow the admin to delete any property.
+    \item The system must allow the admin to delete any room.
+    \item The system must allow the admin to ban any user.
+    \item The system must allow the admin to view analytics of any property.
+    \item The system must allow the admin to filter analytics by time period for any property.
+    \item The system must allow the admin to view analytics starting from the moment a property is added.
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+
+\begin{itemize}
+    \item Bookings must have a duration of one day.
+    \item Passwords of registered users must be securely encrypted.
+    \item Uploaded images must be in JPG or JPEG format.
+    \item The system must provide notifications via email or application.
+    \item The application navigation must be user-friendly.
+    \item The results produced by the system must be consistent.
+    \item The system must ensure high data availability.
+    \item The system must manage data storage using Document DB, Graph DB, and Key-Value DB.
+    \item The DBMS technologies used must be Neo4j, MongoDB, and Redis.
+    \item The business logic and data access layers must be implemented using the Spring framework in Java.
+    \item The codebase must be easily maintainable, readable, and updatable.
+    \item The system must use a document database to store information permanently.
+    \item The system must use a key-value database to temporarily store information, manage cache, locks, and user sessions.
+    \item The system must implement a stateless authentication mechanism using JSON Web Tokens (JWT). All protected API resources must require a valid Bearer token in the Authorization header to grant access.
+\end{itemize}
+
+\subsection{Use Cases Diagram}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/UseCasesDiagram.png}
+    \caption{Use cases diagram}
+    \label{fig:comparison}
+\end{figure}
+
+\subsection{Analysis Class Diagram}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/ClassAnalysisDiagram.png}
+    \caption{Analysis Class diagram}
+    \label{fig:comparison}
+\end{figure}
+
+\subsection{Mock-ups}
+\subsection{Guest and customer view}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/ShowProperties.png}
+    \caption{Analysis Class diagram}
+    \label{fig:comparison}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/ShowRooms.png}
+    \caption{Analysis Class diagram}
+    \label{fig:comparison}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/RoomDetails.png}
+    \caption{Analysis Class diagram}
+    \label{fig:comparison}
+\end{figure}
+\subsubsection{Customer}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/CustomerBookings.png}
+    \caption{Analysis Class diagram}
+    \label{fig:comparison}
+\end{figure}
+\subsubsection{Manager view}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Analytics.png}
+    \caption{Analysis Class diagram}
+    \label{fig:comparison}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/ManagePropertiesManager.png}
+    \caption{Analysis Class diagram}
+    \label{fig:comparison}
+\end{figure}

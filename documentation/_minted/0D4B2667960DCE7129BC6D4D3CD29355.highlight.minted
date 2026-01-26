@@ -1,0 +1,43 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@Data}
+\PYG{n+nd}{@NoArgsConstructor}
+\PYG{n+nd}{@AllArgsConstructor}
+\PYG{n+nd}{@Document}\PYG{p}{(}\PYG{n}{collection}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{properties}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n+nd}{@CompoundIndexes}\PYG{p}{(}\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n+nd}{@CompoundIndex}\PYG{p}{(}\PYG{n}{name}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{location\PYGZus{}idx}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+\PYG{+w}{                   }\PYG{n}{def}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{}\PYGZsq{}city\PYGZsq{}: 1, \PYGZsq{}region\PYGZsq{}: 1, \PYGZsq{}country\PYGZsq{}: 1\PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{    }\PYG{n+nd}{@CompoundIndex}\PYG{p}{(}\PYG{n}{name}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{room\PYGZus{}capacity\PYGZus{}idx}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+\PYG{+w}{                   }\PYG{n}{def}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{}\PYGZsq{}rooms.capacityAdults\PYGZsq{}: 1, \PYGZsq{}rooms.capacityChildren\PYGZsq{}: 1\PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{    }\PYG{n+nd}{@CompoundIndex}\PYG{p}{(}\PYG{n}{name}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{rating\PYGZus{}sort\PYGZus{}idx}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+\PYG{+w}{                   }\PYG{n}{def}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{}\PYGZsq{}ratingStats.value\PYGZsq{}: \PYGZhy{}1\PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{p}{\PYGZcb{}}\PYG{p}{)}
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{k+kd}{class} \PYG{n+nc}{Property}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n+nd}{@Id}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{id}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@TextIndexed}\PYG{p}{(}\PYG{n}{weight}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{p}{)}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{name}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@TextIndexed}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{description}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@TextIndexed}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{city}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@Indexed}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{managerId}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n+nd}{@GeoSpatialIndexed}\PYG{p}{(}\PYG{n}{type}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{GeoSpatialIndexType}\PYG{p}{.}\PYG{n+na}{GEO\PYGZus{}2DSPHERE}\PYG{p}{)}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{Double}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{coordinates}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// [longitude, latitude]}
+
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{amenities}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{photos}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{country}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{region}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Embedded documents}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{Room}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{rooms}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{PointOfInterest}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{pois}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{RatingStats}\PYG{+w}{ }\PYG{n}{ratingStats}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

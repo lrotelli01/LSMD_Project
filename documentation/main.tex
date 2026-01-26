@@ -1,0 +1,62 @@
+\documentclass{report}
+\usepackage{graphicx} 
+\usepackage[table]{xcolor}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{newverbs}
+\usepackage{amssymb}
+\usepackage{minted}
+\usemintedstyle{vs}
+\usepackage[english]{babel}
+\usepackage[skins,theorems]{tcolorbox}
+
+% --- CONFIGURAZIONI ---
+\tcbset{highlight math style={enhanced, colframe=red,colback=gray,arc=0pt,boxrule=1pt}}
+\newverbcommand{\cverb}{\color{DarkGreen}}{}
+\renewcommand{\contentsname}{Indice}
+\definecolor{DarkGreen}{RGB}{0,110,0}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+
+% --- INIZIO DOCUMENTO ---
+\begin{document}
+
+% Spostiamo la Title Page qui dentro
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.4\linewidth]{images/Logo_UNIPI.jpg} % Ridotto un po' per estetica
+\end{figure}
+
+\begin{center}
+    {\LARGE Computer Engineering\\}
+    \vspace{0.3cm}
+    {\LARGE Artificial Intelligence and Data Engineering \\}
+    \vspace{0.3cm}
+    {\huge Large Scale and Multi-structured Databases \\}
+    \vspace{2cm}
+    {\Huge \textbf{Project Documentation of \textit{LargeB\&B}} \\} % Ricorda \& se il nome ha una &
+    \vspace{2cm}
+    {\LARGE Authors:\\
+    Grillo Alessio - Luca Rotelli - Omar Tomàs Sfar \\}
+    \vspace{1cm}
+    {\LARGE Academic Year: 2025-2026 \\}
+\end{center}
+
+\thispagestyle{empty}
+\clearpage
+
+\pagenumbering{Roman}
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+% Inclusione capitoli
+\include{Chapter1}
+\include{Chapter2}
+\include{Chapter3}
+\include{Chapter4}
+\include{Chapter5}
+\include{Chapter6}
+
+\end{document}
