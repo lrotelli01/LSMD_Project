@@ -140,38 +140,158 @@
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/ShowProperties.png}
-    \caption{Analysis Class diagram}
+    \caption{Showing properties view}
     \label{fig:comparison}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/ShowRooms.png}
-    \caption{Analysis Class diagram}
+    \caption{Showing rooms view}
     \label{fig:comparison}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/RoomDetails.png}
-    \caption{Analysis Class diagram}
+    \caption{Room details view}
     \label{fig:comparison}
 \end{figure}
 \subsubsection{Customer}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/CustomerBookings.png}
-    \caption{Analysis Class diagram}
+    \caption{Customer bookings view}
     \label{fig:comparison}
 \end{figure}
 \subsubsection{Manager view}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/Analytics.png}
-    \caption{Analysis Class diagram}
+    \caption{Analytics properties view}
     \label{fig:comparison}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/ManagePropertiesManager.png}
-    \caption{Analysis Class diagram}
+    \caption{Manager properties view}
     \label{fig:comparison}
 \end{figure}
+
+\section{CAP Theorem and Consistency Management}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/CapTheorem.png}
+    \caption{Cap Theorem}
+    \label{fig:comparison}
+\end{figure}
+In the design of the distributed architecture for the B\&B management platform, we addressed the trade-offs imposed by the \textbf{CAP Theorem} (Consistency, Availability, and Partition Tolerance). Given that network partitions (P) are unavoidable in a distributed environment involving microservices and cloud databases, the system adopts a hybrid strategy depending on the criticality of the specific business domain.
+
+\subsection{Reservation Service: Prioritizing Consistency (CP)}
+For the critical path of booking and payments, the system prioritizes \textbf{Consistency} over Availability. The business logic dictates that avoiding "double bookings" (two customers booking the same room for the same dates) is strictly more important than accepting a request during a partial system failure.
+
+To achieve strong consistency:
+\begin{itemize}
+    \item \textbf{Distributed Locking with Redis:} Before a transaction is finalized in the persistent database, a temporary lock (Time-To-Live of 15 minutes) is acquired on Redis. This acts as a pessimistic locking mechanism, ensuring that once a user selects a room for payment, no other nodes can write to that specific resource.
+    \item \textbf{Atomic Writes in MongoDB:} The final confirmation is performed using MongoDB's atomic document updates. If the database primary node is unreachable (partition), the system rejects the write request rather than allowing a potential state conflict, effectively sacrificing Availability to preserve Data Integrity.
+\end{itemize}
+
+\subsection{Search and Discovery: Prioritizing Availability (AP)}
+For the browsing, searching, and property listing modules, the system prioritizes \textbf{Availability}. It is acceptable for a user to see a room that was booked seconds ago as "available" in the search results, provided the error is caught at the checkout stage. It is not acceptable, however, for the homepage or search filters to be unresponsive.
+
+To achieve high availability:
+\begin{itemize}
+    \item \textbf{Caching Strategy:} Frequently accessed data (property details, amenities) are cached in Redis. If the primary database experiences high latency or downtime, the system serves data from the cache.
+    \item \textbf{Read Replicas:} The system allows reading from secondary database replicas, accepting that there may be a slight replication lag (stale data) in exchange for system responsiveness.
+\end{itemize}
+
+\subsection{Polyglot Persistence and Eventual Consistency}
+The system utilizes a polyglot persistence architecture, syncing data between the document store (MongoDB) and the graph database (Neo4j). This synchronization follows an \textbf{Eventual Consistency} model.
+
+When a reservation is confirmed in MongoDB, the relationship is propagated to Neo4j asynchronously. While there is a minimal delay between the transaction confirmation and the update of the social graph, this does not impact the transactional integrity of the booking. This approach ensures that the Graph Service remains decoupled and does not block the critical path of the user experience.
+
+<<<<<<< HEAD
+In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
+\section{Data Distribution and Replication Strategy}
+\label{sec:data_distribution}
+
+According to the non-functional requirements outlined in Section 2.1.6, our system must ensure \textbf{High Availability} and \textbf{Partition Tolerance} to guarantee low-latency responses to user requests, particularly for search and browsing operations. 
+
+In the context of the \textbf{CAP theorem}, LargeB\&B is designed primarily as an \textbf{AP system} (Availability and Partition Tolerance), accepting \textit{Eventual Consistency} for read operations to maximize throughput. However, to prevent critical issues such as double bookings, we enforce stronger consistency constraints on write operations through specific Write Concerns.
+
+The fundamental aspect of our design relies on a hybrid approach combining \textbf{Replica Sets} for high availability and \textbf{Sharding} for horizontal scalability.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/DBArchitectureRappresentation.png}
+    \caption{Database Architecture: Replica Set with 3 Nodes}
+    \label{fig:db_architecture}
+\end{figure}
+
+\subsection{MongoDB Replica Set Configuration}
+To ensure redundancy and automatic failover, the MongoDB architecture is deployed as a \textbf{Replica Set} consisting of three nodes. This configuration protects the system against single-node failures and network partitions.
+
+The cluster is composed of one \textbf{Primary} node and two \textbf{Secondary} nodes. To optimize the election process and resource utilization, we have configured specific \textbf{priority levels} for each member:
+
+\begin{itemize}
+    \item \textbf{Node A (IP 10.1.1.21 - Priority 5):} This is the preferred Primary node. It resides on the highest-performance hardware and handles all write operations under normal conditions.
+    \item \textbf{Node B (IP 10.1.1.22 - Priority 2):} This node acts as the immediate hot-standby. It serves read operations and is the first candidate to become Primary if Node A fails, it also hosts the backend application.
+    \item \textbf{Node C (IP 10.1.1.23 - Priority 1):} This node has the lowest priority. It is primarily used for read offloading and acts as a disaster recovery option. Assigning a lower priority ensures it is elected as Primary only as a last resort.
+\end{itemize}
+
+\subsection{Shard Key and Partitioning Algorithm Selection}
+Since the \_id field is mandatory in every document and is the primary filter for the majority of queries, it was selected as the shard key. This choice enables direct query routing, avoiding the overhead of scatter-gather operations. Consequently, we adopted Hashed Sharding as the partitioning algorithm to ensure uniform distribution.
+
+\subsection{Read and Write Policies}
+To balance the trade-off between latency and data integrity, we have configured specific policies for reading and writing data.
+
+\subsubsection{Read Operations (Read Preference: \texttt{nearest})}
+Given that the read-to-write ratio in LargeB\&B is estimated to be approximately 10:1 (browsing vs. booking), minimizing read latency is crucial.
+We utilize the \textbf{\texttt{nearest}} read preference. The driver routes the read request to the replica set member with the lowest network latency, regardless of whether it is Primary or Secondary.
+
+This choice provides two main benefits:
+\begin{enumerate}
+    \item \textbf{Load Balancing:} It distributes the heavy read traffic across all three nodes, preventing the Primary from being overwhelmed.
+    \item \textbf{Geo-latency Reduction:} If the infrastructure is geo-distributed in the future, users will automatically read from the data center closest to them.
+\end{enumerate}
+
+\subsubsection{Write Operations (Write Concern: \texttt{majority})}
+Although we prioritize availability for reads, write operations—specifically \textit{User Registration}, \textit{Property Creation}, and critical \textit{Reservation} flows—require strict durability.
+We have configured the Write Concern to \textbf{\texttt{majority}}.
+
+\begin{itemize}
+    \item The system acknowledges a write only after it has been committed to the Primary and propagated to at least one Secondary (2 out of 3 nodes).
+    \item This ensures that even if the Primary node crashes immediately after a write (e.g., after a confirmed payment), the data is safe on a Secondary node that will become the new Primary, preventing data rollback and financial inconsistencies.
+\end{itemize}
+\subsection{Redis Configuration}
+Redis is utilized for caching, session management, and the temporary storage of reservation drafts.
+
+\subsubsection{Architecture and High Availability}
+Redis is deployed using a \textbf{Master-Slave} architecture:
+\begin{itemize}
+    \item \textbf{Replication:} The Master (Node A) handles all writes. These are asynchronously propagated to the Slaves (Node B and C), which can serve read traffic.
+    \item \textbf{Sentinel:} To ensure automatic failover, we deployed three \textbf{Redis Sentinel} instances. They monitor the cluster health and, if the Master fails, automatically promote one of the Slaves to be the new Master.
+\end{itemize}
+
+\subsubsection{Sharding Strategy}
+Although deployed in a replicated setup, we utilize an algorithmic sharding approach for key distribution:
+\begin{itemize}
+    \item \textbf{Shard Key:} The database key itself acts as the shard key.
+    \item \textbf{Partitioning Algorithm:} Redis uses the \textbf{CRC16} checksum of the key modulo 16,384 to determine the hash slot. This ensures that keys are distributed deterministically.
+\end{itemize}
+
+\subsubsection{Eviction and Persistence}
+To manage memory efficiently and ensure data safety:
+\begin{itemize}
+    \item \textbf{Eviction Policy (\texttt{allkeys-lfu}):} We set a \texttt{maxmemory} limit of 512MB. When this limit is reached, the Least Frequently Used keys are evicted first. This protects the system from crashing during traffic spikes.
+    \item \textbf{Persistence (RDB):} We enabled RDB snapshots (e.g., save every 5 minutes if 10 keys change) to allow disaster recovery in case of a total cluster reboot.
+\end{itemize}
+
+\subsection{Neo4j Configuration}
+\subsubsection{Deployment Strategy}
+Neo4j is deployed as a \textbf{Single Instance} on Node C (10.1.1.23).
+\begin{itemize}
+    \item \textbf{Rationale:} Graph data is inherently highly connected, making it difficult to shard effectively without incurring massive performance penalties from cross-shard traversals. Additionally, the Community Edition of Neo4j does not support clustering.
+    \item \textbf{Placement:} By isolating Neo4j on Node C and lowering that node's MongoDB priority, we ensure the graph database has dedicated computational resources for complex traversal algorithms (e.g., recommendation engines).
+\end{itemize}
+=======
+In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
+>>>>>>> 0b1752f55e10ec7b2f4590aca85323251a697542

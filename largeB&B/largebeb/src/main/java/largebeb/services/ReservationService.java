@@ -8,15 +8,18 @@ import largebeb.model.RegisteredUser;
 import largebeb.model.Reservation;
 import largebeb.model.Room;
 import largebeb.repository.PropertyRepository;
+import largebeb.repository.ReservationGraphRepository; // IMPORT ADDED
 import largebeb.repository.ReservationRepository;
+import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil;
+import largebeb.utilities.RatingStats; // Assuming this might be needed for other logic, kept if present
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import largebeb.model.Customer;
-import largebeb.repository.UserRepository;
 import largebeb.utilities.PaymentMethod;
 import largebeb.dto.PaymentRequestDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -33,6 +36,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final ReservationGraphRepository reservationGraphRepository;
     private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtUtil jwtUtil;
@@ -162,6 +166,7 @@ public class ReservationService {
     }
     
     // CONFIRM PAYMENT
+    @Transactional
     public ReservationResponseDTO confirmPayment(String token, PaymentRequestDTO paymentRequest) {
         if (paymentRequest.getTempReservationId() == null || paymentRequest.getTempReservationId().isEmpty()) {
             throw new IllegalArgumentException("Temporary Reservation ID is required to confirm payment.");
@@ -178,7 +183,7 @@ public class ReservationService {
         // Retrieve the user to verify if they have a saved payment method
 
         // Use RegisteredUser first to check the role safely
-         String userId = jwtUtil.getUserIdFromToken(token);
+        String userId = jwtUtil.getUserIdFromToken(token);
         
         RegisteredUser genericUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -226,6 +231,22 @@ public class ReservationService {
         tempReservation.setId(null); 
         Reservation finalReservation = reservationRepository.save(tempReservation);
 
+        // Sync reservation to Neo4j
+        try {
+            reservationGraphRepository.createReservation(
+                finalReservation.getId(),             // The new Mongo ID
+                user.getId(),                         // Matches the :User(userId) in Neo4j
+                property.getId(),                     // Matches the :Property(propertyId) in Neo4j
+                finalReservation.getDates().getCheckIn(),
+                finalReservation.getDates().getCheckOut(),
+                amountToPay
+            );
+            System.out.println("Graph: Reservation synced to Neo4j successfully.");
+        } catch (Exception e) {
+            // We log the error but don't stop the process, as the main data is safe in Mongo
+            System.err.println("Graph Error: Failed to sync reservation to Neo4j. " + e.getMessage());
+        }
+
         // Notify Manager of New Booking
         notificationService.notifyManagerOfNewBooking(
             property.getManagerId(), // Manager
@@ -251,6 +272,7 @@ public class ReservationService {
     }
 
     // MODIFY
+    @Transactional
     public ReservationResponseDTO modifyReservation(String token, String reservationId, ReservationRequestDTO newData) {
         // Check if CheckIn is equal or after CheckOut
         if (!newData.getCheckIn().isBefore(newData.getCheckOut())) {
@@ -363,6 +385,7 @@ public class ReservationService {
     }
 
     // CANCEL
+    @Transactional
     public void cancelReservation(String token, String reservationId) {
         // Identify the user from the token
         String userId = jwtUtil.getUserIdFromToken(token);
@@ -421,6 +444,14 @@ public class ReservationService {
         reservation.setStatus("CANCELLED");
         reservationRepository.save(reservation);
         
+        // Delete reservation from Neo4j
+        try {
+            reservationGraphRepository.deleteById(reservationId);
+            System.out.println("Graph: Reservation deleted/cancelled in Neo4j.");
+        } catch (Exception e) {
+            System.err.println("Graph Error: Failed to delete reservation from Neo4j.");
+        }
+
         // Notify Manager of the cancelled booking
         notificationService.notifyManagerOfCancellation(
             property.getManagerId(), // Manager
@@ -472,7 +503,7 @@ public class ReservationService {
 
     private boolean isOverlapping(Reservation.ReservationDates existing, LocalDate newIn, LocalDate newOut) {
         return newIn.isBefore(existing.getCheckOut()) && newOut.isAfter(existing.getCheckIn());
-    }   
+    }    
 
     // Maps Reservation to ReservationResponseDTO using Room details for price, image, and message
     private ReservationResponseDTO mapToDTO(Reservation res, Room room, String message) {
