@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import largebeb.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +70,7 @@ public class NotificationService {
     }
 
     // Marks all notifications as read for a specific user ID
+    @Transactional
     public void markAllAsRead(String userId) {
         // Fetch all notifications for the user
         List<Notification> userNotifications = notificationRepository.findByRecipientIdOrderByTimestampDesc(userId);
@@ -100,7 +102,8 @@ public class NotificationService {
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
-
+    
+    @Transactional
     public void markAsRead(String token, String notificationId) {
         String userId = getUserIdFromToken(token);
         Notification notification = notificationRepository.findById(notificationId)

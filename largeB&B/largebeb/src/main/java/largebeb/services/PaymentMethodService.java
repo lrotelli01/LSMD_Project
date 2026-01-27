@@ -13,6 +13,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +37,8 @@ public class PaymentMethodService {
 
         return mapToDTO(user.getPaymentMethod());
     }
-
+    
+    @Transactional
     public PaymentMethodResponseDTO addPaymentMethod(String token, PaymentMethodRequestDTO request) {
         // Get user entity from token
         Customer user = getCustomerFromToken(token);
@@ -78,7 +80,7 @@ public class PaymentMethodService {
 
         return mapToDTO(newMethod);
     }
-
+    @Transactional
     public void deletePaymentMethod(String token) {
         Customer user = getCustomerFromToken(token);
         if (user.getPaymentMethod() == null) {

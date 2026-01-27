@@ -140,7 +140,7 @@ public class RegistrationService {
                     .username(savedUser.getUsername()) // Graph ID
                     .mongoId(savedUser.getId())        // Foreign Key to Mongo
                     .role(savedUser.getRole())
-                    .name(savedUser.getName())         // For easier display in graph
+                    .name(savedUser.getName())         // or easier display in graph
                     .build();
 
             userGraphRepository.save(userNode);

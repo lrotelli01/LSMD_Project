@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +20,7 @@ public class MessageService {
     private final NotificationService notificationService;
 
     // Sends a new message
+    @Transactional
     public Message sendMessage(String senderId, MessageRequestDTO request) {
         // Content cannot be empty
         if (request.getContent() == null || request.getContent().trim().isEmpty()) {
@@ -64,6 +66,7 @@ public class MessageService {
     }
 
     // Marks messages as read
+    @Transactional
     public void markMessagesAsRead(String recipientId, String senderId) {
         // Fetch unread messages sent by senderId to recipientId
         List<Message> unreadMessages = messageRepository.

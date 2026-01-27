@@ -5,10 +5,11 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 import largebeb.model.RegisteredUser;
 import largebeb.repository.ReservationRepository;
-import largebeb.repository.UserGraphRepository; // IMPORT ADDED
+import largebeb.repository.UserGraphRepository;
 import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +19,8 @@ public class DeleteAccountService {
     private final ReservationRepository reservationRepository; 
     private final UserGraphRepository userGraphRepository;
     private final JwtUtil jwtUtil;
-        
+    
+    @Transactional
     public void deleteAccount(String token) {
         // Handle Bearer prefix if present
         String cleanToken = token.startsWith("Bearer ") ? token.substring(7) : token;

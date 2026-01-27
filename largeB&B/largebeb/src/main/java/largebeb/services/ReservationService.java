@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import largebeb.model.Customer;
 import largebeb.utilities.PaymentMethod;
 import largebeb.dto.PaymentRequestDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -165,6 +166,7 @@ public class ReservationService {
     }
     
     // CONFIRM PAYMENT
+    @Transactional
     public ReservationResponseDTO confirmPayment(String token, PaymentRequestDTO paymentRequest) {
         if (paymentRequest.getTempReservationId() == null || paymentRequest.getTempReservationId().isEmpty()) {
             throw new IllegalArgumentException("Temporary Reservation ID is required to confirm payment.");
@@ -270,6 +272,7 @@ public class ReservationService {
     }
 
     // MODIFY
+    @Transactional
     public ReservationResponseDTO modifyReservation(String token, String reservationId, ReservationRequestDTO newData) {
         // Check if CheckIn is equal or after CheckOut
         if (!newData.getCheckIn().isBefore(newData.getCheckOut())) {
@@ -382,6 +385,7 @@ public class ReservationService {
     }
 
     // CANCEL
+    @Transactional
     public void cancelReservation(String token, String reservationId) {
         // Identify the user from the token
         String userId = jwtUtil.getUserIdFromToken(token);

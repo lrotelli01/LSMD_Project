@@ -207,7 +207,7 @@ To achieve high availability:
 \subsection{Polyglot Persistence and Eventual Consistency}
 The system utilizes a polyglot persistence architecture, syncing data between the document store (MongoDB) and the graph database (Neo4j). This synchronization follows an \textbf{Eventual Consistency} model.
 
-When a reservation is confirmed in MongoDB (the "Source of Truth"), the relationship is propagated to Neo4j asynchronously. While there is a minimal delay between the transaction confirmation and the update of the social graph, this does not impact the transactional integrity of the booking. This approach ensures that the Graph Service remains decoupled and does not block the critical path of the user experience.
+When a reservation is confirmed in MongoDB, the relationship is propagated to Neo4j asynchronously. While there is a minimal delay between the transaction confirmation and the update of the social graph, this does not impact the transactional integrity of the booking. This approach ensures that the Graph Service remains decoupled and does not block the critical path of the user experience.
 
 In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
 \section{Data Distribution and Replication Strategy}
@@ -215,14 +215,9 @@ In conclusion, the system is \textbf{CP} regarding write operations for financia
 
 According to the non-functional requirements outlined in Section 2.1.6, our system must ensure \textbf{High Availability} and \textbf{Partition Tolerance} to guarantee low-latency responses to user requests, particularly for search and browsing operations. 
 
-In the context of the \textbf{CAP theorem}, LargeBeB is designed primarily as an \textbf{AP system} (Availability and Partition Tolerance), accepting \textit{Eventual Consistency} for read operations to maximize throughput. However, to prevent critical issues such as double bookings, we enforce stronger consistency constraints on write operations through specific Write Concerns.
+In the context of the \textbf{CAP theorem}, LargeB\&B is designed primarily as an \textbf{AP system} (Availability and Partition Tolerance), accepting \textit{Eventual Consistency} for read operations to maximize throughput. However, to prevent critical issues such as double bookings, we enforce stronger consistency constraints on write operations through specific Write Concerns.
 
 The fundamental aspect of our design relies on a hybrid approach combining \textbf{Replica Sets} for high availability and \textbf{Sharding} for horizontal scalability.
-
-\subsection{Replica Set Configuration}
-To ensure redundancy and automatic failover, the MongoDB architecture is deployed as a \textbf{Replica Set} consisting of three nodes. This configuration protects the system against single-node failures and network partitions.
-
-The cluster is composed of one \textbf{Primary} node and two \textbf{Secondary} nodes. To optimize the election process and resource utilization, we have configured specific \textbf{priority levels} for each member:
 
 \begin{figure}[H]
     \centering
@@ -231,40 +226,25 @@ The cluster is composed of one \textbf{Primary} node and two \textbf{Secondary} 
     \label{fig:db_architecture}
 \end{figure}
 
+\subsection{MongoDB Replica Set Configuration}
+To ensure redundancy and automatic failover, the MongoDB architecture is deployed as a \textbf{Replica Set} consisting of three nodes. This configuration protects the system against single-node failures and network partitions.
+
+The cluster is composed of one \textbf{Primary} node and two \textbf{Secondary} nodes. To optimize the election process and resource utilization, we have configured specific \textbf{priority levels} for each member:
+
 \begin{itemize}
     \item \textbf{Node A (IP 10.1.1.21 - Priority 5):} This is the preferred Primary node. It resides on the highest-performance hardware and handles all write operations under normal conditions.
-    \item \textbf{Node B (IP 10.1.1.22 - Priority 2):} This node acts as the immediate hot-standby. It serves read operations and is the first candidate to become Primary if Node A fails.
+    \item \textbf{Node B (IP 10.1.1.22 - Priority 2):} This node acts as the immediate hot-standby. It serves read operations and is the first candidate to become Primary if Node A fails, it also hosts the backend application.
     \item \textbf{Node C (IP 10.1.1.23 - Priority 1):} This node has the lowest priority. It is primarily used for read offloading and acts as a disaster recovery option. Assigning a lower priority ensures it is elected as Primary only as a last resort.
 \end{itemize}
 
-\subsection{Sharding Strategy and Partitioning Algorithm}
-Given the potential growth of the \texttt{properties} and \texttt{reviews} collections, a single replica set might eventually become a bottleneck. Therefore, we have designed a \textbf{Sharding} strategy to distribute data across multiple shards (horizontal scaling).
-
-\subsubsection{Shard Key Selection}
-
-\paragraph{Properties Collection}
-The \texttt{properties} collection requires careful balancing between query performance (mostly geospatial) and write distribution.
-\begin{itemize}
-    \item \textbf{Shard Key:} \texttt{\{ \_id: "hashed" \}}
-    \item \textbf{Rationale:} While a range-based shard key (e.g., based on \texttt{city}) might seem intuitive, it leads to \textit{jumbo chunks} (e.g., "Rome" would be much larger than a small village). Hashed sharding ensures a strictly uniform distribution of properties across the cluster.
-    \item \textbf{Note on Rooms:} As defined in our data model, \texttt{Room} entities are embedded within the \texttt{Property} document as a list (\texttt{List<Room>}). Therefore, sharding the parent \texttt{properties} collection automatically scales room availability data without requiring a separate sharding strategy.
-\end{itemize}
-
-\paragraph{Reviews Collection}
-The \texttt{reviews} collection is an append-only dataset that is expected to grow indefinitely as users rate their stays.
-\begin{itemize}
-    \item \textbf{Shard Key:} \texttt{\{ \_id: "hashed" \}}
-    \item \textbf{Rationale:} To optimize for high write throughput and prevent "hot shards" during peak seasons, we hash the review ID. This ensures that incoming reviews are spread evenly across all shards rather than filling up a single node based on time or property grouping.
-\end{itemize}
-
-\paragraph{Users Collection}
-The \texttt{users} collection implements a Single Table Inheritance strategy, storing both \texttt{Customer} and \texttt{Manager} entities in the same collection. Currently, this collection is not sharded as the volume of user profiles fits comfortably within the Replica Set capacity, avoiding the overhead of cross-shard queries during login authentication.
+\subsection{Shard Key and Partitioning Algorithm Selection}
+Since the \_id field is mandatory in every document and is the primary filter for the majority of queries, it was selected as the shard key. This choice enables direct query routing, avoiding the overhead of scatter-gather operations. Consequently, we adopted Hashed Sharding as the partitioning algorithm to ensure uniform distribution.
 
 \subsection{Read and Write Policies}
 To balance the trade-off between latency and data integrity, we have configured specific policies for reading and writing data.
 
 \subsubsection{Read Operations (Read Preference: \texttt{nearest})}
-Given that the read-to-write ratio in LargeBeB is estimated to be approximately 10:1 (browsing vs. booking), minimizing read latency is crucial.
+Given that the read-to-write ratio in LargeB\&B is estimated to be approximately 10:1 (browsing vs. booking), minimizing read latency is crucial.
 We utilize the \textbf{\texttt{nearest}} read preference. The driver routes the read request to the replica set member with the lowest network latency, regardless of whether it is Primary or Secondary.
 
 This choice provides two main benefits:
@@ -280,4 +260,35 @@ We have configured the Write Concern to \textbf{\texttt{majority}}.
 \begin{itemize}
     \item The system acknowledges a write only after it has been committed to the Primary and propagated to at least one Secondary (2 out of 3 nodes).
     \item This ensures that even if the Primary node crashes immediately after a write (e.g., after a confirmed payment), the data is safe on a Secondary node that will become the new Primary, preventing data rollback and financial inconsistencies.
+\end{itemize}
+\subsection{Redis Configuration}
+Redis is utilized for caching, session management, and the temporary storage of reservation drafts.
+
+\subsubsection{Architecture and High Availability}
+Redis is deployed using a \textbf{Master-Slave} architecture:
+\begin{itemize}
+    \item \textbf{Replication:} The Master (Node A) handles all writes. These are asynchronously propagated to the Slaves (Node B and C), which can serve read traffic.
+    \item \textbf{Sentinel:} To ensure automatic failover, we deployed three \textbf{Redis Sentinel} instances. They monitor the cluster health and, if the Master fails, automatically promote one of the Slaves to be the new Master.
+\end{itemize}
+
+\subsubsection{Sharding Strategy}
+Although deployed in a replicated setup, we utilize an algorithmic sharding approach for key distribution:
+\begin{itemize}
+    \item \textbf{Shard Key:} The database key itself acts as the shard key.
+    \item \textbf{Partitioning Algorithm:} Redis uses the \textbf{CRC16} checksum of the key modulo 16,384 to determine the hash slot. This ensures that keys are distributed deterministically.
+\end{itemize}
+
+\subsubsection{Eviction and Persistence}
+To manage memory efficiently and ensure data safety:
+\begin{itemize}
+    \item \textbf{Eviction Policy (\texttt{allkeys-lfu}):} We set a \texttt{maxmemory} limit of 512MB. When this limit is reached, the Least Frequently Used keys are evicted first. This protects the system from crashing during traffic spikes.
+    \item \textbf{Persistence (RDB):} We enabled RDB snapshots (e.g., save every 5 minutes if 10 keys change) to allow disaster recovery in case of a total cluster reboot.
+\end{itemize}
+
+\subsection{Neo4j Configuration}
+\subsubsection{Deployment Strategy}
+Neo4j is deployed as a \textbf{Single Instance} on Node C (10.1.1.23).
+\begin{itemize}
+    \item \textbf{Rationale:} Graph data is inherently highly connected, making it difficult to shard effectively without incurring massive performance penalties from cross-shard traversals. Additionally, the Community Edition of Neo4j does not support clustering.
+    \item \textbf{Placement:} By isolating Neo4j on Node C and lowering that node's MongoDB priority, we ensure the graph database has dedicated computational resources for complex traversal algorithms (e.g., recommendation engines).
 \end{itemize}
