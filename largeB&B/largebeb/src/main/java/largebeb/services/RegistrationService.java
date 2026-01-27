@@ -122,10 +122,6 @@ public class RegistrationService {
         newUser.setRole(request.getRole().toUpperCase());
         newUser.setPhoneNumber(request.getPhoneNumber());
         newUser.setBirthdate(request.getBirthdate());
-        
-        // Map Name/Surname if present in DTO
-        newUser.setName(request.getName());
-        newUser.setSurname(request.getSurname());
 
         // Encrypt Password
         String hashedPassword = passwordEncoder.encode(request.getPassword());
@@ -137,10 +133,14 @@ public class RegistrationService {
         // Save to neo4j
         try {
             UserNode userNode = UserNode.builder()
-                    .username(savedUser.getUsername()) // Graph ID
-                    .mongoId(savedUser.getId())        // Foreign Key to Mongo
+                    .username(savedUser.getUsername())
+                    .mongoId(savedUser.getId())
                     .role(savedUser.getRole())
+<<<<<<< HEAD
                     .name(savedUser.getName())         // or easier display in graph
+=======
+                    .name(savedUser.getUsername())  // Use username as name for now
+>>>>>>> 0b1752f55e10ec7b2f4590aca85323251a697542
                     .build();
 
             userGraphRepository.save(userNode);

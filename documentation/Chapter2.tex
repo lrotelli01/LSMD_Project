@@ -108,7 +108,6 @@
     \item The application navigation must be user-friendly.
     \item The results produced by the system must be consistent.
     \item The system must ensure high data availability.
-    \item The system must ensune partition tolerance.
     \item The system must manage data storage using Document DB, Graph DB, and Key-Value DB.
     \item The DBMS technologies used must be Neo4j, MongoDB, and Redis.
     \item The business logic and data access layers must be implemented using the Spring framework in Java.
@@ -209,6 +208,7 @@ The system utilizes a polyglot persistence architecture, syncing data between th
 
 When a reservation is confirmed in MongoDB, the relationship is propagated to Neo4j asynchronously. While there is a minimal delay between the transaction confirmation and the update of the social graph, this does not impact the transactional integrity of the booking. This approach ensures that the Graph Service remains decoupled and does not block the critical path of the user experience.
 
+<<<<<<< HEAD
 In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
 \section{Data Distribution and Replication Strategy}
 \label{sec:data_distribution}
@@ -292,3 +292,6 @@ Neo4j is deployed as a \textbf{Single Instance} on Node C (10.1.1.23).
     \item \textbf{Rationale:} Graph data is inherently highly connected, making it difficult to shard effectively without incurring massive performance penalties from cross-shard traversals. Additionally, the Community Edition of Neo4j does not support clustering.
     \item \textbf{Placement:} By isolating Neo4j on Node C and lowering that node's MongoDB priority, we ensure the graph database has dedicated computational resources for complex traversal algorithms (e.g., recommendation engines).
 \end{itemize}
+=======
+In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
+>>>>>>> 0b1752f55e10ec7b2f4590aca85323251a697542

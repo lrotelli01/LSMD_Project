@@ -1,0 +1,26 @@
+﻿# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.synctex(busy)
+*.fdb_latexmk
+*.fls
+
+# Minted cache files (syntax highlighting)
+_minted*/
+*.data.minted
+
+# Java compiled files
+*.class
+target/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db

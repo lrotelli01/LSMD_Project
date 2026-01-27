@@ -172,6 +172,7 @@ public class ManagerController {
      * Legacy endpoint - kept for backward compatibility
      * @deprecated Use GET /api/manager/analytics?propertyId={id} instead
      */
+    @Deprecated
     @GetMapping("/analytics/property/{propertyId}")
     public ResponseEntity<?> getPropertyAnalyticsLegacy(
             @RequestHeader("Authorization") String token,
@@ -193,6 +194,7 @@ public class ManagerController {
      * Legacy endpoint - kept for backward compatibility
      * @deprecated Use GET /api/manager/analytics instead
      */
+    @Deprecated
     @GetMapping("/analytics/all")
     public ResponseEntity<?> getAllPropertiesAnalyticsLegacy(
             @RequestHeader("Authorization") String token,
