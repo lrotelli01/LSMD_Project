@@ -32,8 +32,15 @@ public class PropertyService {
             query.addCriteria(Criteria.where("city").regex(city, "i"));
         }
 
+        // FILTRO AMENITIES: Pattern matching (case-insensitive) invece di exact match
+        // Es: "wifi" matcha "WiFi", "WiFi 5GHz", "Free Wifi", ecc.
+        // MongoDB Query: { "amenities": { $regex: "wifi", $options: "i" } } per ogni amenity
         if (amenities != null && !amenities.isEmpty()) {
-            query.addCriteria(Criteria.where("amenities").all(amenities));
+            for (String amenity : amenities) {
+                // Ogni amenity richiesta deve essere presente (anche parzialmente) nell'array
+                // Operatore AND implicito: TUTTE le regex devono matchare
+                query.addCriteria(Criteria.where("amenities").regex(amenity, "i"));
+            }
         }
 
         if (minPrice != null || maxPrice != null) {
