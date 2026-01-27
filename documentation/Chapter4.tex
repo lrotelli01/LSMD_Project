@@ -162,14 +162,32 @@ Key design decisions for the Property model:
 @NoArgsConstructor
 @AllArgsConstructor
 public class Room {
+    @Field("roomId")
     private String id;
+    
+    @Indexed
+    private String propertyId; // Reverse lookup to parent property
+    
+    @Indexed
+    private String roomType; // Type category (e.g., "deluxe", "standard")
+    
+    @TextIndexed(weight = 2)
     private String name;
-    private String description;
-    private Integer capacityAdults;
-    private Integer capacityChildren;
-    private Double pricePerNightAdults;
-    private Double pricePerNightChildren;
+    
+    @Indexed
+    @Field("beds")
+    private short numBeds; // Number of beds
+    
+    private List<String> amenities; // Room-specific amenities
     private List<String> photos;
+    
+    private String status; // Availability status
+    
+    private Long capacityAdults;
+    private Long capacityChildren;
+    
+    private Float pricePerNightAdults;
+    private Float pricePerNightChildren;
 }
 \end{lstlisting}
 
@@ -203,6 +221,8 @@ public class Reservation {
     
     private ReservationDates dates;
     
+    private Double totalPrice; // Total price for the reservation
+    
     @CreatedDate
     private LocalDateTime createdAt;
     
@@ -233,20 +253,35 @@ public class Review {
     @Id
     private String id;
     
-    private String userId;
-    private String username;
+    private String reservationId; // Links to specific reservation
     
     @Indexed
     private String propertyId;
     
-    private Double rating;
+    private String userId;
+    private LocalDate creationDate;
+    
+    private String text; // Review content
+    
+    @Min(1)
+    @Max(5)
+    private Long rating; // Overall rating (1-5)
+    
+    // Detailed ratings
+    @Min(1)
+    @Max(5)
     private Double cleanliness;
+    @Min(1)
+    @Max(5)
     private Double communication;
+    @Min(1)
+    @Max(5)
     private Double location;
+    @Min(1)
+    @Max(5)
     private Double value;
     
-    private String comment;
-    private LocalDateTime creationDate;
+    private String managerReply; // Manager's response to review
 }
 \end{lstlisting}
 

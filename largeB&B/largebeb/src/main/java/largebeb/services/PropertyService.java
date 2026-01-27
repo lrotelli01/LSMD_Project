@@ -5,11 +5,6 @@ import largebeb.model.Property;
 import largebeb.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.geo.Point;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -22,41 +17,19 @@ import java.util.stream.Collectors;
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
-    private final MongoTemplate mongoTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
 
     // ADVANCED SEARCH and FILTERING
     public List<PropertyResponseDTO> searchProperties(String city, Double minPrice, Double maxPrice, List<String> amenities) {
-        Query query = new Query();
-
-        if (city != null && !city.trim().isEmpty()) {
-            query.addCriteria(Criteria.where("city").regex(city, "i"));
-        }
-
-        if (amenities != null && !amenities.isEmpty()) {
-            query.addCriteria(Criteria.where("amenities").all(amenities));
-        }
-
-        if (minPrice != null || maxPrice != null) {
-            Criteria priceCriteria = Criteria.where("pricePerNightAdults");
-            if (minPrice != null) priceCriteria.gte(minPrice);
-            if (maxPrice != null) priceCriteria.lte(maxPrice);
-            
-            query.addCriteria(Criteria.where("rooms").elemMatch(priceCriteria));
-        }
-
-        List<Property> properties = mongoTemplate.find(query, Property.class);
+        List<Property> properties = propertyRepository.searchPropertiesAdvanced(city, minPrice, maxPrice, amenities);
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
     // GEOSPATIAL SEARCH
     public List<PropertyResponseDTO> getPropertiesInArea(double lat, double lon, double radiusKm) {
-        Query query = new Query();
-        // Use nearSphere for accurate distance calculation on Earth's surface
-        query.addCriteria(Criteria.where("location").nearSphere(new Point(lon, lat))
-                .maxDistance(radiusKm / 6378.1)); 
-        
-        List<Property> properties = mongoTemplate.find(query, Property.class);
+        // Convert km to meters for MongoDB $geoNear
+        double radiusMeters = radiusKm * 1000;
+        List<Property> properties = propertyRepository.findPropertiesNearLocation(lat, lon, radiusMeters);
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
@@ -99,11 +72,7 @@ public class PropertyService {
     // TOP RATED PROPERTIES
     @Cacheable(value = "top_rated", key = "'global'")
     public List<PropertyResponseDTO> getTopRatedProperties() {
-        Query query = new Query();
-        query.with(Sort.by(Sort.Direction.DESC, "ratingStats.value"));
-        query.limit(20);
-        
-        return mongoTemplate.find(query, Property.class).stream()
+        return propertyRepository.findTopRated(20).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }

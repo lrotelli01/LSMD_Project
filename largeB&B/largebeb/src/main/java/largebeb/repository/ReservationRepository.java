@@ -41,15 +41,7 @@ public interface ReservationRepository extends MongoRepository<Reservation, Stri
     // Get reservation statistics by status for multiple rooms within a date range
     @Aggregation(pipeline = {
         "{ '$match': { 'roomId': { $in: ?0 }, 'dates.checkIn': { $gte: ?1, $lte: ?2 } } }",
-        "{ '$group': { " +
-        "   '_id': null, " +
-        "   'totalReservations': { $sum: 1 }, " +
-        "   'confirmed': { $sum: { $cond: [{ $eq: ['$status', 'CONFIRMED'] }, 1, 0] } }, " +
-        "   'cancelled': { $sum: { $cond: [{ $eq: ['$status', 'CANCELLED'] }, 1, 0] } }, " +
-        "   'completed': { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, 1, 0] } }, " +
-        "   'totalAdults': { $sum: '$adults' }, " +
-        "   'totalChildren': { $sum: '$children' } " +
-        "} }",
+        "{ '$group': { '_id': null, 'totalReservations': { $sum: 1 }, 'confirmed': { $sum: { $cond: [{ $eq: ['$status', 'CONFIRMED'] }, 1, 0] } }, 'cancelled': { $sum: { $cond: [{ $eq: ['$status', 'CANCELLED'] }, 1, 0] } }, 'completed': { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, 1, 0] } }, 'totalAdults': { $sum: '$adults' }, 'totalChildren': { $sum: '$children' } } }",
         "{ '$project': { '_id': 0 } }"
     })
     Map<String, Object> getReservationStatistics(List<String> roomIds, LocalDate startDate, LocalDate endDate);

@@ -35,14 +35,7 @@ public interface ReviewRepository extends MongoRepository<Review, String> {
     // Calculate average rating and statistics for a property
     @Aggregation(pipeline = {
         "{ '$match': { 'propertyId': ?0 } }",
-        "{ '$group': { " +
-        "   '_id': null, " +
-        "   'averageRating': { $avg: '$rating' }, " +
-        "   'totalReviews': { $sum: 1 }, " +
-        "   'minRating': { $min: '$rating' }, " +
-        "   'maxRating': { $max: '$rating' }, " +
-        "   'variance': { $stdDevPop: '$rating' } " +
-        "} }",
+        "{ '$group': { '_id': null, 'averageRating': { $avg: '$rating' }, 'totalReviews': { $sum: 1 }, 'minRating': { $min: '$rating' }, 'maxRating': { $max: '$rating' }, 'variance': { $stdDevPop: '$rating' } } }",
         "{ '$project': { '_id': 0 } }"
     })
     Map<String, Object> getRatingStatistics(String propertyId);
@@ -69,14 +62,7 @@ public interface ReviewRepository extends MongoRepository<Review, String> {
     // Calculate aggregate statistics for multiple properties (portfolio overview)
     @Aggregation(pipeline = {
         "{ '$match': { 'propertyId': { $in: ?0 } } }",
-        "{ '$group': { " +
-        "   '_id': null, " +
-        "   'overallAverageRating': { $avg: '$rating' }, " +
-        "   'totalReviews': { $sum: 1 }, " +
-        "   'excellentCount': { $sum: { $cond: [{ $gte: ['$rating', 4.5] }, 1, 0] } }, " +
-        "   'goodCount': { $sum: { $cond: [{ $and: [{ $gte: ['$rating', 3.5] }, { $lt: ['$rating', 4.5] }] }, 1, 0] } }, " +
-        "   'poorCount': { $sum: { $cond: [{ $lt: ['$rating', 3.5] }, 1, 0] } } " +
-        "} }",
+        "{ '$group': { '_id': null, 'overallAverageRating': { $avg: '$rating' }, 'totalReviews': { $sum: 1 }, 'excellentCount': { $sum: { $cond: [{ $gte: ['$rating', 4.5] }, 1, 0] } }, 'goodCount': { $sum: { $cond: [{ $and: [{ $gte: ['$rating', 3.5] }, { $lt: ['$rating', 4.5] }] }, 1, 0] } }, 'poorCount': { $sum: { $cond: [{ $lt: ['$rating', 3.5] }, 1, 0] } } } }",
         "{ '$project': { '_id': 0 } }"
     })
     Map<String, Object> getPortfolioRatingStatistics(List<String> propertyIds);
