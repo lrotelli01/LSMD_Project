@@ -292,6 +292,6 @@ Neo4j is deployed as a \textbf{Single Instance} on Node C (10.1.1.23).
     \item \textbf{Rationale:} Graph data is inherently highly connected, making it difficult to shard effectively without incurring massive performance penalties from cross-shard traversals. Additionally, the Community Edition of Neo4j does not support clustering.
     \item \textbf{Placement:} By isolating Neo4j on Node C and lowering that node's MongoDB priority, we ensure the graph database has dedicated computational resources for complex traversal algorithms (e.g., recommendation engines).
 \end{itemize}
-=======
+
 In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
->>>>>>> 0b1752f55e10ec7b2f4590aca85323251a697542
+
