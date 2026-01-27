@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class ReviewService {
     private final JwtUtil jwtUtil; // Injected to handle Token logic
 
     // Customer create a review
+    @Transactional
     public ReviewResponseDTO createReview(String token, ReviewRequestDTO request) {
         RegisteredUser currentUser = getUserFromToken(token);
 
@@ -106,6 +108,7 @@ public class ReviewService {
     }
 
     // Customer edit their own review
+    @Transactional
     public ReviewResponseDTO editReview(String token, String reviewId, ReviewRequestDTO request) {
         RegisteredUser currentUser = getUserFromToken(token);
         Review review = reviewRepository.findById(reviewId)
@@ -154,6 +157,7 @@ public class ReviewService {
     }
 
     // Customer delete their review
+    @Transactional
     public void deleteReview(String token, String reviewId) {
         RegisteredUser currentUser = getUserFromToken(token);
         
@@ -174,6 +178,7 @@ public class ReviewService {
     }
 
     // Manager reply to review
+    @Transactional
     public ReviewResponseDTO replyToReview(String token, String reviewId, String replyText) {
         RegisteredUser currentUser = getUserFromToken(token);
 

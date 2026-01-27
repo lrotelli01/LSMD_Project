@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Set;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class FavoredPropertyService {
     }
 
     // Add favored property
+    @Transactional
     public FavoredPropertyResponseDTO addFavoredProperty(String token, FavoredPropertyRequestDTO request) {
         if (request.getPropertyId() == null || request.getPropertyId().trim().isEmpty()) {
             throw new IllegalArgumentException("Property ID cannot be empty.");
@@ -57,6 +59,7 @@ public class FavoredPropertyService {
     }
 
     // Remove favored property
+    @Transactional
     public FavoredPropertyResponseDTO removeFavoredProperty(String token, String propertyId) {
         Customer customer = getCustomerFromToken(token);
         if (customer.getFavoredPropertyIds() != null) {
