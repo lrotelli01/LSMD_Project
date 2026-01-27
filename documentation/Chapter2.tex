@@ -108,6 +108,7 @@
     \item The application navigation must be user-friendly.
     \item The results produced by the system must be consistent.
     \item The system must ensure high data availability.
+    \item The system must ensune partition tolerance.
     \item The system must manage data storage using Document DB, Graph DB, and Key-Value DB.
     \item The DBMS technologies used must be Neo4j, MongoDB, and Redis.
     \item The business logic and data access layers must be implemented using the Spring framework in Java.
@@ -209,3 +210,74 @@ The system utilizes a polyglot persistence architecture, syncing data between th
 When a reservation is confirmed in MongoDB (the "Source of Truth"), the relationship is propagated to Neo4j asynchronously. While there is a minimal delay between the transaction confirmation and the update of the social graph, this does not impact the transactional integrity of the booking. This approach ensures that the Graph Service remains decoupled and does not block the critical path of the user experience.
 
 In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
+\section{Data Distribution and Replication Strategy}
+\label{sec:data_distribution}
+
+According to the non-functional requirements outlined in Section 2.1.6, our system must ensure \textbf{High Availability} and \textbf{Partition Tolerance} to guarantee low-latency responses to user requests, particularly for search and browsing operations. 
+
+In the context of the \textbf{CAP theorem}, LargeBeB is designed primarily as an \textbf{AP system} (Availability and Partition Tolerance), accepting \textit{Eventual Consistency} for read operations to maximize throughput. However, to prevent critical issues such as double bookings, we enforce stronger consistency constraints on write operations through specific Write Concerns.
+
+The fundamental aspect of our design relies on a hybrid approach combining \textbf{Replica Sets} for high availability and \textbf{Sharding} for horizontal scalability.
+
+\subsection{Replica Set Configuration}
+To ensure redundancy and automatic failover, the MongoDB architecture is deployed as a \textbf{Replica Set} consisting of three nodes. This configuration protects the system against single-node failures and network partitions.
+
+The cluster is composed of one \textbf{Primary} node and two \textbf{Secondary} nodes. To optimize the election process and resource utilization, we have configured specific \textbf{priority levels} for each member:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/DBArchitectureRappresentation.png}
+    \caption{Database Architecture: Replica Set with 3 Nodes}
+    \label{fig:db_architecture}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Node A (IP 10.1.1.21 - Priority 5):} This is the preferred Primary node. It resides on the highest-performance hardware and handles all write operations under normal conditions.
+    \item \textbf{Node B (IP 10.1.1.22 - Priority 2):} This node acts as the immediate hot-standby. It serves read operations and is the first candidate to become Primary if Node A fails.
+    \item \textbf{Node C (IP 10.1.1.23 - Priority 1):} This node has the lowest priority. It is primarily used for read offloading and acts as a disaster recovery option. Assigning a lower priority ensures it is elected as Primary only as a last resort.
+\end{itemize}
+
+\subsection{Sharding Strategy and Partitioning Algorithm}
+Given the potential growth of the \texttt{properties} and \texttt{reviews} collections, a single replica set might eventually become a bottleneck. Therefore, we have designed a \textbf{Sharding} strategy to distribute data across multiple shards (horizontal scaling).
+
+\subsubsection{Shard Key Selection}
+
+\paragraph{Properties Collection}
+The \texttt{properties} collection requires careful balancing between query performance (mostly geospatial) and write distribution.
+\begin{itemize}
+    \item \textbf{Shard Key:} \texttt{\{ \_id: "hashed" \}}
+    \item \textbf{Rationale:} While a range-based shard key (e.g., based on \texttt{city}) might seem intuitive, it leads to \textit{jumbo chunks} (e.g., "Rome" would be much larger than a small village). Hashed sharding ensures a strictly uniform distribution of properties across the cluster.
+    \item \textbf{Note on Rooms:} As defined in our data model, \texttt{Room} entities are embedded within the \texttt{Property} document as a list (\texttt{List<Room>}). Therefore, sharding the parent \texttt{properties} collection automatically scales room availability data without requiring a separate sharding strategy.
+\end{itemize}
+
+\paragraph{Reviews Collection}
+The \texttt{reviews} collection is an append-only dataset that is expected to grow indefinitely as users rate their stays.
+\begin{itemize}
+    \item \textbf{Shard Key:} \texttt{\{ \_id: "hashed" \}}
+    \item \textbf{Rationale:} To optimize for high write throughput and prevent "hot shards" during peak seasons, we hash the review ID. This ensures that incoming reviews are spread evenly across all shards rather than filling up a single node based on time or property grouping.
+\end{itemize}
+
+\paragraph{Users Collection}
+The \texttt{users} collection implements a Single Table Inheritance strategy, storing both \texttt{Customer} and \texttt{Manager} entities in the same collection. Currently, this collection is not sharded as the volume of user profiles fits comfortably within the Replica Set capacity, avoiding the overhead of cross-shard queries during login authentication.
+
+\subsection{Read and Write Policies}
+To balance the trade-off between latency and data integrity, we have configured specific policies for reading and writing data.
+
+\subsubsection{Read Operations (Read Preference: \texttt{nearest})}
+Given that the read-to-write ratio in LargeBeB is estimated to be approximately 10:1 (browsing vs. booking), minimizing read latency is crucial.
+We utilize the \textbf{\texttt{nearest}} read preference. The driver routes the read request to the replica set member with the lowest network latency, regardless of whether it is Primary or Secondary.
+
+This choice provides two main benefits:
+\begin{enumerate}
+    \item \textbf{Load Balancing:} It distributes the heavy read traffic across all three nodes, preventing the Primary from being overwhelmed.
+    \item \textbf{Geo-latency Reduction:} If the infrastructure is geo-distributed in the future, users will automatically read from the data center closest to them.
+\end{enumerate}
+
+\subsubsection{Write Operations (Write Concern: \texttt{majority})}
+Although we prioritize availability for reads, write operations—specifically \textit{User Registration}, \textit{Property Creation}, and critical \textit{Reservation} flows—require strict durability.
+We have configured the Write Concern to \textbf{\texttt{majority}}.
+
+\begin{itemize}
+    \item The system acknowledges a write only after it has been committed to the Primary and propagated to at least one Secondary (2 out of 3 nodes).
+    \item This ensures that even if the Primary node crashes immediately after a write (e.g., after a confirmed payment), the data is safe on a Secondary node that will become the new Primary, preventing data rollback and financial inconsistencies.
+\end{itemize}

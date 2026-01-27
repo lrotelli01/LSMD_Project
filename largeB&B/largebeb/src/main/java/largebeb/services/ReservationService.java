@@ -8,11 +8,11 @@ import largebeb.model.RegisteredUser;
 import largebeb.model.Reservation;
 import largebeb.model.Room;
 import largebeb.repository.PropertyRepository;
-import largebeb.repository.ReservationGraphRepository; // IMPORT ADDED
+import largebeb.repository.ReservationGraphRepository;
 import largebeb.repository.ReservationRepository;
 import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil;
-import largebeb.utilities.RatingStats; // Assuming this might be needed for other logic, kept if present
+import largebeb.utilities.RatingStats;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
