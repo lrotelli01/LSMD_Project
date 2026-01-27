@@ -1,0 +1,5 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@Query}\PYG{p}{(}\PYG{n}{value}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{} \PYGZsq{}userId\PYGZsq{}: ?0, \PYGZsq{}status\PYGZsq{}: \PYGZsq{}confirmed\PYGZsq{}, }\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}
+\PYG{+w}{    }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZsq{}dates.checkOut\PYGZsq{}: \PYGZob{} \PYGZdl{}gt: ?1 \PYGZcb{} \PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{exists}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{true}\PYG{p}{)}
+\PYG{k+kt}{boolean}\PYG{+w}{ }\PYG{n+nf}{hasActiveBookings}\PYG{p}{(}\PYG{n}{String}\PYG{+w}{ }\PYG{n}{userId}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{today}\PYG{p}{)}\PYG{p}{;}
+\end{MintedVerbatim}

@@ -1,0 +1,23 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{PropertyResponseDTO}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n+nf}{getCollaborativeRecommendations}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{propertyId}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+
+\PYG{+w}{    }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{cypherQuery}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s}{        MATCH (p:Property \PYGZob{}propertyId: \PYGZdl{}propId\PYGZcb{})\PYGZlt{}\PYGZhy{}[:BOOKED]\PYGZhy{}(u:User)}
+\PYG{l+s}{              \PYGZhy{}[:BOOKED]\PYGZhy{}\PYGZgt{}(other:Property)}
+\PYG{l+s}{        RETURN other.propertyId AS recommendedId,}
+\PYG{l+s}{               count(*) AS strength}
+\PYG{l+s}{        ORDER BY strength DESC}
+\PYG{l+s}{        LIMIT 5}
+\PYG{l+s}{    }\PYG{l+s}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n}{Collection}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{recommendedIds}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{neo4jClient}\PYG{p}{.}\PYG{n+na}{query}\PYG{p}{(}\PYG{n}{cypherQuery}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{bind}\PYG{p}{(}\PYG{n}{propertyId}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{to}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{propId}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{fetchAs}\PYG{p}{(}\PYG{n}{String}\PYG{p}{.}\PYG{n+na}{class}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{mappedBy}\PYG{p}{(}\PYG{p}{(}\PYG{n}{typeSystem}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{record}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZgt{}}
+\PYG{+w}{            }\PYG{k+kd}{record}\PYG{err}{.}\PYG{n+nc}{get}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{recommendedId}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{asString}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{all}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{propertyRepository}\PYG{p}{.}\PYG{n+na}{findAllById}\PYG{p}{(}\PYG{n}{recommendedIds}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

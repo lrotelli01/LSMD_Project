@@ -1,0 +1,7 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@Query}\PYG{p}{(}\PYG{n}{value}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{}\PYGZdl{}or: [ }\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}
+\PYG{+w}{    }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{} \PYGZsq{}senderId\PYGZsq{}: ?0, \PYGZsq{}recipientId\PYGZsq{}: ?1 \PYGZcb{}, }\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}
+\PYG{+w}{    }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{} \PYGZsq{}senderId\PYGZsq{}: ?1, \PYGZsq{}recipientId\PYGZsq{}: ?0 \PYGZcb{} ]\PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+\PYG{+w}{    }\PYG{n}{sort}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{} \PYGZsq{}timestamp\PYGZsq{} : 1 \PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{Message}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n+nf}{findConversation}\PYG{p}{(}\PYG{n}{String}\PYG{+w}{ }\PYG{n}{user1}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{user2}\PYG{p}{)}\PYG{p}{;}
+\end{MintedVerbatim}

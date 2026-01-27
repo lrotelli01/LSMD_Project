@@ -1,0 +1,50 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{private}\PYG{+w}{ }\PYG{k+kd}{static}\PYG{+w}{ }\PYG{k+kd}{final}\PYG{+w}{ }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{REDIS\PYGZus{}PREFIX}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{temp\PYGZus{}res:}\PYG{l+s}{\PYGZdq{}}\PYG{p}{;}
+
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{n}{ReservationResponseDTO}\PYG{+w}{ }\PYG{n+nf}{initiateReservation}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{token}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ReservationRequestDTO}\PYG{+w}{ }\PYG{n}{request}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+
+\PYG{+w}{    }\PYG{c+c1}{// Check MongoDB for confirmed bookings}
+\PYG{+w}{    }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{Reservation}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{confirmedOverlaps}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{reservationRepository}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{findOverlappingReservations}\PYG{p}{(}\PYG{n}{room}\PYG{p}{.}\PYG{n+na}{getId}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{            }\PYG{n}{request}\PYG{p}{.}\PYG{n+na}{getCheckIn}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{request}\PYG{p}{.}\PYG{n+na}{getCheckOut}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{o}{!}\PYG{n}{confirmedOverlaps}\PYG{p}{.}\PYG{n+na}{isEmpty}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k}{throw}\PYG{+w}{ }\PYG{k}{new}\PYG{+w}{ }\PYG{n}{IllegalStateException}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{Room already booked}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{c+c1}{// Check Redis for temporary locks}
+\PYG{+w}{    }\PYG{n}{Set}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{keys}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{redisTemplate}\PYG{p}{.}\PYG{n+na}{keys}\PYG{p}{(}\PYG{n}{REDIS\PYGZus{}PREFIX}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{*}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{keys}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k}{for}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{String}\PYG{+w}{ }\PYG{n}{key}\PYG{+w}{ }\PYG{p}{:}\PYG{+w}{ }\PYG{n}{keys}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{            }\PYG{n}{Reservation}\PYG{+w}{ }\PYG{n}{pending}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{objectMapper}\PYG{p}{.}\PYG{n+na}{convertValue}\PYG{p}{(}
+\PYG{+w}{                }\PYG{n}{redisTemplate}\PYG{p}{.}\PYG{n+na}{opsForValue}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{get}\PYG{p}{(}\PYG{n}{key}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{                }\PYG{n}{Reservation}\PYG{p}{.}\PYG{n+na}{class}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{            }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{pending}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{o}{\PYGZam{}}
+\PYG{+w}{                }\PYG{n}{pending}\PYG{p}{.}\PYG{n+na}{getRoomId}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{equals}\PYG{p}{(}\PYG{n}{room}\PYG{p}{.}\PYG{n+na}{getId}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{o}{\PYGZam{}}
+\PYG{+w}{                }\PYG{n}{isOverlapping}\PYG{p}{(}\PYG{n}{pending}\PYG{p}{.}\PYG{n+na}{getDates}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{                    }\PYG{n}{request}\PYG{p}{.}\PYG{n+na}{getCheckIn}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{request}\PYG{p}{.}\PYG{n+na}{getCheckOut}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{                }\PYG{k}{throw}\PYG{+w}{ }\PYG{k}{new}\PYG{+w}{ }\PYG{n}{IllegalStateException}\PYG{p}{(}
+\PYG{+w}{                    }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{Room being paid for. Try again in 15 mins.}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{            }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{        }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{c+c1}{// Create temporary reservation with 15\PYGZhy{}minute TTL}
+\PYG{+w}{    }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{tempId}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{UUID}\PYG{p}{.}\PYG{n+na}{randomUUID}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{toString}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{Reservation}\PYG{+w}{ }\PYG{n}{tempReservation}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{Reservation}\PYG{p}{.}\PYG{n+na}{builder}\PYG{p}{(}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{id}\PYG{p}{(}\PYG{n}{tempId}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{roomId}\PYG{p}{(}\PYG{n}{room}\PYG{p}{.}\PYG{n+na}{getId}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{dates}\PYG{p}{(}\PYG{k}{new}\PYG{+w}{ }\PYG{n}{ReservationDates}\PYG{p}{(}
+\PYG{+w}{            }\PYG{n}{request}\PYG{p}{.}\PYG{n+na}{getCheckIn}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{request}\PYG{p}{.}\PYG{n+na}{getCheckOut}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{status}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{PENDING\PYGZus{}PAYMENT}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{build}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n}{redisTemplate}\PYG{p}{.}\PYG{n+na}{opsForValue}\PYG{p}{(}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{set}\PYG{p}{(}\PYG{n}{REDIS\PYGZus{}PREFIX}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{tempId}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{tempReservation}\PYG{p}{,}
+\PYG{+w}{             }\PYG{l+m+mi}{15}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{TimeUnit}\PYG{p}{.}\PYG{n+na}{MINUTES}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{mapToDTO}\PYG{p}{(}\PYG{n}{tempReservation}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

@@ -1,0 +1,20 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@EventListener}\PYG{p}{(}\PYG{n}{ApplicationReadyEvent}\PYG{p}{.}\PYG{n+na}{class}\PYG{p}{)}
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{createIndexesAndConstraints}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{startupQueries}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{List}\PYG{p}{.}\PYG{n+na}{of}\PYG{p}{(}
+\PYG{+w}{        }\PYG{c+c1}{// Property uniqueness \PYGZhy{} O(1) lookup for recommendations}
+\PYG{+w}{        }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{CREATE CONSTRAINT property\PYGZus{}id\PYGZus{}unique IF NOT EXISTS }\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}
+\PYG{+w}{        }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{FOR (p:Property) REQUIRE p.id IS UNIQUE}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+
+\PYG{+w}{        }\PYG{c+c1}{// User uniqueness \PYGZhy{} essential for collaborative filtering}
+\PYG{+w}{        }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{CREATE CONSTRAINT user\PYGZus{}id\PYGZus{}unique IF NOT EXISTS }\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}
+\PYG{+w}{        }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{FOR (u:User) REQUIRE u.id IS UNIQUE}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+
+\PYG{+w}{        }\PYG{c+c1}{// Amenity uniqueness \PYGZhy{} ensures shared nodes for traversal}
+\PYG{+w}{        }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{CREATE CONSTRAINT amenity\PYGZus{}name\PYGZus{}unique IF NOT EXISTS }\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}
+\PYG{+w}{        }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{FOR (a:Amenity) REQUIRE a.name IS UNIQUE}\PYG{l+s}{\PYGZdq{}}
+\PYG{+w}{    }\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n}{startupQueries}\PYG{p}{.}\PYG{n+na}{forEach}\PYG{p}{(}\PYG{n}{query}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{neo4jClient}\PYG{p}{.}\PYG{n+na}{query}\PYG{p}{(}\PYG{n}{query}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{run}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

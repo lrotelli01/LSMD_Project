@@ -1,0 +1,26 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{PropertyResponseDTO}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n+nf}{searchProperties}\PYG{p}{(}\PYG{n}{String}\PYG{+w}{ }\PYG{n}{city}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{Double}\PYG{+w}{ }\PYG{n}{minPrice}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Double}\PYG{+w}{ }\PYG{n}{maxPrice}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{amenities}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{Query}\PYG{+w}{ }\PYG{n}{query}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{k}{new}\PYG{+w}{ }\PYG{n}{Query}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Case\PYGZhy{}insensitive city search using regex}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{city}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{o}{!}\PYG{n}{city}\PYG{p}{.}\PYG{n+na}{trim}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{isEmpty}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{query}\PYG{p}{.}\PYG{n+na}{addCriteria}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{city}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{regex}\PYG{p}{(}\PYG{n}{city}\PYG{p}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{i}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{c+c1}{// All specified amenities must be present}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{amenities}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{o}{!}\PYG{n}{amenities}\PYG{p}{.}\PYG{n+na}{isEmpty}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{query}\PYG{p}{.}\PYG{n+na}{addCriteria}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{amenities}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{all}\PYG{p}{(}\PYG{n}{amenities}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{c+c1}{// Price range filter on nested room documents}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{minPrice}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{|}\PYG{o}{|}\PYG{+w}{ }\PYG{n}{maxPrice}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{Criteria}\PYG{+w}{ }\PYG{n}{priceCriteria}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{pricePerNightAdults}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{minPrice}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{priceCriteria}\PYG{p}{.}\PYG{n+na}{gte}\PYG{p}{(}\PYG{n}{minPrice}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{maxPrice}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{priceCriteria}\PYG{p}{.}\PYG{n+na}{lte}\PYG{p}{(}\PYG{n}{maxPrice}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{query}\PYG{p}{.}\PYG{n+na}{addCriteria}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{rooms}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{elemMatch}\PYG{p}{(}\PYG{n}{priceCriteria}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{mongoTemplate}\PYG{p}{.}\PYG{n+na}{find}\PYG{p}{(}\PYG{n}{query}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Property}\PYG{p}{.}\PYG{n+na}{class}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}
