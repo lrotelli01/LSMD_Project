@@ -5,14 +5,15 @@ import largebeb.model.Property;
 import largebeb.model.RegisteredUser;
 import largebeb.model.Reservation;
 import largebeb.model.Room;
-import largebeb.model.graph.PropertyNode; // Import Neo4j Node
-import largebeb.repository.PropertyGraphRepository; // Import Neo4j Repository
+import largebeb.model.graph.PropertyNode;
+import largebeb.repository.PropertyGraphRepository; 
 import largebeb.repository.PropertyRepository;
 import largebeb.repository.ReservationRepository;
 import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil;
 import largebeb.utilities.RatingStats;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class ManagerPropertyService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final Neo4jClient neo4jClient; // Client to execute custom Cypher queries
 
     /**
      * Add a new property (Manager only)
@@ -67,11 +69,12 @@ public class ManagerPropertyService {
             property.setCoordinates(Arrays.asList(lon, lat));
         }
 
-        // 1. Save to MongoDB
+        // Save to MongoDB
         Property saved = propertyRepository.save(property);
 
-        // 2. Save to Neo4j
+        // Save to Neo4j
         try {
+            // Save the main Property Node using the Repository 
             PropertyNode propertyNode = PropertyNode.builder()
                     .propertyId(saved.getId()) // Use Mongo ID as Graph Key
                     .name(saved.getName())
@@ -79,9 +82,25 @@ public class ManagerPropertyService {
                     .build();
             
             propertyGraphRepository.save(propertyNode);
+
+            // Handle the Amenities (Services) relationships using custom Cypher.
+            // MERGE the service node (create if not exists), then link Property -> Service.
+            if (saved.getAmenities() != null && !saved.getAmenities().isEmpty()) {
+                String cypherQuery = """
+                    MATCH (p:Property {propertyId: $propId})
+                    UNWIND $amenitiesList AS amenityName
+                    MERGE (s:Service {name: amenityName}) 
+                    MERGE (p)-[:HAS_SERVICE]->(s)
+                """;
+
+                neo4jClient.query(cypherQuery)
+                        .bind(saved.getId()).to("propId")
+                        .bind(saved.getAmenities()).to("amenitiesList")
+                        .run();
+            }
+
         } catch (Exception e) {
             System.err.println("Error saving property to Neo4j: " + e.getMessage());
-            // Optional: throw exception to rollback transaction if graph consistency is strict
         }
 
         return mapPropertyToDTO(saved);
@@ -119,12 +138,31 @@ public class ManagerPropertyService {
             }
         }
 
-        // 1. Delete from MongoDB
+        // Delete from MongoDB
         propertyRepository.delete(property);
 
-        // 2. Delete from Neo4j
+        // Delete from Neo4j
         try {
-            propertyGraphRepository.deleteById(propertyId);
+            // Logic: 
+            // 1. Match the property and its services.
+            // 2. Detach and delete the property.
+            // 3. Check the services that were connected. If they have NO other connections, delete them.
+            String cypherQuery = """
+                MATCH (p:Property {propertyId: $propId})
+                OPTIONAL MATCH (p)-[:HAS_SERVICE]->(s:Service)
+                DETACH DELETE p
+                WITH s
+                WHERE s IS NOT NULL
+                OPTIONAL MATCH (s)<-[r:HAS_SERVICE]-(other:Property)
+                WITH s, count(r) AS connections
+                WHERE connections = 0
+                DELETE s
+            """;
+
+            neo4jClient.query(cypherQuery)
+                    .bind(propertyId).to("propId")
+                    .run();
+            
         } catch (Exception e) {
             System.err.println("Error deleting property from Neo4j: " + e.getMessage());
         }
@@ -146,7 +184,8 @@ public class ManagerPropertyService {
         }
 
         // Update fields (only if provided)
-        boolean updateGraph = false; // Flag to check if we need to update Neo4j
+        boolean updateGraph = false; // Flag to check if we need to update Neo4j basic info
+        boolean updateAmenitiesGraph = false; // Flag to check if amenities changed
 
         if (request.getName() != null) {
             property.setName(request.getName());
@@ -162,7 +201,12 @@ public class ManagerPropertyService {
         if (request.getRegion() != null) property.setRegion(request.getRegion());
         if (request.getCountry() != null) property.setCountry(request.getCountry());
         if (request.getEmail() != null) property.setEmail(request.getEmail());
-        if (request.getAmenities() != null) property.setAmenities(request.getAmenities());
+        
+        if (request.getAmenities() != null) {
+            property.setAmenities(request.getAmenities());
+            updateAmenitiesGraph = true;
+        }
+        
         if (request.getPhotos() != null) property.setPhotos(request.getPhotos());
         
         // Handle coordinates
@@ -172,22 +216,57 @@ public class ManagerPropertyService {
             property.setCoordinates(Arrays.asList(lon, lat));
         }
 
-        // 1. Save to MongoDB
+        // Save to MongoDB
         Property saved = propertyRepository.save(property);
 
-        // 2. Update Neo4j (only if critical fields changed)
-        if (updateGraph) {
-            try {
-                // Since we use propertyId as @Id in Neo4j, calling save() works as an "upsert" (update if exists)
+        // Update Neo4j
+        try {
+            // A. Update basic Node info if needed
+            if (updateGraph) {
                 PropertyNode node = PropertyNode.builder()
                         .propertyId(saved.getId())
                         .name(saved.getName())
                         .city(saved.getCity())
                         .build();
-                propertyGraphRepository.save(node);
-            } catch (Exception e) {
-                System.err.println("Error updating property in Neo4j: " + e.getMessage());
+                propertyGraphRepository.save(node); // This works as an upsert based on ID
             }
+
+            // Update Amenities if changed
+            if (updateAmenitiesGraph) {
+                // Logic:
+                // 1. Find old services linked to this property.
+                // 2. Remove the relationship.
+                // 3. If those old services are now orphans, delete them.
+                // 4. Add new services (create if not exist) and link them.
+                String cypherQuery = """
+                    MATCH (p:Property {propertyId: $propId})
+                    
+                    // Step 1: Handle removals
+                    OPTIONAL MATCH (p)-[rOld:HAS_SERVICE]->(oldS:Service)
+                    DELETE rOld
+                    WITH p, collect(oldS) AS oldServices
+                    
+                    // Step 2: Handle additions
+                    UNWIND $newAmenities AS newAmenityName
+                    MERGE (newS:Service {name: newAmenityName})
+                    MERGE (p)-[:HAS_SERVICE]->(newS)
+                    
+                    // Step 3: Clean up orphans from the old list
+                    WITH oldServices
+                    UNWIND oldServices AS s
+                    OPTIONAL MATCH (s)<-[r:HAS_SERVICE]-(other:Property)
+                    WITH s, count(r) AS connections
+                    WHERE connections = 0
+                    DELETE s
+                """;
+
+                neo4jClient.query(cypherQuery)
+                        .bind(saved.getId()).to("propId")
+                        .bind(saved.getAmenities()).to("newAmenities")
+                        .run();
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating property in Neo4j: " + e.getMessage());
         }
 
         return mapPropertyToDTO(saved);
@@ -204,11 +283,8 @@ public class ManagerPropertyService {
                 .collect(Collectors.toList());
     }
 
-    // (Room logic remains unchanged as rooms are embedded in Property on Mongo
-    // and usually not modeled as separate Nodes in this simplified Graph approach)
-
     /**
-     * Add a room to a property (Manager only)
+     * Add a room to a property
      */
     public RoomResponseDTO addRoom(String token, String propertyId, RoomRequestDTO request) {
         RegisteredUser manager = getManagerFromToken(token);
