@@ -3,16 +3,20 @@
 \usepackage[table]{xcolor}
 \usepackage{array}
 \usepackage{float}
-% --- REPLACEMENT FOR MINTED: LISTINGS ---
+\usepackage{hyperref} % Added for clickable URLs (fixes the URL warning)
+\usepackage{url}      % Helper for long URLs
+
+% --- LISTINGS CONFIGURATION ---
 \usepackage{listings} 
 
-% Colors similar to VS Code / Minted
+% Colors similar to VS Code
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
 \definecolor{mauve}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
-\lstset{
+% 1. Define the specific style 'javaStyle' required by Chapter 6
+\lstdefinestyle{javaStyle}{
   language=Java,                
   backgroundcolor=\color{backcolour}, 
   frame=single,                 
@@ -30,6 +34,9 @@
   breakatwhitespace=true,
   tabsize=4
 }
+
+% 2. Set 'javaStyle' as the default (optional, but good for consistency)
+\lstset{style=javaStyle}
 % -------------------------------------------
 
 \usepackage{newverbs}
@@ -37,10 +44,10 @@
 \usepackage[english]{babel}
 \usepackage[skins,theorems]{tcolorbox}
 
-% --- CONFIGURAZIONI ---
+% --- CONFIGURATIONS ---
 \tcbset{highlight math style={enhanced, colframe=red,colback=gray,arc=0pt,boxrule=1pt}}
 \newverbcommand{\cverb}{\color{DarkGreen}}{}
-\renewcommand{\contentsname}{Indice}
+\renewcommand{\contentsname}{Table of Contents} % Changed to English since babel is English
 \definecolor{DarkGreen}{RGB}{0,110,0}
 \newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
 \newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
@@ -50,11 +57,11 @@
 
 \begin{titlepage}
     \centering
-    % Ensure this image exists, otherwise comment it out with %
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\linewidth]{images/Logo_UNIPI.jpg} 
-\end{figure}
+    % Ensure this image exists
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{images/Logo_UNIPI.jpg} 
+    \end{figure}
 
     \vspace{1cm}
     {\LARGE Computer Engineering\\}
@@ -78,6 +85,9 @@
 \pagenumbering{arabic}
 
 % --- CHAPTERS ---
+% Ensure strict line breaking for long text in included files
+\sloppy 
+
 \include{Chapter1}
 \include{Chapter2}
 \include{Chapter3}
