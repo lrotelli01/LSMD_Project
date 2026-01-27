@@ -1,0 +1,23 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{blacklistToken}\PYG{p}{(}\PYG{n}{String}\PYG{+w}{ }\PYG{n}{token}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{cleanedToken}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{cleanToken}\PYG{p}{(}\PYG{n}{token}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{Claims}\PYG{+w}{ }\PYG{n}{claims}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{getClaims}\PYG{p}{(}\PYG{n}{cleanedToken}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Calculate remaining TTL}
+\PYG{+w}{    }\PYG{k+kt}{long}\PYG{+w}{ }\PYG{n}{tokenExpiration}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{claims}\PYG{p}{.}\PYG{n+na}{getExpiration}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{getTime}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{long}\PYG{+w}{ }\PYG{n}{currentTime}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{System}\PYG{p}{.}\PYG{n+na}{currentTimeMillis}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{long}\PYG{+w}{ }\PYG{n}{ttl}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{tokenExpiration}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{currentTime}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{ttl}\PYG{+w}{ }\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{c+c1}{// Key format: \PYGZdq{}blacklist:\PYGZlt{}token\PYGZgt{}\PYGZdq{}}
+\PYG{+w}{        }\PYG{n}{redisTemplate}\PYG{p}{.}\PYG{n+na}{opsForValue}\PYG{p}{(}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{set}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{blacklist:}\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{cleanedToken}\PYG{p}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{true}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+\PYG{+w}{                 }\PYG{n}{ttl}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{TimeUnit}\PYG{p}{.}\PYG{n+na}{MILLISECONDS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kd}{private}\PYG{+w}{ }\PYG{k+kt}{boolean}\PYG{+w}{ }\PYG{n+nf}{isTokenBlacklisted}\PYG{p}{(}\PYG{n}{String}\PYG{+w}{ }\PYG{n}{token}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{Boolean}\PYG{+w}{ }\PYG{n}{exists}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{redisTemplate}\PYG{p}{.}\PYG{n+na}{hasKey}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{blacklist:}\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{token}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{exists}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{exists}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

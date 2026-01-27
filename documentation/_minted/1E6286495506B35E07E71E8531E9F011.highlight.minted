@@ -1,0 +1,44 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{private}\PYG{+w}{ }\PYG{n}{AnalyticsResponseDTO}\PYG{+w}{ }\PYG{n+nf}{calculateAggregatedAnalyticsWithPipeline}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{Property}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{properties}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{startDate}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{endDate}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+
+\PYG{+w}{    }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{allRoomIds}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{properties}\PYG{p}{.}\PYG{n+na}{stream}\PYG{p}{(}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{flatMap}\PYG{p}{(}\PYG{n}{p}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{p}\PYG{p}{.}\PYG{n+na}{getRooms}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{stream}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{map}\PYG{p}{(}\PYG{n}{Room}\PYG{p}{:}\PYG{p}{:}\PYG{n}{getId}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{collect}\PYG{p}{(}\PYG{n}{Collectors}\PYG{p}{.}\PYG{n+na}{toList}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Build match criteria}
+\PYG{+w}{    }\PYG{n}{Criteria}\PYG{+w}{ }\PYG{n}{criteria}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{roomId}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{in}\PYG{p}{(}\PYG{n}{allRoomIds}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{startDate}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{endDate}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{criteria}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{criteria}\PYG{p}{.}\PYG{n+na}{and}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{dates.checkIn}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{gte}\PYG{p}{(}\PYG{n}{startDate}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{lte}\PYG{p}{(}\PYG{n}{endDate}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{c+c1}{// Pipeline stages}
+\PYG{+w}{    }\PYG{n}{MatchOperation}\PYG{+w}{ }\PYG{n}{matchStage}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{Aggregation}\PYG{p}{.}\PYG{n+na}{match}\PYG{p}{(}\PYG{n}{criteria}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n}{GroupOperation}\PYG{+w}{ }\PYG{n}{groupStage}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{Aggregation}\PYG{p}{.}\PYG{n+na}{group}\PYG{p}{(}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{count}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{as}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{totalReservations}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{sum}\PYG{p}{(}\PYG{n}{ConditionalOperators}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{when}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{status}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{is}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{CONFIRMED}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{then}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{otherwise}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{as}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{confirmed}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{sum}\PYG{p}{(}\PYG{n}{ConditionalOperators}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{when}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{status}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{is}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{CANCELLED}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{then}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{otherwise}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{as}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{cancelled}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{sum}\PYG{p}{(}\PYG{n}{ConditionalOperators}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{when}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{status}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{is}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{COMPLETED}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{then}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{otherwise}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{as}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{completed}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{sum}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{adults}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{as}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{totalAdults}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{sum}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{children}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{as}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{totalChildren}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n}{Aggregation}\PYG{+w}{ }\PYG{n}{aggregation}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{Aggregation}\PYG{p}{.}\PYG{n+na}{newAggregation}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{matchStage}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{groupStage}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n}{AggregationResults}\PYG{o}{\PYGZlt{}}\PYG{n}{AggregatedResult}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{results}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{mongoTemplate}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{aggregate}\PYG{p}{(}\PYG{n}{aggregation}\PYG{p}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{reservations}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{AggregatedResult}\PYG{p}{.}\PYG{n+na}{class}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{results}\PYG{p}{.}\PYG{n+na}{getUniqueMappedResult}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

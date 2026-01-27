@@ -1,0 +1,6 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@Query}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZob{} \PYGZsq{}roomId\PYGZsq{}: ?0, \PYGZsq{}status\PYGZsq{}: \PYGZob{} \PYGZdl{}ne: \PYGZsq{}cancelled\PYGZsq{} \PYGZcb{}, }\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{+}
+\PYG{+w}{       }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZsq{}dates.checkIn\PYGZsq{}: \PYGZob{} \PYGZdl{}lt: ?2 \PYGZcb{}, \PYGZsq{}dates.checkOut\PYGZsq{}: \PYGZob{} \PYGZdl{}gt: ?1 \PYGZcb{} \PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{Reservation}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n+nf}{findOverlappingReservations}\PYG{p}{(}
+\PYG{+w}{    }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{roomId}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{newCheckIn}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{LocalDate}\PYG{+w}{ }\PYG{n}{newCheckOut}\PYG{p}{)}\PYG{p}{;}
+\end{MintedVerbatim}

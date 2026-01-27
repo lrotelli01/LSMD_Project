@@ -1,0 +1,43 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{PropertyResponseDTO}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n+nf}{getContentBasedRecommendations}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{String}\PYG{+w}{ }\PYG{n}{propertyId}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{Property}\PYG{+w}{ }\PYG{n}{current}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{propertyRepository}\PYG{p}{.}\PYG{n+na}{findById}\PYG{p}{(}\PYG{n}{propertyId}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{orElse}\PYG{p}{(}\PYG{k+kc}{null}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{current}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{|}\PYG{o}{|}\PYG{+w}{ }\PYG{n}{current}\PYG{p}{.}\PYG{n+na}{getAmenities}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{|}\PYG{o}{|}
+\PYG{+w}{        }\PYG{n}{current}\PYG{p}{.}\PYG{n+na}{getAmenities}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{isEmpty}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{Collections}\PYG{p}{.}\PYG{n+na}{emptyList}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{n}{Query}\PYG{+w}{ }\PYG{n}{query}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{k}{new}\PYG{+w}{ }\PYG{n}{Query}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{c+c1}{// Exclude current property}
+\PYG{+w}{    }\PYG{n}{query}\PYG{p}{.}\PYG{n+na}{addCriteria}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZus{}id}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{.}\PYG{n+na}{ne}\PYG{p}{(}\PYG{n}{propertyId}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{c+c1}{// Match any shared amenities}
+\PYG{+w}{    }\PYG{n}{query}\PYG{p}{.}\PYG{n+na}{addCriteria}\PYG{p}{(}\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{amenities}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{in}\PYG{p}{(}\PYG{n}{current}\PYG{p}{.}\PYG{n+na}{getAmenities}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{query}\PYG{p}{.}\PYG{n+na}{limit}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{Property}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{candidates}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{mongoTemplate}\PYG{p}{.}\PYG{n+na}{find}\PYG{p}{(}\PYG{n}{query}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Property}\PYG{p}{.}\PYG{n+na}{class}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Sort by number of common amenities}
+\PYG{+w}{    }\PYG{n}{candidates}\PYG{p}{.}\PYG{n+na}{sort}\PYG{p}{(}\PYG{p}{(}\PYG{n}{p1}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{p2}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k+kt}{long}\PYG{+w}{ }\PYG{n}{common1}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{countCommon}\PYG{p}{(}\PYG{n}{p1}\PYG{p}{.}\PYG{n+na}{getAmenities}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{            }\PYG{n}{current}\PYG{p}{.}\PYG{n+na}{getAmenities}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k+kt}{long}\PYG{+w}{ }\PYG{n}{common2}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{countCommon}\PYG{p}{(}\PYG{n}{p2}\PYG{p}{.}\PYG{n+na}{getAmenities}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{            }\PYG{n}{current}\PYG{p}{.}\PYG{n+na}{getAmenities}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{Long}\PYG{p}{.}\PYG{n+na}{compare}\PYG{p}{(}\PYG{n}{common2}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{common1}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{candidates}\PYG{p}{.}\PYG{n+na}{stream}\PYG{p}{(}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{limit}\PYG{p}{(}\PYG{l+m+mi}{5}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{map}\PYG{p}{(}\PYG{k}{this}\PYG{p}{:}\PYG{p}{:}\PYG{n}{mapToDTO}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n+na}{collect}\PYG{p}{(}\PYG{n}{Collectors}\PYG{p}{.}\PYG{n+na}{toList}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kd}{private}\PYG{+w}{ }\PYG{k+kt}{long}\PYG{+w}{ }\PYG{n+nf}{countCommon}\PYG{p}{(}\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{l1}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{l2}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{l1}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{+w}{ }\PYG{o}{|}\PYG{o}{|}\PYG{+w}{ }\PYG{n}{l2}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{=}\PYG{+w}{ }\PYG{k+kc}{null}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{return}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{String}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{copy}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{k}{new}\PYG{+w}{ }\PYG{n}{ArrayList}\PYG{o}{\PYGZlt{}}\PYG{o}{\PYGZgt{}}\PYG{p}{(}\PYG{n}{l1}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{copy}\PYG{p}{.}\PYG{n+na}{retainAll}\PYG{p}{(}\PYG{n}{l2}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{copy}\PYG{p}{.}\PYG{n+na}{size}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

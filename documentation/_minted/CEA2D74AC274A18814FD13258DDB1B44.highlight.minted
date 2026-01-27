@@ -1,0 +1,12 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{public}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{PropertyResponseDTO}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n+nf}{getPropertiesInArea}\PYG{p}{(}
+\PYG{+w}{        }\PYG{k+kt}{double}\PYG{+w}{ }\PYG{n}{lat}\PYG{p}{,}\PYG{+w}{ }\PYG{k+kt}{double}\PYG{+w}{ }\PYG{n}{lon}\PYG{p}{,}\PYG{+w}{ }\PYG{k+kt}{double}\PYG{+w}{ }\PYG{n}{radiusKm}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{Query}\PYG{+w}{ }\PYG{n}{query}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{k}{new}\PYG{+w}{ }\PYG{n}{Query}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{query}\PYG{p}{.}\PYG{n+na}{addCriteria}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{Criteria}\PYG{p}{.}\PYG{n+na}{where}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{location}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{nearSphere}\PYG{p}{(}\PYG{k}{new}\PYG{+w}{ }\PYG{n}{Point}\PYG{p}{(}\PYG{n}{lon}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{lat}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n+na}{maxDistance}\PYG{p}{(}\PYG{n}{radiusKm}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{l+m+mf}{6378.1}\PYG{p}{)}\PYG{+w}{  }\PYG{c+c1}{// Convert km to radians}
+\PYG{+w}{    }\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{mongoTemplate}\PYG{p}{.}\PYG{n+na}{find}\PYG{p}{(}\PYG{n}{query}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Property}\PYG{p}{.}\PYG{n+na}{class}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}
