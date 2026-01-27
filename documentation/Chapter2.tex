@@ -267,7 +267,7 @@ Redis is utilized for caching, session management, and the temporary storage of 
 Redis is deployed using a \textbf{Master-Slave} architecture:
 \begin{itemize}
     \item \textbf{Replication:} The Master (Node A) handles all writes. These are asynchronously propagated to the Slaves (Node B and C), which can serve read traffic.
-    \item \textbf{Sentinel:} To ensure automatic failover, we deployed three \textbf{Redis Sentinel} instances. They monitor the cluster health and, if the Master fails, automatically promote one of the Slaves to be the new Master.
+    \item \textbf{Sentinel:} To ensure automatic failover, we deployed three \textbf{Redis Sentinel} instances. They monitor the cluster health and, if the Master fails, automatically promote one of the Slaves to be the new Master (in descending order of priority).
 \end{itemize}
 
 \subsubsection{Sharding Strategy}
