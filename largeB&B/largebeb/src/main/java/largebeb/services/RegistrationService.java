@@ -136,11 +136,7 @@ public class RegistrationService {
                     .username(savedUser.getUsername())
                     .mongoId(savedUser.getId())
                     .role(savedUser.getRole())
-<<<<<<< HEAD
-                    .name(savedUser.getName())         // or easier display in graph
-=======
-                    .name(savedUser.getUsername())  // Use username as name for now
->>>>>>> 0b1752f55e10ec7b2f4590aca85323251a697542
+                    .name(savedUser.getName()) // Conflict resolved: using name field
                     .build();
 
             userGraphRepository.save(userNode);
