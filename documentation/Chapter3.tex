@@ -26,6 +26,170 @@ The datasets obtained using the previous script are:
     \item \textbf{notifications.json 22.3MB} -- contains the notification about reservations and received messages
     
 \end{itemize}
+
+\subsection{Dataset Examples}
+Below are complete examples of documents from each collection in the dataset, showing the actual structure used in the MongoDB database.
+
+\subsubsection{Customer Document}
+\begin{verbatim}
+{
+  "id": "6712303a-0f84-4fef-9931-e9eea56c0941",
+  "username": "lauren13",
+  "email": "jameswest@example.com",
+  "password": "q^#4*aOh&h",
+  "name": "Brian",
+  "surname": "Valdez",
+  "birthdate": "2000-07-14",
+  "phoneNumber": "660.826.0647",
+  "paymentMethod": {
+    "id": "fed4057d-bb02-4576-b512-c4c3b253d218",
+    "gatewayToken": "f34b375a74e765e3627af52fb9e8c1de0b68...",
+    "cardType": "AMEX",
+    "last4Digits": "8973",
+    "expiryDate": "05/27",
+    "cardHolderName": "BRIAN VALDEZ"
+  },
+  "favoredPropertyIds": ["bdd640fb-0667-4ad1-9c80-317fa3b1799d"]
+}
+\end{verbatim}
+
+\subsubsection{Manager Document}
+\begin{verbatim}
+{
+  "id": "23b8c1e9-3924-46de-beb1-3b9046685257",
+  "username": "rhodespatricia",
+  "email": "garzaanthony@example.org",
+  "password": "@2$3Qtl!ld",
+  "name": "Susan",
+  "surname": "Rogers",
+  "phoneNumber": "361-855-9407",
+  "iban": "GB38CRJU95931034131647",
+  "vatNumber": "KD52553419283",
+  "billingAddress": {
+    "street": "8350 Lydia Valley Suite 641",
+    "city": "New Nancy",
+    "zipCode": "41746",
+    "country": "Croatia",
+    "stateProvince": "Tennessee"
+  }
+}
+\end{verbatim}
+
+\subsubsection{Property Document}
+\begin{verbatim}
+{
+  "id": "bdd640fb-0667-4ad1-9c80-317fa3b1799d",
+  "name": "Elif's room in cozy, clean flat.",
+  "address": "VIII Appia Antica",
+  "description": "10 min by bus to Piazza Venezia or Colosseum...",
+  "amenities": ["Wifi", "Kitchen", "Air conditioning", "Heating", ...],
+  "photos": [
+    "https://placekitten.com/1022/810",
+    "https://dummyimage.com/939x292", ...
+  ],
+  "email": "williamdavis@callahan.com",
+  "country": "Italy",
+  "region": "Lazio",
+  "city": "Rome",
+  "managerId": "23b8c1e9-3924-46de-beb1-3b9046685257",
+  "coordinates": [12.5013, 41.8719],
+  "ratingStats": {
+    "value": 4.2,
+    "count": 156,
+    "sum": 655.2
+  }
+}
+\end{verbatim}
+
+\subsubsection{Room Document}
+\begin{verbatim}
+{
+  "id": "e2817efd-ae84-4217-9d53-434bb88139b9",
+  "property_id": "bdd640fb-0667-4ad1-9c80-317fa3b1799d",
+  "roomType": "single",
+  "name": "Cozy Single Room",
+  "numBeds": 1,
+  "capacityAdults": 2,
+  "capacityChildren": 1,
+  "pricePerNightAdults": 75.50,
+  "pricePerNightChildren": 25.00,
+  "amenities": ["Wifi", "Heating", "Hangers", "Iron", ...],
+  "photos": ["https://placekitten.com/800/600", ...],
+  "status": "available"
+}
+\end{verbatim}
+
+\subsubsection{Reservation Document}
+\begin{verbatim}
+{
+  "id": "0ef8c2d6-f7fd-4646-b7bb-3eec4bf50b52",
+  "checkInDate": "2025-12-28",
+  "checkOutDate": "2026-01-02",
+  "creationDate": "2025-12-08",
+  "adults": 4,
+  "children": 2,
+  "status": "confirmed",
+  "totalPrice": 452.50,
+  "room_id": "e2817efd-ae84-4217-9d53-434bb88139b9",
+  "customer_id": "6712303a-0f84-4fef-9931-e9eea56c0941"
+}
+\end{verbatim}
+
+\subsubsection{Review Document}
+\begin{verbatim}
+{
+  "id": "0b19f88e-9d77-445e-b206-c26938b77c07",
+  "propertyId": "bdd640fb-0667-4ad1-9c80-317fa3b1799d",
+  "userId": "6712303a-0f84-4fef-9931-e9eea56c0941",
+  "reservationId": "0ef8c2d6-f7fd-4646-b7bb-3eec4bf50b52",
+  "creationDate": "2014-12-26",
+  "text": "Great spot in a nice area, walking distance from subway...",
+  "rating": 5,
+  "cleanliness": 3.0,
+  "communication": 5.0,
+  "location": 4.0,
+  "value": 3.0,
+  "managerReply": "Thank you for your kind words!"
+}
+\end{verbatim}
+
+\subsubsection{Message Document}
+\begin{verbatim}
+{
+  "id": "ee87905e-4ca4-45ea-8dfa-6a56d12dbc9a",
+  "sender_id": "da4bd9ca-eb5c-4467-80ba-cd647a0ecfea",
+  "recipient_id": "23b8c1e9-3924-46de-beb1-3b9046685257",
+  "timestamp": "2025-11-24T00:56:00",
+  "content": "Hello, is the property available for next week?",
+  "is_read": true
+}
+\end{verbatim}
+
+\subsubsection{Notification Document}
+\begin{verbatim}
+{
+  "id": "6c6fa611-5ab3-4edf-ae59-5ed3a8b317fa",
+  "recipientId": "23b8c1e9-3924-46de-beb1-3b9046685257",
+  "title": "New Booking",
+  "body": "Customer Kyle has made a new reservation.",
+  "type": "RESERVATION_CREATED",
+  "referenceId": "1825bc54-30be-445f-a835-14f2ceb81f9d",
+  "read": false,
+  "timestamp": "2025-11-19"
+}
+\end{verbatim}
+
+\subsubsection{Point of Interest (POI) Document}
+\begin{verbatim}
+{
+  "id": "113634a5-2050-4c62-88e8-95d7702c1821",
+  "property_id": "bdd640fb-0667-4ad1-9c80-317fa3b1799d",
+  "name": "Colosseum",
+  "coordinates": [41.8902, 12.4922],
+  "type": "historical"
+}
+\end{verbatim}
+
 % --- INIZIO NUOVA SEZIONE DATA DESIGN ---
 
 \section{Data Modelling Strategy}
@@ -105,12 +269,28 @@ Unlike the document model, we do not replicate the full dataset in Neo4j. We ado
     \begin{itemize}
         \item \texttt{(:User)} Contains only \texttt{userId} and minimal metadata (role).
         \item \texttt{(:Property)} Contains only \texttt{propertyId} and \texttt{city}.
+        \item \texttt{(:Amenity)} Contains amenity \texttt{name} for content-based recommendations.
     \end{itemize}
     \item \textbf{Relationships:}
     \begin{itemize}
         \item \texttt{(:User)-[:BOOKED \{date: ...\}]->(:Property)} represents a confirmed reservation.
+        \item \texttt{(:Property)-[:HAS]->(:Amenity)} links properties to their amenities for similarity analysis.
     \end{itemize}
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/graph_book.png}
+    \caption{User-Property booking relationships in Neo4j. This graph structure enables collaborative filtering recommendations by identifying users with similar booking patterns.}
+    \label{fig:graph_booking}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/graph_amenity.png}
+    \caption{Property-Amenity relationships in Neo4j. Properties sharing common amenities can be efficiently identified for content-based recommendations.}
+    \label{fig:graph_amenity}
+\end{figure}
 
 \textbf{Note on Granularity:} In MongoDB, reservations are linked to specific \textit{Rooms}. However, for the recommendation logic ("Users who liked this Property also liked..."), the granularity of the "Room" is too fine. Therefore, during the graph ingestion, we aggregated room-level bookings up to the \textbf{Property} level to create meaningful connections between users and properties.
 

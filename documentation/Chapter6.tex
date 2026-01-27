@@ -355,6 +355,85 @@ The Cypher query pattern works as follows:
 
 This implements the classic "users who booked X also booked Y" collaborative filtering pattern.
 
+\paragraph{Domain-specific query description:}
+Given a user viewing a property page, the system needs to suggest alternative properties that were popular among users with similar booking behavior. The recommendation logic follows the pattern: "Users who booked this property also booked these other properties."
+
+\paragraph{Graph-centric query translation:}
+The Cypher query exploits the graph structure to traverse booking relationships:
+\begin{enumerate}
+    \item Start from the target \texttt{Property} node using its \texttt{propertyId}
+    \item Traverse \texttt{BOOKED} relationships \textit{backward} to reach \texttt{User} nodes who booked this property
+    \item From these users, traverse \texttt{BOOKED} relationships \textit{forward} to discover other \texttt{Property} nodes they also booked
+    \item Aggregate the results by counting co-occurrence frequency (strength metric)
+    \item Rank by strength descending to prioritize properties with strongest collaborative signals
+\end{enumerate}
+
+This two-hop graph traversal naturally captures collaborative filtering semantics: properties frequently co-booked by the same users indicate similar appeal.
+
+\subsection{Content-Based Filtering Recommendations}
+
+The content-based approach finds similar properties by analyzing shared amenities:
+
+\begin{lstlisting}[style=javaStyle]
+public List<PropertyResponseDTO> getContentBasedRecommendations(
+        String propertyId) {
+    
+    String cypherQuery = """
+        MATCH (p:Property {propertyId: $propId})-[:HAS]->(a:Amenity)
+              <-[:HAS]-(other:Property)
+        WHERE p.propertyId <> other.propertyId
+        RETURN other.propertyId AS recommendedId, 
+               count(a) AS matchStrength
+        ORDER BY matchStrength DESC
+        LIMIT 10
+    """;
+
+    Collection<String> recommendedIds = neo4jClient.query(cypherQuery)
+        .bind(propertyId).to("propId")
+        .fetchAs(String.class)
+        .mappedBy((typeSystem, record) -> 
+            record.get("recommendedId").asString())
+        .all();
+
+    List<Property> properties = 
+        (List<Property>) propertyRepository.findAllById(recommendedIds);
+    
+    // Preserve Neo4j ordering (highest similarity first)
+    Map<String, Property> propertyMap = properties.stream()
+        .collect(Collectors.toMap(Property::getId, p -> p));
+    
+    return recommendedIds.stream()
+        .map(propertyMap::get)
+        .filter(Objects::nonNull)
+        .map(this::mapToDTO)
+        .collect(Collectors.toList());
+}
+\end{lstlisting}
+
+The query identifies properties sharing common amenities:
+\begin{itemize}
+    \item \textbf{Pattern matching}: Finds amenities connected to the source property via \texttt{HAS} relationships.
+    \item \textbf{Similarity discovery}: Traverses back through \texttt{HAS} relationships to find other properties with matching amenities.
+    \item \textbf{Strength metric}: Counts shared amenities as a similarity score.
+    \item \textbf{Self-exclusion}: Filters out the source property using \texttt{WHERE} clause.
+\end{itemize}
+
+\paragraph{Domain-specific query description:}
+When a user views a property with specific features (pool, WiFi, parking, etc.), the system should recommend other properties offering similar amenities. This answers the question: "Show me properties with features similar to this one."
+
+\paragraph{Graph-centric query translation:}
+The Cypher query leverages the bipartite graph structure between Properties and Amenities:
+\begin{enumerate}
+    \item Start from the source \texttt{Property} node
+    \item Traverse \texttt{HAS} relationships \textit{outward} to reach connected \texttt{Amenity} nodes (WiFi, Pool, Parking, etc.)
+    \item From these shared amenity nodes, traverse \texttt{HAS} relationships \textit{backward} to discover other \texttt{Property} nodes
+    \item Count the number of shared \texttt{Amenity} nodes as the match strength metric
+    \item Filter out the source property to avoid self-recommendation
+    \item Rank results by match strength descending
+\end{enumerate}
+
+This pattern-matching strategy efficiently computes feature overlap without requiring pairwise comparisons. Properties sharing more amenities naturally emerge at the top through graph traversal counting.
+
 \subsection{Graph Constraints for Data Integrity}
 
 The application creates constraints at startup to ensure graph integrity:
