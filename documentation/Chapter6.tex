@@ -1,4 +1,4 @@
-\chapter{Most relevant queries}
+\chapter{Most Relevant Queries}
 
 This chapter presents the most relevant queries implemented in the application, showcasing how each database technology is leveraged to fulfill specific functional requirements. The queries are organized by database system and demonstrate the query-driven design approach adopted throughout the project.
 
@@ -14,7 +14,7 @@ The property search functionality is one of the most critical features of the pl
 
 The \texttt{PropertyService} implements a dynamic query builder that constructs MongoDB queries based on user-provided filters:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 public List<PropertyResponseDTO> searchProperties(String city, 
         Double minPrice, Double maxPrice, List<String> amenities) {
     Query query = new Query();
@@ -39,20 +39,20 @@ public List<PropertyResponseDTO> searchProperties(String city,
 
     return mongoTemplate.find(query, Property.class);
 }
-\end{minted}
+\end{lstlisting}
 
 Key aspects of this query:
 \begin{itemize}
-    \item \textbf{Case-insensitive regex}: The \texttt{regex(city, "i")} operator enables flexible text matching regardless of capitalization
-    \item \textbf{\$all operator}: Ensures all specified amenities are present in the property, not just one of them
-    \item \textbf{\$elemMatch}: Queries nested array elements (rooms) with compound conditions
+    \item \textbf{Case-insensitive regex}: The \texttt{regex(city, "i")} operator enables flexible text matching regardless of capitalization.
+    \item \textbf{\$all operator}: Ensures all specified amenities are present in the property, not just one of them.
+    \item \textbf{\$elemMatch}: Queries nested array elements (rooms) with compound conditions.
 \end{itemize}
 
 \subsubsection{Geospatial Search}
 
 For map-based property discovery, the application uses MongoDB's geospatial capabilities:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 public List<PropertyResponseDTO> getPropertiesInArea(
         double lat, double lon, double radiusKm) {
     Query query = new Query();
@@ -63,7 +63,7 @@ public List<PropertyResponseDTO> getPropertiesInArea(
     );
     return mongoTemplate.find(query, Property.class);
 }
-\end{minted}
+\end{lstlisting}
 
 The \texttt{\$nearSphere} operator uses spherical geometry for accurate distance calculations on Earth's surface, essential for travel applications.
 
@@ -71,48 +71,48 @@ The \texttt{\$nearSphere} operator uses spherical geometry for accurate distance
 
 One of the most critical queries ensures that double-booking is prevented:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 @Query("{ 'roomId': ?0, 'status': { $ne: 'cancelled' }, " +
        "'dates.checkIn': { $lt: ?2 }, 'dates.checkOut': { $gt: ?1 } }")
 List<Reservation> findOverlappingReservations(
     String roomId, LocalDate newCheckIn, LocalDate newCheckOut);
-\end{minted}
+\end{lstlisting}
 
 This query implements the classic interval overlap detection algorithm:
 \begin{itemize}
-    \item Two intervals [A, B] and [C, D] overlap if and only if A < D AND C < B
-    \item The \texttt{\$ne: 'cancelled'} filter excludes cancelled reservations from availability checks
-    \item Proper indexing on \texttt{roomId} and \texttt{dates.checkIn} ensures efficient execution
+    \item Two intervals [A, B] and [C, D] overlap if and only if A < D AND C < B.
+    \item The \texttt{\$ne: 'cancelled'} filter excludes cancelled reservations from availability checks.
+    \item Proper indexing on \texttt{roomId} and \texttt{dates.checkIn} ensures efficient execution.
 \end{itemize}
 
 \subsection{Message Conversation Retrieval}
 
 The messaging system requires bidirectional message retrieval:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 @Query(value = "{$or: [ " +
     "{ 'senderId': ?0, 'recipientId': ?1 }, " +
     "{ 'senderId': ?1, 'recipientId': ?0 } ]}", 
     sort = "{ 'timestamp' : 1 }")
 List<Message> findConversation(String user1, String user2);
-\end{minted}
+\end{lstlisting}
 
 This query:
 \begin{itemize}
-    \item Uses \texttt{\$or} to match messages in both directions
-    \item Sorts by timestamp ascending to display conversation chronologically
-    \item Leverages compound index on (senderId, recipientId) for performance
+    \item Uses \texttt{\$or} to match messages in both directions.
+    \item Sorts by timestamp ascending to display conversation chronologically.
+    \item Leverages compound index on (senderId, recipientId) for performance.
 \end{itemize}
 
 \subsection{Review Analytics with Date Filtering}
 
 For the manager analytics dashboard, reviews can be filtered by creation date:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 @Query("{ 'propertyId': ?0, 'creationDate': { $gte: ?1, $lte: ?2 } }")
 List<Review> findByPropertyIdAndCreationDateBetween(
     String propertyId, LocalDate startDate, LocalDate endDate);
-\end{minted}
+\end{lstlisting}
 
 The \texttt{\$gte} (greater than or equal) and \texttt{\$lte} (less than or equal) operators create an inclusive date range filter.
 
@@ -120,11 +120,11 @@ The \texttt{\$gte} (greater than or equal) and \texttt{\$lte} (less than or equa
 
 To prevent account deletion while active bookings exist:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 @Query(value = "{ 'userId': ?0, 'status': 'confirmed', " +
     "'dates.checkOut': { $gt: ?1 } }", exists = true)
 boolean hasActiveBookings(String userId, LocalDate today);
-\end{minted}
+\end{lstlisting}
 
 The \texttt{exists = true} parameter makes this an existence check query, returning a boolean instead of retrieving documents, which is more efficient for validation purposes.
 
@@ -134,7 +134,7 @@ For complex analytics calculations, the application leverages MongoDB's Aggregat
 
 \subsubsection{Reservation Statistics Aggregation}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 private AnalyticsResponseDTO calculateAggregatedAnalyticsWithPipeline(
         List<Property> properties, LocalDate startDate, LocalDate endDate) {
     
@@ -177,14 +177,14 @@ private AnalyticsResponseDTO calculateAggregatedAnalyticsWithPipeline(
 
     return results.getUniqueMappedResult();
 }
-\end{minted}
+\end{lstlisting}
 
 This aggregation pipeline demonstrates:
 \begin{itemize}
-    \item \textbf{\$match stage}: Filters documents early to reduce processing
-    \item \textbf{\$group stage}: Aggregates statistics across all matching documents
-    \item \textbf{Conditional operators}: Counts reservations by status using \texttt{\$cond} expressions
-    \item \textbf{Type-safe results}: Maps aggregation output to a strongly-typed DTO
+    \item \textbf{\$match stage}: Filters documents early to reduce processing.
+    \item \textbf{\$group stage}: Aggregates statistics across all matching documents.
+    \item \textbf{Conditional operators}: Counts reservations by status using \texttt{\$cond} expressions.
+    \item \textbf{Type-safe results}: Maps aggregation output to a strongly-typed DTO.
 \end{itemize}
 
 \section{Neo4j Queries}
@@ -195,7 +195,7 @@ Neo4j powers the recommendation engine through graph-based queries using Cypher,
 
 The primary recommendation algorithm identifies properties booked by users with similar preferences:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 public List<PropertyResponseDTO> getCollaborativeRecommendations(
         String propertyId) {
     
@@ -217,15 +217,15 @@ public List<PropertyResponseDTO> getCollaborativeRecommendations(
 
     return propertyRepository.findAllById(recommendedIds);
 }
-\end{minted}
+\end{lstlisting}
 
 The Cypher query pattern works as follows:
 \begin{itemize}
-    \item \textbf{Start node}: Finds the property being viewed
-    \item \textbf{First hop}: Traverses \texttt{BOOKED} relationships backward to find users who booked this property
-    \item \textbf{Second hop}: Traverses \texttt{BOOKED} relationships forward to find other properties these users booked
-    \item \textbf{Aggregation}: Groups by property and counts co-occurrences as "strength"
-    \item \textbf{Ranking}: Orders by strength to surface the most relevant recommendations
+    \item \textbf{Start node}: Finds the property being viewed.
+    \item \textbf{First hop}: Traverses \texttt{BOOKED} relationships backward to find users who booked this property.
+    \item \textbf{Second hop}: Traverses \texttt{BOOKED} relationships forward to find other properties these users booked.
+    \item \textbf{Aggregation}: Groups by property and counts co-occurrences as "strength".
+    \item \textbf{Ranking}: Orders by strength to surface the most relevant recommendations.
 \end{itemize}
 
 This implements the classic "users who booked X also booked Y" collaborative filtering pattern.
@@ -234,7 +234,7 @@ This implements the classic "users who booked X also booked Y" collaborative fil
 
 The application creates constraints at startup to ensure graph integrity:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 @EventListener(ApplicationReadyEvent.class)
 public void createIndexesAndConstraints() {
     List<String> startupQueries = List.of(
@@ -253,12 +253,12 @@ public void createIndexesAndConstraints() {
 
     startupQueries.forEach(query -> neo4jClient.query(query).run());
 }
-\end{minted}
+\end{lstlisting}
 
 These constraints serve dual purposes:
 \begin{itemize}
-    \item \textbf{Data integrity}: Prevents duplicate nodes
-    \item \textbf{Performance}: Creates implicit indexes for O(1) lookups
+    \item \textbf{Data integrity}: Prevents duplicate nodes.
+    \item \textbf{Performance}: Creates implicit indexes for O(1) lookups.
 \end{itemize}
 
 \section{Redis Queries and Operations}
@@ -269,7 +269,7 @@ Redis provides in-memory data structures for caching, session management, and re
 
 JWT tokens are stateless by design, but the application implements secure logout through Redis blacklisting:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 public void blacklistToken(String token) {
     String cleanedToken = cleanToken(token);
     Claims claims = getClaims(cleanedToken);
@@ -291,20 +291,20 @@ private boolean isTokenBlacklisted(String token) {
     Boolean exists = redisTemplate.hasKey("blacklist:" + token);
     return exists != null && exists;
 }
-\end{minted}
+\end{lstlisting}
 
 Key design decisions:
 \begin{itemize}
-    \item \textbf{TTL-based expiration}: Blacklist entries automatically expire when the token would have naturally expired, preventing unbounded memory growth
-    \item \textbf{String data type}: Simple key-value structure for O(1) lookup
-    \item \textbf{Validation integration}: Token validation checks blacklist before accepting requests
+    \item \textbf{TTL-based expiration}: Blacklist entries automatically expire when the token would have naturally expired, preventing unbounded memory growth.
+    \item \textbf{String data type}: Simple key-value structure for O(1) lookup.
+    \item \textbf{Validation integration}: Token validation checks blacklist before accepting requests.
 \end{itemize}
 
 \subsection{Pessimistic Locking for Reservations}
 
 To prevent double-booking during the payment window, Redis implements temporary locks:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 private static final String REDIS_PREFIX = "temp_res:";
 
 public ReservationResponseDTO initiateReservation(
@@ -353,20 +353,20 @@ public ReservationResponseDTO initiateReservation(
     
     return mapToDTO(tempReservation);
 }
-\end{minted}
+\end{lstlisting}
 
 This implements a pessimistic locking pattern:
 \begin{itemize}
-    \item \textbf{Temporary reservation}: Stored in Redis with 15-minute TTL during payment
-    \item \textbf{Overlap checking}: Both MongoDB (confirmed) and Redis (pending) are checked
-    \item \textbf{Automatic unlock}: TTL ensures locks are released if payment is abandoned
+    \item \textbf{Temporary reservation}: Stored in Redis with 15-minute TTL during payment.
+    \item \textbf{Overlap checking}: Both MongoDB (confirmed) and Redis (pending) are checked.
+    \item \textbf{Automatic unlock}: TTL ensures locks are released if payment is abandoned.
 \end{itemize}
 
 \subsection{Trending Properties with Sorted Sets}
 
 Redis sorted sets maintain real-time property popularity rankings:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 // Increment view count when property is viewed
 public PropertyResponseDTO getPropertyDetails(String propertyId) {
     Property property = propertyRepository.findById(propertyId)
@@ -395,20 +395,20 @@ public List<PropertyResponseDTO> getTrendingProperties() {
         .map(this::mapToDTO)
         .collect(Collectors.toList());
 }
-\end{minted}
+\end{lstlisting}
 
 Redis sorted sets provide:
 \begin{itemize}
-    \item \textbf{O(log N) insertion}: Efficient score updates
-    \item \textbf{O(log N + M) range queries}: Fast top-K retrieval
-    \item \textbf{Atomic operations}: Thread-safe score increments
+    \item \textbf{O(log N) insertion}: Efficient score updates.
+    \item \textbf{O(log N + M) range queries}: Fast top-K retrieval.
+    \item \textbf{Atomic operations}: Thread-safe score increments.
 \end{itemize}
 
 \subsection{User Browsing History with Lists}
 
 Redis lists store recently viewed properties per user:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 public void addToUserHistory(String userId, String propertyId) {
     String key = "history:" + userId;
     
@@ -437,20 +437,20 @@ public List<PropertyResponseDTO> getUserHistory(String userId) {
         .map(this::mapToDTO)
         .collect(Collectors.toList());
 }
-\end{minted}
+\end{lstlisting}
 
 This pattern:
 \begin{itemize}
-    \item Uses \texttt{LPUSH} for O(1) insertion at head
-    \item Uses \texttt{LTRIM} to maintain fixed-size history (last 10 properties)
-    \item Provides O(1) retrieval for "recently viewed" feature
+    \item Uses \texttt{LPUSH} for O(1) insertion at head.
+    \item Uses \texttt{LTRIM} to maintain fixed-size history (last 10 properties).
+    \item Provides O(1) retrieval for "recently viewed" feature.
 \end{itemize}
 
 \section{Content-Based Filtering with MongoDB}
 
 The application also implements content-based recommendations using MongoDB:
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}[style=javaStyle]
 public List<PropertyResponseDTO> getContentBasedRecommendations(
         String propertyId) {
     Property current = propertyRepository.findById(propertyId)
@@ -492,13 +492,13 @@ private long countCommon(List<String> l1, List<String> l2) {
     copy.retainAll(l2);
     return copy.size();
 }
-\end{minted}
+\end{lstlisting}
 
 This query demonstrates:
 \begin{itemize}
-    \item \textbf{\$in operator}: Matches properties with at least one shared amenity
-    \item \textbf{Client-side ranking}: Sorts by Jaccard-like similarity metric
-    \item \textbf{Hybrid approach}: Database filtering + application sorting for flexibility
+    \item \textbf{\$in operator}: Matches properties with at least one shared amenity.
+    \item \textbf{Client-side ranking}: Sorts by Jaccard-like similarity metric.
+    \item \textbf{Hybrid approach}: Database filtering + application sorting for flexibility.
 \end{itemize}
 
 \section{Summary}
@@ -506,9 +506,9 @@ This query demonstrates:
 The query implementations in this chapter demonstrate how the application leverages each database technology's strengths:
 
 \begin{itemize}
-    \item \textbf{MongoDB}: Complex document queries, aggregation pipelines for analytics, geospatial search, and flexible schema support
-    \item \textbf{Neo4j}: Graph traversal for collaborative filtering recommendations, relationship-based queries
-    \item \textbf{Redis}: In-memory caching, session management, pessimistic locking, and real-time rankings
+    \item \textbf{MongoDB}: Complex document queries, aggregation pipelines for analytics, geospatial search, and flexible schema support.
+    \item \textbf{Neo4j}: Graph traversal for collaborative filtering recommendations, relationship-based queries.
+    \item \textbf{Redis}: In-memory caching, session management, pessimistic locking, and real-time rankings.
 \end{itemize}
 
 The query-driven design approach ensures that data models are optimized for the access patterns they need to support, resulting in efficient and maintainable database operations throughout the application.
