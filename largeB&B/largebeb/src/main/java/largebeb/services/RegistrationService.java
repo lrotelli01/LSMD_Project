@@ -5,10 +5,14 @@ import largebeb.dto.RegistrationResponseDTO;
 import largebeb.model.Customer;
 import largebeb.model.Manager;
 import largebeb.model.RegisteredUser;
+import largebeb.model.graph.UserNode; // Import the Neo4j Node class
+import largebeb.repository.UserGraphRepository; // Import the Neo4j Repository
 import largebeb.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.util.regex.Pattern;
 
@@ -16,7 +20,8 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class RegistrationService {
 
-    private final UserRepository userRepository;
+    private final UserRepository userRepository;      // MongoDB Repository
+    private final UserGraphRepository userGraphRepository; // Neo4j Repository
     private final PasswordEncoder passwordEncoder;
 
     // Password: 8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special character
@@ -24,16 +29,16 @@ public class RegistrationService {
         "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
 
     // Universal IBAN (ISO 13616): 
-    // Starts with 2 Country Code letters, 2 Check Digits, followed by 11-30 alphanumeric chars.
     private static final String UNIVERSAL_IBAN_PATTERN = "^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$";
 
     // Universal Tax ID / VAT: 
-    // Alphanumeric + hyphens, length 5-20.
     private static final String UNIVERSAL_TAX_ID_PATTERN = "^[A-Z0-9\\-]{5,20}$";
 
     // Universal Phone Number: Optional '+', followed by 7 to 20 digits/spaces/dashes.
     private static final String UNIVERSAL_PHONE_PATTERN = "^\\+?[0-9\\s\\-\\.]{7,20}$";
 
+    // Using Transactional is recommended to ensure data consistency (though cross-db transactions are complex)
+    @Transactional 
     public RegistrationResponseDTO register(RegistrationRequestDTO request) {
                 
         // Basic Field Validation
@@ -47,7 +52,6 @@ public class RegistrationService {
         }
 
         // Age and Date Format Validation
-        // If parsing fails before reaching here, Spring throws a HttpMessageNotReadableException.
         if (request.getBirthdate() == null) {
             return new RegistrationResponseDTO("Birthdate is mandatory and must follow the format 'yyyy-MM-dd'.", null, null);
         }
@@ -118,14 +122,33 @@ public class RegistrationService {
         newUser.setRole(request.getRole().toUpperCase());
         newUser.setPhoneNumber(request.getPhoneNumber());
         newUser.setBirthdate(request.getBirthdate());
+        
+        // Map Name/Surname if present in DTO
+        newUser.setName(request.getName());
+        newUser.setSurname(request.getSurname());
 
         // Encrypt Password
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         newUser.setPassword(hashedPassword);
 
-        // Save to DB
+        // Save to MongoDB
         RegisteredUser savedUser = userRepository.save(newUser);
         
+        // Save to neo4j
+        try {
+            UserNode userNode = UserNode.builder()
+                    .username(savedUser.getUsername()) // Graph ID
+                    .mongoId(savedUser.getId())        // Foreign Key to Mongo
+                    .role(savedUser.getRole())
+                    .name(savedUser.getName())         // For easier display in graph
+                    .build();
+
+            userGraphRepository.save(userNode);
+        } catch (Exception e) {
+            // Log error
+            System.err.println("Error saving to Neo4j: " + e.getMessage());
+        }
+
         return new RegistrationResponseDTO(
             "Registration successful", 
             savedUser.getId(), 
