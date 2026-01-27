@@ -21,9 +21,6 @@ import largebeb.utilities.RatingStats;
 @Document(collection = "properties")
 // COMPOUND INDEXES (For complex multi-field filtering)
 @CompoundIndexes({
-    // Location Hierarchy: Optimizes drill-down "City -> Region -> Country"
-    @CompoundIndex(name = "location_idx", def = "{'city': 1, 'region': 1, 'country': 1}"),
-
     // Room Capacity: Optimizes "Find property with room for X adults & Y children"
     // Indexes fields inside the embedded 'rooms' list.
     @CompoundIndex(name = "room_capacity_idx", def = "{'rooms.capacityAdults': 1, 'rooms.capacityChildren': 1}"),

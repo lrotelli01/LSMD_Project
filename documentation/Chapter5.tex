@@ -11,25 +11,6 @@ The indexing strategy is implemented directly via Spring Data MongoDB annotation
 The \texttt{properties} collection utilizes a combination of Compound, Text, and Geospatial indexes to handle complex filtering and search requirements.
 
 \begin{itemize}
-    \item \textbf{Location Hierarchy Compound Index}
-    \begin{itemize}
-        \item \textbf{Type:} Compound Index
-        \item \textbf{Fields:} \texttt{\{ "city": 1, "region": 1, "country": 1 \}}
-        \item \textbf{Justification:} Optimizes hierarchical drill-down filtering (e.g., selecting a country, then a region, then a city) without requiring separate indexes for each level.
-    \begin{figure}[H]
-      \centering
-      \includegraphics[width=0.5\textwidth]{images/LHCNoIndex.png}
-      \caption{Query results without index}
-      \label{fig:my_label}
-    \end{figure}
-    \begin{figure}[H]
-      \centering
-      \includegraphics[width=0.5\textwidth]{images/LHCIndex.png}
-      \caption{Query results with index}
-      \label{fig:my_label}
-    \end{figure}
-    \end{itemize}
-
     \item \textbf{Room Capacity Compound Index}
     \begin{itemize}
         \item \textbf{Type:} Compound Index
