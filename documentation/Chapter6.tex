@@ -4,65 +4,274 @@ This chapter presents the most relevant queries implemented in the application, 
 
 \section{MongoDB Queries}
 
-MongoDB serves as the primary database for the application, handling the majority of data storage and retrieval operations. The queries range from simple CRUD operations to complex aggregation pipelines for business analytics.
+MongoDB serves as the primary database for the application, handling the majority of data storage and retrieval operations. The queries are implemented using Spring Data MongoDB's \texttt{@Query} and \texttt{@Aggregation} annotations directly in repository interfaces, providing a clean declarative approach.
 
-\subsection{MongoDB Aggregation Pipeline}
+\subsection{Property Search and Filtering}
 
-For complex analytics calculations, the application leverages MongoDB's Aggregation Framework, which provides better performance than client-side processing for large datasets.
+The property search functionality is one of the most critical features of the platform, allowing users to find accommodations based on multiple criteria.
 
-\subsubsection{Reservation Statistics Aggregation}
+\subsubsection{Search by Name with Average Rating Calculation}
+
+The following query demonstrates searching properties by name while calculating their average rating on-the-fly using an aggregation pipeline:
 
 \begin{lstlisting}[style=javaStyle]
-private AnalyticsResponseDTO calculateAggregatedAnalyticsWithPipeline(
-        List<Property> properties, LocalDate startDate, LocalDate endDate) {
-    
-    List<String> allRoomIds = properties.stream()
-        .flatMap(p -> p.getRooms().stream())
-        .map(Room::getId)
-        .collect(Collectors.toList());
-
-    // Build match criteria
-    Criteria criteria = Criteria.where("roomId").in(allRoomIds);
-    if (startDate != null && endDate != null) {
-        criteria = criteria.and("dates.checkIn").gte(startDate).lte(endDate);
-    }
-
-    // Pipeline stages
-    MatchOperation matchStage = Aggregation.match(criteria);
-
-    GroupOperation groupStage = Aggregation.group()
-        .count().as("totalReservations")
-        .sum(ConditionalOperators
-            .when(Criteria.where("status").is("CONFIRMED"))
-            .then(1).otherwise(0))
-            .as("confirmed")
-        .sum(ConditionalOperators
-            .when(Criteria.where("status").is("CANCELLED"))
-            .then(1).otherwise(0))
-            .as("cancelled")
-        .sum(ConditionalOperators
-            .when(Criteria.where("status").is("COMPLETED"))
-            .then(1).otherwise(0))
-            .as("completed")
-        .sum("adults").as("totalAdults")
-        .sum("children").as("totalChildren");
-
-    Aggregation aggregation = Aggregation.newAggregation(
-        matchStage, groupStage);
-    
-    AggregationResults<AggregatedResult> results = mongoTemplate
-        .aggregate(aggregation, "reservations", AggregatedResult.class);
-
-    return results.getUniqueMappedResult();
-}
+@Aggregation(pipeline = {
+    "{ '$match': { 'name': { $regex: ?0, $options: 'i' } } }",
+    "{ '$addFields': { 'averageRating': { " +
+    "   $cond: { " +
+    "       if: { $eq: ['$ratingStats.count', 0] }, " +
+    "       then: 0, " +
+    "       else: { $divide: ['$ratingStats.sum', '$ratingStats.count'] } " +
+    "} } } }",
+    "{ '$project': { 'id': '$_id', 'name': 1, 'city': 1, 'averageRating': 1 } }"
+})
+Slice<PropertySearchDTO> findByNameContaining(String name, Pageable pageable);
 \end{lstlisting}
 
-This aggregation pipeline demonstrates:
+Key aspects of this aggregation:
 \begin{itemize}
-    \item \textbf{\$match stage}: Filters documents early to reduce processing.
-    \item \textbf{\$group stage}: Aggregates statistics across all matching documents.
-    \item \textbf{Conditional operators}: Counts reservations by status using \texttt{\$cond} expressions.
-    \item \textbf{Type-safe results}: Maps aggregation output to a strongly-typed DTO.
+    \item \textbf{\$match stage}: Filters properties using case-insensitive regex (\texttt{\$options: 'i'}).
+    \item \textbf{\$addFields stage}: Computes derived fields, using \texttt{\$cond} to handle division by zero.
+    \item \textbf{\$project stage}: Shapes the output to only include relevant fields.
+    \item \textbf{Pageable support}: Spring Data handles pagination automatically with \texttt{Slice<>}.
+\end{itemize}
+
+\subsubsection{Find Property by Room ID}
+
+A query to find the parent property when only the room ID is known:
+
+\begin{lstlisting}[style=javaStyle]
+@Query("{ 'rooms.roomId': ?0 }")
+Optional<Property> findByRoomsId(String roomId);
+\end{lstlisting}
+
+This leverages MongoDB's ability to query nested array elements using dot notation.
+
+\subsection{Reservation Management Queries}
+
+\subsubsection{Availability Checking (Overlap Detection)}
+
+One of the most critical queries ensures that double-booking is prevented:
+
+\begin{lstlisting}[style=javaStyle]
+@Query("{ 'roomId': ?0, " +
+       "'status': { $ne: 'cancelled' }, " +
+       "'dates.checkIn': { $lt: ?2 }, " +
+       "'dates.checkOut': { $gt: ?1 } }")
+List<Reservation> findOverlappingReservations(
+    String roomId, LocalDate newCheckIn, LocalDate newCheckOut);
+\end{lstlisting}
+
+This query implements the classic interval overlap detection algorithm:
+\begin{itemize}
+    \item Two intervals [A, B] and [C, D] overlap if and only if A < D AND C < B.
+    \item The \texttt{\$ne: 'cancelled'} filter excludes cancelled reservations.
+    \item Proper indexing on \texttt{(roomId, dates.checkIn)} ensures O(log n) execution.
+\end{itemize}
+
+\subsubsection{Active Bookings Detection}
+
+To prevent account deletion while active bookings exist:
+
+\begin{lstlisting}[style=javaStyle]
+@Query(value = "{ 'userId': ?0, 'status': 'confirmed', " +
+    "'dates.checkOut': { $gt: ?1 } }", exists = true)
+boolean hasActiveBookings(String userId, LocalDate today);
+\end{lstlisting}
+
+The \texttt{exists = true} parameter makes this an existence check query, returning a boolean instead of retrieving documents.
+
+\subsection{Analytics Aggregation Pipelines}
+
+The manager analytics dashboard leverages complex aggregation pipelines for business intelligence.
+
+\subsubsection{Reservation Statistics by Status}
+
+\begin{lstlisting}[style=javaStyle]
+@Aggregation(pipeline = {
+    "{ '$match': { 'roomId': { $in: ?0 }, " +
+    "   'dates.checkIn': { $gte: ?1, $lte: ?2 } } }",
+    "{ '$group': { " +
+    "   '_id': null, " +
+    "   'totalReservations': { $sum: 1 }, " +
+    "   'confirmed': { $sum: { $cond: [{ $eq: ['$status', 'CONFIRMED'] }, 1, 0] } }, " +
+    "   'cancelled': { $sum: { $cond: [{ $eq: ['$status', 'CANCELLED'] }, 1, 0] } }, " +
+    "   'completed': { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, 1, 0] } }, " +
+    "   'totalAdults': { $sum: '$adults' }, " +
+    "   'totalChildren': { $sum: '$children' } " +
+    "} }",
+    "{ '$project': { '_id': 0 } }"
+})
+ReservationStatsDTO getReservationStatistics(
+    List<String> roomIds, LocalDate startDate, LocalDate endDate);
+\end{lstlisting}
+
+This aggregation demonstrates:
+\begin{itemize}
+    \item \textbf{\$match with \$in}: Filters reservations for multiple rooms efficiently.
+    \item \textbf{\$group with \$cond}: Conditional counting for status-based metrics.
+    \item \textbf{Date range filtering}: Uses \texttt{\$gte} and \texttt{\$lte} for inclusive date bounds.
+\end{itemize}
+
+\subsubsection{Rating Evolution Over Time}
+
+Analyzing how property ratings change over time:
+
+\begin{lstlisting}[style=javaStyle]
+@Aggregation(pipeline = {
+    "{ '$match': { 'propertyId': ?0, " +
+    "   'creationDate': { $gte: ?1, $lte: ?2 } } }",
+    "{ '$addFields': { " +
+    "   'yearMonth': { $dateToString: { format: '%Y-%m', date: '$creationDate' } } " +
+    "} }",
+    "{ '$group': { " +
+    "   '_id': '$yearMonth', " +
+    "   'averageRating': { $avg: '$rating' }, " +
+    "   'reviewCount': { $sum: 1 } " +
+    "} }",
+    "{ '$sort': { '_id': 1 } }",
+    "{ '$project': { 'month': '$_id', 'averageRating': 1, 'reviewCount': 1, '_id': 0 } }"
+})
+List<RatingEvolutionDTO> getRatingEvolution(
+    String propertyId, LocalDate startDate, LocalDate endDate);
+\end{lstlisting}
+
+Key techniques:
+\begin{itemize}
+    \item \textbf{\$dateToString}: Formats dates for grouping by month.
+    \item \textbf{\$avg}: Computes average rating per time period.
+    \item Chronological sorting enables trend visualization.
+\end{itemize}
+
+\subsubsection{Trending Properties (Improving Ratings)}
+
+Finding properties with improving ratings (recent reviews > historical average):
+
+\begin{lstlisting}[style=javaStyle]
+@Aggregation(pipeline = {
+    "{ '$addFields': { " +
+    "   'averageScore': { '$cond': { " +
+    "       if: { '$gt': ['$ratingStats.count', 0] }, " +
+    "       then: { '$divide': ['$ratingStats.sum', '$ratingStats.count'] }, " +
+    "       else: 0 " +
+    "   } }, " +
+    "   'recentReviews': { '$slice': [ " +
+    "       { '$sortArray': { 'input': '$reviews', 'sortBy': { 'timestamp': -1 } } }, " +
+    "       5 ] } " +
+    "} }",
+    "{ '$addFields': { 'recentAverage': { '$avg': '$recentReviews.score' } } }",
+    "{ '$match': { '$expr': { '$gt': ['$recentAverage', '$averageScore'] } } }",
+    "{ '$addFields': { 'scoreDifference': { '$subtract': ['$recentAverage', '$averageScore'] } } }",
+    "{ '$sort': { 'scoreDifference': -1 } }",
+    "{ '$limit': 10 }",
+    "{ '$project': { '_id': 0, 'id': '$_id', 'name': 1, 'scoreDifference': 1 } }"
+})
+List<TrendingPropertyDTO> findTopImprovingProperties();
+\end{lstlisting}
+
+Advanced techniques demonstrated:
+\begin{itemize}
+    \item \textbf{\$sortArray}: Sorts embedded array by timestamp without \$unwind.
+    \item \textbf{\$slice}: Takes only the 5 most recent reviews.
+    \item \textbf{\$expr in \$match}: Enables comparison between computed fields.
+    \item \textbf{Multi-stage \$addFields}: Builds up computed values incrementally.
+\end{itemize}
+
+\subsubsection{Top Properties by Genre/Category (Optional Filter)}
+
+Finding top-rated properties with optional category filtering:
+
+\begin{lstlisting}[style=javaStyle]
+@Aggregation(pipeline = {
+    "{ '$match': { '$expr': { '$or': [ " +
+    "   { '$eq': [?0, null] }, " +
+    "   { '$in': [?0, '$amenities'] } " +
+    "] } } }",
+    "{ '$addFields': { 'averageScore': { '$cond': { " +
+    "   if: { '$gt': ['$ratingStats.count', 0] }, " +
+    "   then: { '$divide': ['$ratingStats.sum', '$ratingStats.count'] }, " +
+    "   else: 0 } } } }",
+    "{ '$sort': { 'averageScore': -1 } }",
+    "{ '$limit': 10 }",
+    "{ '$project': { 'id': 1, 'name': 1, 'averageScore': 1 } }"
+})
+List<PropertyAverageDTO> findTop10Properties(String amenity);
+\end{lstlisting}
+
+This query handles optional parameters elegantly using \texttt{\$expr} with \texttt{\$or}.
+
+\subsection{Update Operations with @Query and @Update}
+
+Spring Data MongoDB supports atomic update operations using the combination of \texttt{@Query} and \texttt{@Update} annotations.
+
+\subsubsection{Update Username in Reviews}
+
+When a user changes their username, all their reviews must be updated:
+
+\begin{lstlisting}[style=javaStyle]
+@Query("{ 'reviews.username': ?0 }")
+@Update("{ '$set': { 'reviews.$.username': ?1 } }")
+void updateReviewsByUsername(String oldUsername, String newUsername);
+\end{lstlisting}
+
+The positional operator \texttt{\$} identifies the matched array element for the update.
+
+\subsubsection{Remove User Reviews on Account Deletion}
+
+\begin{lstlisting}[style=javaStyle]
+@Query("{ 'reviews.username': ?0 }")
+@Update("{ '$pull': { 'reviews': { 'username': ?0 } } }")
+void deleteReviewsByUsername(String username);
+\end{lstlisting}
+
+The \texttt{\$pull} operator removes all matching elements from the embedded array in a single atomic operation.
+
+\subsubsection{Increment Rating Statistics}
+
+\begin{lstlisting}[style=javaStyle]
+@Query("{ '_id': ?0 }")
+@Update("{ '$inc': { 'ratingStats.count': 1, 'ratingStats.sum': ?1 } }")
+void incrementRatingStats(String propertyId, int rating);
+\end{lstlisting}
+
+The \texttt{\$inc} operator provides atomic increment operations, essential for concurrent rating submissions.
+
+\subsection{Most Controversial Properties}
+
+Finding properties with highest rating variance (most polarizing opinions):
+
+\begin{lstlisting}[style=javaStyle]
+@Aggregation(pipeline = {
+    "{ '$addFields': { " +
+    "   'variance': { '$pow': [{ '$stdDevPop': '$reviews.rating' }, 2] } " +
+    "} }",
+    "{ '$match': { 'variance': { $gt: 0 } } }",
+    "{ '$sort': { 'variance': -1 } }",
+    "{ '$limit': 10 }",
+    "{ '$project': { '_id': 0, 'id': '$_id', 'name': 1, 'variance': 1 } }"
+})
+List<ControversialPropertyDTO> findMostControversialProperties();
+\end{lstlisting}
+
+This uses MongoDB's \texttt{\$stdDevPop} (population standard deviation) function to measure rating dispersion.
+
+\subsection{Message Conversation Retrieval}
+
+The messaging system requires bidirectional message retrieval:
+
+\begin{lstlisting}[style=javaStyle]
+@Query(value = "{ $or: [ " +
+    "{ 'senderId': ?0, 'recipientId': ?1 }, " +
+    "{ 'senderId': ?1, 'recipientId': ?0 } ] }", 
+    sort = "{ 'timestamp': 1 }")
+List<Message> findConversation(String user1, String user2);
+\end{lstlisting}
+
+This query:
+\begin{itemize}
+    \item Uses \texttt{\$or} to match messages in both directions.
+    \item Sorts by timestamp ascending to display conversation chronologically.
+    \item Leverages compound index on \texttt{(senderId, recipientId)} for performance.
 \end{itemize}
 
 \section{Neo4j Queries}
@@ -324,69 +533,14 @@ This pattern:
     \item Provides O(1) retrieval for "recently viewed" feature.
 \end{itemize}
 
-\section{Content-Based Filtering with MongoDB}
-
-The application also implements content-based recommendations using MongoDB:
-
-\begin{lstlisting}[style=javaStyle]
-public List<PropertyResponseDTO> getContentBasedRecommendations(
-        String propertyId) {
-    Property current = propertyRepository.findById(propertyId)
-        .orElse(null);
-    
-    if (current == null || current.getAmenities() == null || 
-        current.getAmenities().isEmpty()) {
-        return Collections.emptyList();
-    }
-
-    Query query = new Query();
-    // Exclude current property
-    query.addCriteria(Criteria.where("_id").ne(propertyId));
-    // Match any shared amenities
-    query.addCriteria(Criteria.where("amenities")
-        .in(current.getAmenities()));
-    query.limit(10);
-
-    List<Property> candidates = mongoTemplate.find(query, Property.class);
-
-    // Sort by number of common amenities
-    candidates.sort((p1, p2) -> {
-        long common1 = countCommon(p1.getAmenities(), 
-            current.getAmenities());
-        long common2 = countCommon(p2.getAmenities(), 
-            current.getAmenities());
-        return Long.compare(common2, common1);
-    });
-
-    return candidates.stream()
-        .limit(5)
-        .map(this::mapToDTO)
-        .collect(Collectors.toList());
-}
-
-private long countCommon(List<String> l1, List<String> l2) {
-    if (l1 == null || l2 == null) return 0;
-    List<String> copy = new ArrayList<>(l1);
-    copy.retainAll(l2);
-    return copy.size();
-}
-\end{lstlisting}
-
-This query demonstrates:
-\begin{itemize}
-    \item \textbf{\$in operator}: Matches properties with at least one shared amenity.
-    \item \textbf{Client-side ranking}: Sorts by Jaccard-like similarity metric.
-    \item \textbf{Hybrid approach}: Database filtering + application sorting for flexibility.
-\end{itemize}
-
 \section{Summary}
 
 The query implementations in this chapter demonstrate how the application leverages each database technology's strengths:
 
 \begin{itemize}
-    \item \textbf{MongoDB}: Complex document queries, aggregation pipelines for analytics, geospatial search, and flexible schema support.
-    \item \textbf{Neo4j}: Graph traversal for collaborative filtering recommendations, relationship-based queries.
-    \item \textbf{Redis}: In-memory caching, session management, pessimistic locking, and real-time rankings.
+    \item \textbf{MongoDB}: Complex document queries using \texttt{@Query} annotations, powerful aggregation pipelines with \texttt{@Aggregation} for analytics, and atomic updates with \texttt{@Update}.
+    \item \textbf{Neo4j}: Graph traversal for collaborative filtering recommendations, relationship management with Cypher's \texttt{MERGE} and \texttt{MATCH} patterns.
+    \item \textbf{Redis}: In-memory caching with TTL, pessimistic locking for reservations, real-time rankings with sorted sets, and browsing history with lists.
 \end{itemize}
 
 The query-driven design approach ensures that data models are optimized for the access patterns they need to support, resulting in efficient and maintainable database operations throughout the application.
