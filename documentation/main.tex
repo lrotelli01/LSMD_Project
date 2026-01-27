@@ -2,11 +2,38 @@
 \usepackage{graphicx} 
 \usepackage[table]{xcolor}
 \usepackage{array}
-\usepackage{listings}
+\usepackage{float}
+% --- REPLACEMENT FOR MINTED: LISTINGS ---
+\usepackage{listings} 
+
+% Colors similar to VS Code / Minted
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstset{
+  language=Java,                
+  backgroundcolor=\color{backcolour}, 
+  frame=single,                 
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=left,                 
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,              
+  breakatwhitespace=true,
+  tabsize=4
+}
+% -------------------------------------------
+
 \usepackage{newverbs}
 \usepackage{amssymb}
-\usepackage{minted2}
-\usemintedstyle{vs}
 \usepackage[english]{babel}
 \usepackage[skins,theorems]{tcolorbox}
 
@@ -18,40 +45,35 @@
 \newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
 \newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
 
-% --- INIZIO DOCUMENTO ---
+% --- DOCUMENT START ---
 \begin{document}
 
-% Spostiamo la Title Page qui dentro
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.4\linewidth]{images/Logo_UNIPI.jpg} % Ridotto un po' per estetica
-\end{figure}
-
-\begin{center}
+\begin{titlepage}
+    \centering
+    % Ensure this image exists, otherwise comment it out with %
+    \includegraphics[width=0.4\linewidth]{images/Logo_UNIPI.jpg} 
+    \vspace{1cm}
     {\LARGE Computer Engineering\\}
     \vspace{0.3cm}
     {\LARGE Artificial Intelligence and Data Engineering \\}
     \vspace{0.3cm}
     {\huge Large Scale and Multi-structured Databases \\}
     \vspace{2cm}
-    {\Huge \textbf{Project Documentation of \textit{LargeB\&B}} \\} % Ricorda \& se il nome ha una &
+    {\Huge \textbf{Project Documentation of \textit{LargeB\&B}} \\} 
     \vspace{2cm}
     {\LARGE Authors:\\
     Grillo Alessio - Luca Rotelli - Omar Tomàs Sfar \\}
     \vspace{1cm}
     {\LARGE Academic Year: 2025-2026 \\}
-\end{center}
+\end{titlepage}
 
-\thispagestyle{empty}
 \clearpage
-
 \pagenumbering{Roman}
 \tableofcontents
 \clearpage
-
 \pagenumbering{arabic}
 
-% Inclusione capitoli
+% --- CHAPTERS ---
 \include{Chapter1}
 \include{Chapter2}
 \include{Chapter3}
