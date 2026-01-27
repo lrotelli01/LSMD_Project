@@ -8,16 +8,17 @@ import largebeb.model.RegisteredUser;
 import largebeb.model.Reservation;
 import largebeb.model.Room;
 import largebeb.repository.PropertyRepository;
+import largebeb.repository.ReservationGraphRepository; // IMPORT ADDED
 import largebeb.repository.ReservationRepository;
+import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil;
+import largebeb.utilities.RatingStats; // Assuming this might be needed for other logic, kept if present
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import largebeb.model.Customer;
-import largebeb.repository.UserRepository;
 import largebeb.utilities.PaymentMethod;
 import largebeb.dto.PaymentRequestDTO;
-import org.springframework.data.neo4j.core.Neo4jClient;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -34,11 +35,11 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final ReservationGraphRepository reservationGraphRepository;
     private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtUtil jwtUtil;
     private final NotificationService notificationService;
-    private final Neo4jClient neo4jClient;
 
     private static final String REDIS_PREFIX = "temp_res:";
 
@@ -180,7 +181,7 @@ public class ReservationService {
         // Retrieve the user to verify if they have a saved payment method
 
         // Use RegisteredUser first to check the role safely
-         String userId = jwtUtil.getUserIdFromToken(token);
+        String userId = jwtUtil.getUserIdFromToken(token);
         
         RegisteredUser genericUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -228,8 +229,21 @@ public class ReservationService {
         tempReservation.setId(null); 
         Reservation finalReservation = reservationRepository.save(tempReservation);
 
-        // Sync with Neo4j - Create BOOKED relationship
-        syncBookingToNeo4j(userId, property.getId(), finalReservation.getDates().getCheckIn());
+        // Sync reservation to Neo4j
+        try {
+            reservationGraphRepository.createReservation(
+                finalReservation.getId(),             // The new Mongo ID
+                user.getId(),                         // Matches the :User(userId) in Neo4j
+                property.getId(),                     // Matches the :Property(propertyId) in Neo4j
+                finalReservation.getDates().getCheckIn(),
+                finalReservation.getDates().getCheckOut(),
+                amountToPay
+            );
+            System.out.println("Graph: Reservation synced to Neo4j successfully.");
+        } catch (Exception e) {
+            // We log the error but don't stop the process, as the main data is safe in Mongo
+            System.err.println("Graph Error: Failed to sync reservation to Neo4j. " + e.getMessage());
+        }
 
         // Notify Manager of New Booking
         notificationService.notifyManagerOfNewBooking(
@@ -426,9 +440,14 @@ public class ReservationService {
         reservation.setStatus("CANCELLED");
         reservationRepository.save(reservation);
         
-        // Sync with Neo4j - Remove BOOKED relationship
-        removeBookingFromNeo4j(userId, property.getId(), reservation.getDates().getCheckIn());
-        
+        // Delete reservation from Neo4j
+        try {
+            reservationGraphRepository.deleteById(reservationId);
+            System.out.println("Graph: Reservation deleted/cancelled in Neo4j.");
+        } catch (Exception e) {
+            System.err.println("Graph Error: Failed to delete reservation from Neo4j.");
+        }
+
         // Notify Manager of the cancelled booking
         notificationService.notifyManagerOfCancellation(
             property.getManagerId(), // Manager
@@ -444,62 +463,6 @@ public class ReservationService {
         System.out.println("\n--- [BANK GATEWAY - REFUND] ---");
         System.out.println("USER: " + username + " | TOKEN: " + token);
         System.out.println("AMOUNT: €" + String.format("%.2f", amount));
-
-    // NEO4J SYNCHRONIZATION METHODS
-
-    /**
-     * Creates a BOOKED relationship in Neo4j between a User and a Property
-     * This enables collaborative filtering recommendations
-     */
-    private void syncBookingToNeo4j(String userId, String propertyId, LocalDate bookingDate) {
-        try {
-            String cypherQuery = """
-                MERGE (u:User {userId: $userId})
-                MERGE (p:Property {propertyId: $propertyId})
-                MERGE (u)-[r:BOOKED {date: $date}]->(p)
-                RETURN u, r, p
-            """;
-
-            neo4jClient.query(cypherQuery)
-                    .bind(userId).to("userId")
-                    .bind(propertyId).to("propertyId")
-                    .bind(bookingDate.toString()).to("date")
-                    .run();
-
-            System.out.println("[Neo4j SYNC] Created BOOKED relationship: User(" + userId + ") -> Property(" + propertyId + ") on " + bookingDate);
-        } catch (Exception e) {
-            // Log error but don't fail the reservation - Neo4j is for recommendations, not critical data
-            System.err.println("[Neo4j SYNC ERROR] Failed to create BOOKED relationship: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Removes a BOOKED relationship from Neo4j when a reservation is cancelled
-     * Keeps the recommendation graph accurate
-     */
-    private void removeBookingFromNeo4j(String userId, String propertyId, LocalDate bookingDate) {
-        try {
-            String cypherQuery = """
-                MATCH (u:User {userId: $userId})-[r:BOOKED {date: $date}]->(p:Property {propertyId: $propertyId})
-                DELETE r
-                RETURN count(r) as deleted
-            """;
-
-            neo4jClient.query(cypherQuery)
-                    .bind(userId).to("userId")
-                    .bind(propertyId).to("propertyId")
-                    .bind(bookingDate.toString()).to("date")
-                    .run();
-
-            System.out.println("[Neo4j SYNC] Removed BOOKED relationship: User(" + userId + ") -> Property(" + propertyId + ") on " + bookingDate);
-        } catch (Exception e) {
-            // Log error but don't fail the cancellation
-            System.err.println("[Neo4j SYNC ERROR] Failed to remove BOOKED relationship: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
         System.out.println("STATUS: REFUNDED");
         System.out.println("-------------------------------\n");
     }
@@ -536,7 +499,7 @@ public class ReservationService {
 
     private boolean isOverlapping(Reservation.ReservationDates existing, LocalDate newIn, LocalDate newOut) {
         return newIn.isBefore(existing.getCheckOut()) && newOut.isAfter(existing.getCheckIn());
-    }   
+    }    
 
     // Maps Reservation to ReservationResponseDTO using Room details for price, image, and message
     private ReservationResponseDTO mapToDTO(Reservation res, Room room, String message) {

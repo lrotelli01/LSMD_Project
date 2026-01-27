@@ -5,6 +5,8 @@ import largebeb.model.Property;
 import largebeb.model.RegisteredUser;
 import largebeb.model.Reservation;
 import largebeb.model.Room;
+import largebeb.model.graph.PropertyNode; // Import Neo4j Node
+import largebeb.repository.PropertyGraphRepository; // Import Neo4j Repository
 import largebeb.repository.PropertyRepository;
 import largebeb.repository.ReservationRepository;
 import largebeb.repository.UserRepository;
@@ -12,6 +14,7 @@ import largebeb.utilities.JwtUtil;
 import largebeb.utilities.RatingStats;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -21,16 +24,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ManagerPropertyService {
 
-    private final PropertyRepository propertyRepository;
+    private final PropertyRepository propertyRepository;      // MongoDB
+    private final PropertyGraphRepository propertyGraphRepository; // Neo4j
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
-    // ==================== PROPERTY CRUD ====================
-
     /**
      * Add a new property (Manager only)
      */
+    @Transactional // Recommended for multi-db operations
     public PropertyResponseDTO addProperty(String token, PropertyRequestDTO request) {
         RegisteredUser manager = getManagerFromToken(token);
 
@@ -64,13 +67,30 @@ public class ManagerPropertyService {
             property.setCoordinates(Arrays.asList(lon, lat));
         }
 
+        // 1. Save to MongoDB
         Property saved = propertyRepository.save(property);
+
+        // 2. Save to Neo4j
+        try {
+            PropertyNode propertyNode = PropertyNode.builder()
+                    .propertyId(saved.getId()) // Use Mongo ID as Graph Key
+                    .name(saved.getName())
+                    .city(saved.getCity())
+                    .build();
+            
+            propertyGraphRepository.save(propertyNode);
+        } catch (Exception e) {
+            System.err.println("Error saving property to Neo4j: " + e.getMessage());
+            // Optional: throw exception to rollback transaction if graph consistency is strict
+        }
+
         return mapPropertyToDTO(saved);
     }
 
     /**
      * Delete a property (Manager only - must own the property)
      */
+    @Transactional
     public void deleteProperty(String token, String propertyId) {
         RegisteredUser manager = getManagerFromToken(token);
         
@@ -99,12 +119,21 @@ public class ManagerPropertyService {
             }
         }
 
+        // 1. Delete from MongoDB
         propertyRepository.delete(property);
+
+        // 2. Delete from Neo4j
+        try {
+            propertyGraphRepository.deleteById(propertyId);
+        } catch (Exception e) {
+            System.err.println("Error deleting property from Neo4j: " + e.getMessage());
+        }
     }
 
     /**
      * Modify property information (Manager only - must own the property)
      */
+    @Transactional
     public PropertyResponseDTO modifyProperty(String token, String propertyId, PropertyRequestDTO request) {
         RegisteredUser manager = getManagerFromToken(token);
         
@@ -117,10 +146,19 @@ public class ManagerPropertyService {
         }
 
         // Update fields (only if provided)
-        if (request.getName() != null) property.setName(request.getName());
+        boolean updateGraph = false; // Flag to check if we need to update Neo4j
+
+        if (request.getName() != null) {
+            property.setName(request.getName());
+            updateGraph = true;
+        }
+        if (request.getCity() != null) {
+            property.setCity(request.getCity());
+            updateGraph = true;
+        }
+
         if (request.getAddress() != null) property.setAddress(request.getAddress());
         if (request.getDescription() != null) property.setDescription(request.getDescription());
-        if (request.getCity() != null) property.setCity(request.getCity());
         if (request.getRegion() != null) property.setRegion(request.getRegion());
         if (request.getCountry() != null) property.setCountry(request.getCountry());
         if (request.getEmail() != null) property.setEmail(request.getEmail());
@@ -134,7 +172,24 @@ public class ManagerPropertyService {
             property.setCoordinates(Arrays.asList(lon, lat));
         }
 
+        // 1. Save to MongoDB
         Property saved = propertyRepository.save(property);
+
+        // 2. Update Neo4j (only if critical fields changed)
+        if (updateGraph) {
+            try {
+                // Since we use propertyId as @Id in Neo4j, calling save() works as an "upsert" (update if exists)
+                PropertyNode node = PropertyNode.builder()
+                        .propertyId(saved.getId())
+                        .name(saved.getName())
+                        .city(saved.getCity())
+                        .build();
+                propertyGraphRepository.save(node);
+            } catch (Exception e) {
+                System.err.println("Error updating property in Neo4j: " + e.getMessage());
+            }
+        }
+
         return mapPropertyToDTO(saved);
     }
 
@@ -149,7 +204,8 @@ public class ManagerPropertyService {
                 .collect(Collectors.toList());
     }
 
-    // ==================== ROOM CRUD ====================
+    // (Room logic remains unchanged as rooms are embedded in Property on Mongo
+    // and usually not modeled as separate Nodes in this simplified Graph approach)
 
     /**
      * Add a room to a property (Manager only)
@@ -193,7 +249,7 @@ public class ManagerPropertyService {
     }
 
     /**
-     * Delete a room from a property (Manager only)
+     * Delete a room from a property
      */
     public void deleteRoom(String token, String propertyId, String roomId) {
         RegisteredUser manager = getManagerFromToken(token);
@@ -287,7 +343,7 @@ public class ManagerPropertyService {
                 .collect(Collectors.toList());
     }
 
-    // ==================== HELPER METHODS ====================
+    // HELPER METHODS
 
     private RegisteredUser getManagerFromToken(String token) {
         String cleanToken = token.replace("Bearer ", "");

@@ -49,7 +49,7 @@ The user hierarchy is implemented using object-oriented inheritance, with \textt
 
 \textbf{RegisteredUser Model (Abstract Base Class)}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -67,26 +67,26 @@ public abstract class RegisteredUser {
     private String phoneNumber;
     private String role; // "CUSTOMER" or "MANAGER"
 }
-\end{minted}
+\end{lstlisting}
 
 This abstract class defines the common structure for all registered users in the system, storing essential information such as credentials, personal data, and role-based access control identifiers.
 
 \textbf{Customer Model}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Customer extends RegisteredUser {
     private PaymentMethod paymentMethod;
     private Set<String> favoredPropertyIds;
 }
-\end{minted}
+\end{lstlisting}
 
 The Customer class extends RegisteredUser with customer-specific attributes including payment method details and a set of favorite property IDs for quick access to preferred accommodations.
 
 \textbf{Manager Model}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Manager extends RegisteredUser {
@@ -94,7 +94,7 @@ public class Manager extends RegisteredUser {
     private String vatNumber;
     private BillingAddress billingAddress;
 }
-\end{minted}
+\end{lstlisting}
 
 The Manager class is similarly structured but includes business-specific attributes such as IBAN for receiving payments, VAT number for tax purposes, and billing address information.
 
@@ -102,7 +102,7 @@ The Manager class is similarly structured but includes business-specific attribu
 
 The Property model demonstrates advanced MongoDB features including embedded documents, compound indexes for query optimization, text indexes for full-text search capabilities, and geospatial indexes for location-based queries.
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -144,7 +144,7 @@ public class Property {
     private List<PointOfInterest> pois;
     private RatingStats ratingStats;
 }
-\end{minted}
+\end{lstlisting}
 
 Key design decisions for the Property model:
 
@@ -157,7 +157,7 @@ Key design decisions for the Property model:
 
 \subsubsection{Room Model}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -171,7 +171,7 @@ public class Room {
     private Double pricePerNightChildren;
     private List<String> photos;
 }
-\end{minted}
+\end{lstlisting}
 
 Rooms are designed as embedded documents within the Property model, storing detailed information about each accommodation unit including capacity constraints and pricing structure.
 
@@ -179,7 +179,7 @@ Rooms are designed as embedded documents within the Property model, storing deta
 
 The Reservation model includes critical compound indexes specifically designed for efficient availability checking operations.
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @Builder
 @NoArgsConstructor
@@ -218,13 +218,13 @@ public class Reservation {
         private LocalDate checkOut;
     }
 }
-\end{minted}
+\end{lstlisting}
 
 The compound index on \texttt{roomId}, \texttt{checkIn}, and \texttt{checkOut} is critical for efficiently querying room availability with the question: "Is Room X available between Date A and Date B?" This index prevents the need for full collection scans and ensures sub-millisecond response times for availability queries.
 
 \subsubsection{Review Model}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -248,13 +248,13 @@ public class Review {
     private String comment;
     private LocalDateTime creationDate;
 }
-\end{minted}
+\end{lstlisting}
 
 Reviews are stored in a separate collection rather than embedded in properties to enable flexible querying, pagination, and independent scaling. The indexed \texttt{propertyId} field allows efficient retrieval of all reviews for a specific property.
 
 \subsubsection{Message Model}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -273,13 +273,13 @@ public class Message {
     private LocalDateTime timestamp;
     private Boolean isRead;
 }
-\end{minted}
+\end{lstlisting}
 
 The Message model supports the chat functionality between customers and property managers, with indexes on both sender and receiver IDs to optimize conversation retrieval.
 
 \subsubsection{Notification Model}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -296,7 +296,7 @@ public class Notification {
     private LocalDateTime timestamp;
     private Boolean isRead;
 }
-\end{minted}
+\end{lstlisting}
 
 \subsection{Neo4j Models}
 
@@ -304,7 +304,7 @@ Neo4j models use the \texttt{@Node} annotation to define graph vertices and \tex
 
 \subsubsection{User Node}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Node("User")
 @Data
 @NoArgsConstructor
@@ -318,13 +318,13 @@ public class UserNode {
     private String username;
     private String privacyStatus;
 }
-\end{minted}
+\end{lstlisting}
 
 The UserNode represents users in the graph database with a minimal set of attributes necessary for relationship traversal and recommendation algorithms.
 
 \subsubsection{Property Node}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Node("Property")
 @Data
 @NoArgsConstructor
@@ -338,13 +338,13 @@ public class PropertyNode {
     private String name;
     private String city;
 }
-\end{minted}
+\end{lstlisting}
 
 PropertyNode stores essential property information in the graph for efficient traversal during recommendation queries.
 
 \subsubsection{Booking Relationship}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @RelationshipProperties
 @Data
 @NoArgsConstructor
@@ -359,7 +359,7 @@ public class BookedRelationship {
     @TargetNode
     private PropertyNode property;
 }
-\end{minted}
+\end{lstlisting}
 
 The BOOKED relationship connects users to properties they have reserved, storing the booking date as a relationship property. This graph structure enables powerful collaborative filtering queries such as: "Users who booked property X also frequently booked properties Y and Z."
 
@@ -367,7 +367,7 @@ The BOOKED relationship connects users to properties they have reserved, storing
 
 \subsubsection{PaymentMethod}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -379,13 +379,13 @@ public class PaymentMethod {
     private String expiryDate;
     private String cardHolderName;
 }
-\end{minted}
+\end{lstlisting}
 
 The PaymentMethod class implements secure payment information storage using tokenization. Actual card numbers are never stored; instead, a gateway token is used to represent the payment method, adhering to PCI DSS compliance standards.
 
 \subsubsection{RatingStats}
 
-\begin{minted}[fontsize=\small]{java}
+\begin{lstlisting}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -395,7 +395,7 @@ public class RatingStats {
     private Double location;
     private Double value;
 }
-\end{minted}
+\end{lstlisting}
 
 RatingStats aggregates multiple rating dimensions for properties, allowing users to evaluate accommodations across different quality criteria.
 
@@ -625,7 +625,3 @@ The \texttt{populateNeo4j.py} script creates the graph structure in Neo4j:
 \end{itemize}
 
 The script uses Cypher's \texttt{MERGE} operation to ensure idempotency, allowing it to be run multiple times without creating duplicate nodes. Batch processing with \texttt{UNWIND} statements significantly improves import performance for large datasets.
-
-\subsection{Data Consistency}
-
-All population scripts maintain consistency across the three databases by using the same generated IDs. This ensures that a property with a specific ID in MongoDB corresponds to the same property node in Neo4j, enabling seamless cross-database queries and operations in the application layer.
