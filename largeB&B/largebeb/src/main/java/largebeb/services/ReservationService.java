@@ -17,6 +17,7 @@ import largebeb.model.Customer;
 import largebeb.repository.UserRepository;
 import largebeb.utilities.PaymentMethod;
 import largebeb.dto.PaymentRequestDTO;
+import org.springframework.data.neo4j.core.Neo4jClient;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -37,6 +38,7 @@ public class ReservationService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtUtil jwtUtil;
     private final NotificationService notificationService;
+    private final Neo4jClient neo4jClient;
 
     private static final String REDIS_PREFIX = "temp_res:";
 
@@ -225,6 +227,9 @@ public class ReservationService {
         tempReservation.setStatus("CONFIRMED");
         tempReservation.setId(null); 
         Reservation finalReservation = reservationRepository.save(tempReservation);
+
+        // Sync with Neo4j - Create BOOKED relationship
+        syncBookingToNeo4j(userId, property.getId(), finalReservation.getDates().getCheckIn());
 
         // Notify Manager of New Booking
         notificationService.notifyManagerOfNewBooking(
@@ -421,6 +426,9 @@ public class ReservationService {
         reservation.setStatus("CANCELLED");
         reservationRepository.save(reservation);
         
+        // Sync with Neo4j - Remove BOOKED relationship
+        removeBookingFromNeo4j(userId, property.getId(), reservation.getDates().getCheckIn());
+        
         // Notify Manager of the cancelled booking
         notificationService.notifyManagerOfCancellation(
             property.getManagerId(), // Manager
@@ -436,6 +444,62 @@ public class ReservationService {
         System.out.println("\n--- [BANK GATEWAY - REFUND] ---");
         System.out.println("USER: " + username + " | TOKEN: " + token);
         System.out.println("AMOUNT: €" + String.format("%.2f", amount));
+
+    // NEO4J SYNCHRONIZATION METHODS
+
+    /**
+     * Creates a BOOKED relationship in Neo4j between a User and a Property
+     * This enables collaborative filtering recommendations
+     */
+    private void syncBookingToNeo4j(String userId, String propertyId, LocalDate bookingDate) {
+        try {
+            String cypherQuery = """
+                MERGE (u:User {userId: $userId})
+                MERGE (p:Property {propertyId: $propertyId})
+                MERGE (u)-[r:BOOKED {date: $date}]->(p)
+                RETURN u, r, p
+            """;
+
+            neo4jClient.query(cypherQuery)
+                    .bind(userId).to("userId")
+                    .bind(propertyId).to("propertyId")
+                    .bind(bookingDate.toString()).to("date")
+                    .run();
+
+            System.out.println("[Neo4j SYNC] Created BOOKED relationship: User(" + userId + ") -> Property(" + propertyId + ") on " + bookingDate);
+        } catch (Exception e) {
+            // Log error but don't fail the reservation - Neo4j is for recommendations, not critical data
+            System.err.println("[Neo4j SYNC ERROR] Failed to create BOOKED relationship: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Removes a BOOKED relationship from Neo4j when a reservation is cancelled
+     * Keeps the recommendation graph accurate
+     */
+    private void removeBookingFromNeo4j(String userId, String propertyId, LocalDate bookingDate) {
+        try {
+            String cypherQuery = """
+                MATCH (u:User {userId: $userId})-[r:BOOKED {date: $date}]->(p:Property {propertyId: $propertyId})
+                DELETE r
+                RETURN count(r) as deleted
+            """;
+
+            neo4jClient.query(cypherQuery)
+                    .bind(userId).to("userId")
+                    .bind(propertyId).to("propertyId")
+                    .bind(bookingDate.toString()).to("date")
+                    .run();
+
+            System.out.println("[Neo4j SYNC] Removed BOOKED relationship: User(" + userId + ") -> Property(" + propertyId + ") on " + bookingDate);
+        } catch (Exception e) {
+            // Log error but don't fail the cancellation
+            System.err.println("[Neo4j SYNC ERROR] Failed to remove BOOKED relationship: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
         System.out.println("STATUS: REFUNDED");
         System.out.println("-------------------------------\n");
     }

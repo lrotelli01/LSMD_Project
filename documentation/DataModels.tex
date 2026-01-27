@@ -1,0 +1,559 @@
+\section{Data Models}
+
+\subsection{Database Architecture Overview}
+
+LargeB\&B implements a \textbf{polyglot persistence} approach, utilizing three different database systems, each optimized for specific use cases:
+
+\begin{itemize}
+    \item \textbf{MongoDB} (Port 27017): Document-oriented NoSQL database for operational data storage including users, properties, rooms, reservations, reviews, messages, and notifications
+    \item \textbf{Neo4j} (Port 7687): Graph database specifically designed for collaborative filtering and recommendation system algorithms
+    \item \textbf{Redis} (Port 6379): In-memory key-value store used for caching trending properties, user history tracking, and temporary reservation locks
+\end{itemize}
+
+This architectural choice allows each database to handle the workload it is best suited for, maximizing performance and scalability while maintaining data consistency across the platform.
+
+\subsection{MongoDB Document Models}
+
+MongoDB serves as the primary operational database, storing complete information about users, properties, reservations, reviews, messages, and notifications. All documents are organized in separate collections optimized for specific access patterns following a query-driven design approach.
+
+\subsubsection{User Collection}
+
+The \texttt{users} collection stores all registered users using a polymorphic pattern with role-based attributes. The collection contains both customers and property managers differentiated by the \texttt{role} field.
+
+\textbf{Base User Structure:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  "_id": ObjectId("..."),
+  "username": "john_traveler",
+  "email": "john@example.com",
+  "password": "$2a$10$...",  // BCrypt hashed
+  "birthdate": ISODate("1990-05-15"),
+  "name": "John",
+  "surname": "Doe",
+  "phoneNumber": "+1-555-0123",
+  "role": "CUSTOMER"  // or "MANAGER"
+}
+\end{minted}
+
+\textbf{Customer-Specific Attributes:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  // ... base user fields ...
+  "role": "CUSTOMER",
+  "paymentMethod": {
+    "id": "pm_123",
+    "gatewayToken": "tok_visa_1234",
+    "cardType": "VISA",
+    "last4Digits": "4242",
+    "expiryDate": "12/26",
+    "cardHolderName": "John Doe"
+  },
+  "favoredPropertyIds": ["prop_123", "prop_456", "prop_789"]
+}
+\end{minted}
+
+\textbf{Manager-Specific Attributes:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  // ... base user fields ...
+  "role": "MANAGER",
+  "iban": "IT60X0542811101000000123456",
+  "vatNumber": "IT12345678901",
+  "billingAddress": {
+    "street": "Via Roma 123",
+    "city": "Rome",
+    "zipCode": "00186",
+    "country": "Italy",
+    "stateProvince": "Lazio"
+  }
+}
+\end{minted}
+
+\textbf{Key Attributes:}
+
+\begin{itemize}
+    \item \texttt{role}: Discriminator field for polymorphic user types (CUSTOMER or MANAGER)
+    \item \texttt{paymentMethod}: Tokenized payment information for PCI DSS compliance (customers only)
+    \item \texttt{favoredPropertyIds}: Array of property IDs for quick access to favorite accommodations (customers only)
+    \item \texttt{iban} \& \texttt{vatNumber}: Business information for receiving payments and tax purposes (managers only)
+    \item \texttt{password}: BCrypt-encrypted passwords ensuring security compliance
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+The polymorphic single-collection approach allows both user types to share authentication and profile management logic while maintaining role-specific attributes. Document linking via \texttt{favoredPropertyIds} enables fast favorite retrieval without embedding entire property documents.
+
+% [INSERT SCREENSHOT HERE]
+% Example: Customer document with payment method and favored properties
+
+% [INSERT SCREENSHOT HERE]
+% Example: Manager document with IBAN and billing address
+
+\subsubsection{Property Collection}
+
+The \texttt{properties} collection stores accommodation listings with embedded rooms and points of interest, optimized for single-query retrieval of complete property information.
+
+\textbf{Document Structure:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  "_id": ObjectId("..."),
+  "name": "Charming Apartment in Trastevere",
+  "description": "Beautiful 2-bedroom apartment...",
+  "address": "Via della Lungaretta 50",
+  "city": "Rome",
+  "region": "Lazio",
+  "country": "Italy",
+  "coordinates": [12.4698, 41.8902],  // [longitude, latitude]
+  "managerId": "mgr_123",
+  "email": "contact@property.com",
+  "amenities": ["WiFi", "Air Conditioning", "Kitchen", "Parking"],
+  "photos": ["https://...", "https://..."],
+  "ratingStats": {
+    "averageRating": 4.7,
+    "totalReviews": 128,
+    "cleanliness": 4.8,
+    "communication": 4.9,
+    "location": 4.6,
+    "value": 4.5
+  },
+  "rooms": [
+    {
+      "id": "room_001",
+      "name": "Deluxe Double Room",
+      "description": "Spacious room with king-size bed",
+      "capacityAdults": 2,
+      "capacityChildren": 1,
+      "pricePerNightAdults": 120.00,
+      "pricePerNightChildren": 30.00,
+      "photos": ["https://...", "https://..."]
+    }
+  ],
+  "pois": [
+    {
+      "name": "Colosseum",
+      "coordinates": [12.4924, 41.8902],
+      "type": "monument",
+      "distance": 2.3  // km
+    }
+  ]
+}
+\end{minted}
+
+\textbf{Indexes:}
+
+\begin{itemize}
+    \item \textbf{Compound Index}: \texttt{\{city: 1, region: 1, country: 1\}} for hierarchical location filtering
+    \item \textbf{Compound Index}: \texttt{\{rooms.capacityAdults: 1, rooms.capacityChildren: 1\}} for capacity-based searches
+    \item \textbf{Compound Index}: \texttt{\{ratingStats.averageRating: -1\}} for rating-based sorting
+    \item \textbf{Compound Index}: \texttt{\{rooms.pricePerNightAdults: 1, rooms.pricePerNightChildren: 1\}} for price range filtering
+    \item \textbf{Text Index}: \texttt{\{name: 3, description: 1, city: 1\}} for full-text search with weighted relevance
+    \item \textbf{Geospatial Index (2dsphere)}: \texttt{coordinates} for proximity-based queries
+    \item \textbf{Single Field Index}: \texttt{managerId} for manager dashboard queries
+\end{itemize}
+
+\textbf{Key Design Decisions:}
+
+\begin{itemize}
+    \item \textbf{Embedded Rooms}: Rooms are embedded within properties rather than stored separately, enabling atomic updates and single-query retrieval of complete property information
+    \item \textbf{Embedded POIs}: Points of interest are embedded to avoid joins and improve read performance
+    \item \textbf{Aggregated Ratings}: Pre-computed rating statistics (\texttt{ratingStats}) enable instant display without aggregating the reviews collection
+    \item \textbf{Geospatial Coordinates}: Stored as \texttt{[longitude, latitude]} array with 2dsphere index for "find properties near me" functionality
+    \item \textbf{Text Search}: Multi-field text index with weights prioritizes matches in property names over descriptions
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+The embedded document model optimizes for the most frequent query pattern: "show me complete property details for booking." All information needed for the property detail page is retrieved in a single query. The comprehensive indexing strategy supports diverse search patterns including location hierarchy, capacity filtering, price ranges, ratings, full-text search, and proximity queries.
+
+% [INSERT SCREENSHOT HERE]
+% Example: Property document with embedded rooms and POIs
+
+\subsubsection{Reservation Collection}
+
+The \texttt{reservations} collection stores booking information with critical compound indexes for efficient availability checking.
+
+\textbf{Document Structure:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  "_id": ObjectId("..."),
+  "userId": "user_123",
+  "roomId": "room_456",
+  "adults": 2,
+  "children": 1,
+  "status": "CONFIRMED",  // PENDING, CONFIRMED, CANCELLED
+  "dates": {
+    "checkIn": "2025-07-15",
+    "checkOut": "2025-07-22"
+  },
+  "createdAt": ISODate("2025-06-01T14:30:00Z")
+}
+\end{minted}
+
+\textbf{Indexes:}
+
+\begin{itemize}
+    \item \textbf{Compound Index}: \texttt{\{roomId: 1, dates.checkIn: 1, dates.checkOut: 1\}} for availability checks
+    \item \textbf{Single Field Index}: \texttt{userId} for user booking history retrieval
+    \item \textbf{Single Field Index}: \texttt{roomId} for room-specific queries
+\end{itemize}
+
+\textbf{Key Design Decisions:}
+
+\begin{itemize}
+    \item \textbf{Critical Compound Index}: The \texttt{roomId + checkIn + checkOut} index is essential for the availability query: "Is Room X available between Date A and Date B?"
+    \item \textbf{Embedded Dates}: Check-in and check-out dates are grouped in a nested \texttt{dates} object for semantic clarity
+    \item \textbf{Status Field}: Enables filtering by reservation state (pending payment, confirmed, cancelled)
+    \item \textbf{@CreatedDate}: Automatic timestamp tracking using Spring Data MongoDB annotations
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+The compound index on \texttt{roomId} and date fields prevents full collection scans during availability checks, ensuring sub-millisecond response times even with millions of reservations. The index supports overlap detection queries essential for preventing double-bookings.
+
+% [INSERT SCREENSHOT HERE]
+% Example: Reservation document with embedded dates structure
+
+\subsubsection{Review Collection}
+
+The \texttt{reviews} collection stores user feedback separately from properties to enable flexible querying, pagination, and independent scaling.
+
+\textbf{Document Structure:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  "_id": ObjectId("..."),
+  "userId": "user_123",
+  "username": "john_traveler",
+  "propertyId": "prop_456",
+  "rating": 4.5,
+  "cleanliness": 5.0,
+  "communication": 4.0,
+  "location": 4.5,
+  "value": 4.0,
+  "comment": "Great location, very clean and comfortable!",
+  "creationDate": ISODate("2025-07-25T10:00:00Z")
+}
+\end{minted}
+
+\textbf{Indexes:}
+
+\begin{itemize}
+    \item \textbf{Single Field Index}: \texttt{propertyId} for retrieving all reviews of a specific property
+\end{itemize}
+
+\textbf{Key Design Decisions:}
+
+\begin{itemize}
+    \item \textbf{Separate Collection}: Reviews are not embedded in properties to enable unlimited growth and efficient pagination
+    \item \textbf{Multi-Dimensional Ratings}: Separate ratings for cleanliness, communication, location, and value provide detailed feedback
+    \item \textbf{Denormalized Username}: Username is stored alongside userId to avoid joins when displaying reviews
+    \item \textbf{Optional Comment}: Comment field is optional, allowing users to provide ratings without written feedback
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+Storing reviews in a separate collection rather than embedding them in properties prevents document size limits and enables independent scaling as review volume grows. The indexed \texttt{propertyId} allows efficient retrieval with pagination. Upon review creation, the property's aggregated \texttt{ratingStats} are recalculated to maintain consistency.
+
+% [INSERT SCREENSHOT HERE]
+% Example: Review document with multi-dimensional ratings
+
+\subsubsection{Message Collection}
+
+The \texttt{messages} collection supports real-time chat functionality between customers and property managers.
+
+\textbf{Document Structure:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  "_id": ObjectId("..."),
+  "senderId": "user_123",
+  "receiverId": "mgr_456",
+  "text": "Is early check-in possible?",
+  "timestamp": ISODate("2025-07-10T09:30:00Z"),
+  "isRead": false
+}
+\end{minted}
+
+\textbf{Indexes:}
+
+\begin{itemize}
+    \item \textbf{Single Field Index}: \texttt{senderId} for retrieving sent messages
+    \item \textbf{Single Field Index}: \texttt{receiverId} for retrieving received messages
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+Dual indexes on \texttt{senderId} and \texttt{receiverId} enable efficient conversation retrieval from both participants' perspectives. The \texttt{isRead} flag supports unread message notifications.
+
+% [INSERT SCREENSHOT HERE]
+% Example: Message document showing conversation structure
+
+\subsubsection{Notification Collection}
+
+The \texttt{notifications} collection stores system-generated notifications for important events.
+
+\textbf{Document Structure:}
+
+\begin{minted}[fontsize=\small]{json}
+{
+  "_id": ObjectId("..."),
+  "userId": "user_123",
+  "type": "RESERVATION_CONFIRMED",
+  "message": "Your reservation at Charming Apartment has been confirmed",
+  "timestamp": ISODate("2025-07-01T15:00:00Z"),
+  "isRead": false
+}
+\end{minted}
+
+\textbf{Indexes:}
+
+\begin{itemize}
+    \item \textbf{Single Field Index}: \texttt{userId} for retrieving user-specific notifications
+\end{itemize}
+
+\textbf{Key Design Decisions:}
+
+\begin{itemize}
+    \item \textbf{Type Field}: Categorizes notifications (RESERVATION\_CONFIRMED, RESERVATION\_CANCELLED, MESSAGE\_RECEIVED, REVIEW\_RECEIVED)
+    \item \textbf{Read Status}: Supports unread notification counts and filtering
+\end{itemize}
+
+% [INSERT SCREENSHOT HERE]
+% Example: Notification document
+
+\subsection{Neo4j Graph Models}
+
+Neo4j is specifically optimized for collaborative filtering and recommendation algorithms, storing minimal user and property information required for graph traversals.
+
+\subsubsection{Graph Nodes}
+
+The graph database contains three node types representing users, properties, and amenities.
+
+\textbf{User Node:}
+
+\begin{minted}[fontsize=\small]{cypher}
+(:User {
+  userId: "user_123",
+  username: "john_traveler",
+  privacyStatus: "PUBLIC"
+})
+\end{minted}
+
+User nodes contain minimal attributes necessary for traversal and privacy filtering.
+
+\textbf{Property Node:}
+
+\begin{minted}[fontsize=\small]{cypher}
+(:Property {
+  propertyId: "prop_456",
+  name: "Charming Apartment in Trastevere",
+  city: "Rome"
+})
+\end{minted}
+
+Property nodes store essential metadata for recommendation algorithms.
+
+\textbf{Amenity Node:}
+
+\begin{minted}[fontsize=\small]{cypher}
+(:Amenity {
+  name: "WiFi"
+})
+\end{minted}
+
+Amenity nodes enable content-based filtering by property features.
+
+\subsubsection{Graph Relationships}
+
+The graph database implements two primary relationship types.
+
+\textbf{BOOKED Relationship:}
+
+\begin{minted}[fontsize=\small]{cypher}
+(:User {userId: "user_123"})-[:BOOKED {date: "2025-07-15"}]->
+  (:Property {propertyId: "prop_456"})
+\end{minted}
+
+The \texttt{BOOKED} relationship connects users to properties they have reserved, storing the booking date as a relationship property.
+
+\textbf{Collaborative Filtering Queries:}
+
+This structure enables powerful collaborative filtering:
+\begin{itemize}
+    \item "Users who booked property X also frequently booked properties Y and Z"
+    \item "Find users with similar booking patterns to recommend new properties"
+    \item "Discover trending properties among users with overlapping bookings"
+\end{itemize}
+
+\textbf{HAS Relationship:}
+
+\begin{minted}[fontsize=\small]{cypher}
+(:Property {propertyId: "prop_456"})-[:HAS]->(:Amenity {name: "WiFi"})
+\end{minted}
+
+The \texttt{HAS} relationship connects properties to their amenities.
+
+\textbf{Content-Based Filtering Queries:}
+
+This structure supports content-based recommendations:
+\begin{itemize}
+    \item "Find properties with similar amenities to properties I've booked"
+    \item "Recommend properties based on preferred features"
+    \item "Discover properties popular among users who value specific amenities"
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+Storing booking history in Neo4j rather than only in MongoDB enables multi-hop graph traversals for sophisticated recommendations. The graph structure naturally represents "users who booked X also booked Y" patterns that would require complex aggregations in a document database.
+
+% [INSERT SCREENSHOT HERE]
+% Example: Graph visualization showing User-BOOKED->Property relationships
+
+% [INSERT SCREENSHOT HERE]
+% Example: Graph visualization showing Property-HAS->Amenity relationships
+
+\subsection{Redis Data Structures}
+
+Redis provides high-performance caching and real-time tracking using various data structures.
+
+\subsubsection{Trending Properties (Sorted Set)}
+
+\textbf{Key Pattern:} \texttt{trending\_properties}
+
+\textbf{Structure:}
+
+\begin{minted}[fontsize=\small]{text}
+ZADD trending_properties 1523 "prop_123"
+ZADD trending_properties 987 "prop_456"
+ZADD trending_properties 2341 "prop_789"
+
+ZREVRANGE trending_properties 0 9 WITHSCORES
+# Returns top 10 properties by view count
+\end{minted}
+
+\textbf{Operations:}
+
+\begin{itemize}
+    \item \texttt{ZINCRBY trending\_properties 1 propertyId}: Increment view count when property is viewed
+    \item \texttt{ZREVRANGE trending\_properties 0 9}: Retrieve top 10 trending properties
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+Sorted sets enable O(log N) increments and O(log N) range queries for real-time trending property ranking. The view count is maintained exclusively in Redis without persisting to MongoDB, as trending data is ephemeral and regenerates naturally.
+
+\subsubsection{User History (List)}
+
+\textbf{Key Pattern:} \texttt{history:userId}
+
+\textbf{Structure:}
+
+\begin{minted}[fontsize=\small]{text}
+LPUSH history:user_123 "prop_789"
+LPUSH history:user_123 "prop_456"
+LTRIM history:user_123 0 9
+# Maintains last 10 viewed properties
+
+LRANGE history:user_123 0 9
+# Retrieves user's recent property views
+\end{minted}
+
+\textbf{Operations:}
+
+\begin{itemize}
+    \item \texttt{LPUSH history:userId propertyId}: Add property to user's view history
+    \item \texttt{LTRIM history:userId 0 9}: Keep only last 10 entries
+    \item \texttt{LRANGE history:userId 0 9}: Retrieve recent views for recommendations
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+Lists implement a LIFO (Last In, First Out) queue for recent property views. The combination of \texttt{LPUSH} and \texttt{LTRIM} maintains a rolling window of the 10 most recent views, providing data for personalized recommendations.
+
+\subsubsection{Temporary Reservation Locks (String with TTL)}
+
+\textbf{Key Pattern:} \texttt{temp\_res:roomId:checkIn:checkOut}
+
+\textbf{Structure:}
+
+\begin{minted}[fontsize=\small]{text}
+SET temp_res:room_456:2025-07-15:2025-07-22 "user_123" EX 900
+# Lock room for 15 minutes during booking process
+
+GET temp_res:room_456:2025-07-15:2025-07-22
+# Check if room is temporarily locked
+\end{minted}
+
+\textbf{Operations:}
+
+\begin{itemize}
+    \item \texttt{SET temp\_res:key userId EX 900}: Lock room for 15 minutes (900 seconds)
+    \item \texttt{GET temp\_res:key}: Check if room is locked
+    \item Automatic expiration via TTL prevents abandoned locks from blocking availability
+\end{itemize}
+
+\textbf{Design Rationale:}
+
+Temporary locks prevent race conditions during the booking process when a user is completing payment. The 15-minute TTL ensures locks are automatically released if users abandon the checkout process, maintaining room availability without manual cleanup.
+
+% [INSERT SCREENSHOT HERE]
+% Example: Redis CLI showing trending properties sorted set
+
+% [INSERT SCREENSHOT HERE]
+% Example: Redis CLI showing user history list
+
+\subsection{Cross-Database Data Consistency}
+
+LargeB\&B maintains data redundancy across MongoDB, Neo4j, and Redis for performance optimization. Critical fields such as \texttt{userId}, \texttt{propertyId}, and \texttt{username} exist in multiple databases.
+
+\subsubsection{Consistency Strategy}
+
+The application implements \textbf{eventual consistency} with the following approach:
+
+\textbf{MongoDB ↔ Neo4j Synchronization:}
+
+\begin{itemize}
+    \item User registration creates documents in MongoDB and nodes in Neo4j
+    \item Property creation creates documents in MongoDB and nodes with amenity relationships in Neo4j
+    \item Reservations create documents in MongoDB and BOOKED relationships in Neo4j
+    \item Updates are propagated to both databases using transaction-like patterns
+\end{itemize}
+
+\textbf{Redis Cache Invalidation:}
+
+\begin{itemize}
+    \item Trending properties are ephemeral and regenerate naturally (no consistency required)
+    \item User history is append-only and eventually consistent
+    \item Temporary locks have automatic TTL-based expiration
+\end{itemize}
+
+\textbf{Write Pattern:}
+
+\begin{enumerate}
+    \item Primary write to MongoDB (authoritative source of truth)
+    \item Asynchronous write to Neo4j for graph relationships
+    \item Redis updates for caching and temporary data
+    \item No rollback for Neo4j failures (accepts rare inconsistency)
+\end{enumerate}
+
+This strategy prioritizes availability and performance (AP in CAP theorem) while maintaining strong consistency for critical operations through MongoDB's replica set with majority write concern.
+
+\subsection{Data Model Summary}
+
+The LargeB\&B data model demonstrates effective polyglot persistence design:
+
+\begin{itemize}
+    \item \textbf{MongoDB}: Optimized for operational data with embedded documents (rooms, POIs) and comprehensive indexing
+    \item \textbf{Neo4j}: Optimized for graph traversals enabling collaborative and content-based filtering
+    \item \textbf{Redis}: Optimized for real-time tracking (trending, history) and temporary state (locks)
+    \item \textbf{Separation of Concerns}: Complete data in MongoDB, relationships in Neo4j, ephemeral data in Redis
+    \item \textbf{Eventual Consistency}: Pragmatic approach balancing consistency with availability and performance
+    \item \textbf{Performance}: Strategic embedding, comprehensive indexes, pre-computed aggregations, in-memory caching
+\end{itemize}
+
+This architecture supports the application's core requirements: fast property search, sophisticated recommendations, real-time availability checking, booking management, and trending property tracking.
