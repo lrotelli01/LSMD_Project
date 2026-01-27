@@ -35,7 +35,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
-    private final ReservationGraphRepository reservationGraphRepository; // INJECTION ADDED
+    private final ReservationGraphRepository reservationGraphRepository;
     private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtUtil jwtUtil;

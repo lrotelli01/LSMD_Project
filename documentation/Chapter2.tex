@@ -140,38 +140,72 @@
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/ShowProperties.png}
-    \caption{Analysis Class diagram}
+    \caption{Showing properties view}
     \label{fig:comparison}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/ShowRooms.png}
-    \caption{Analysis Class diagram}
+    \caption{Showing rooms view}
     \label{fig:comparison}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/RoomDetails.png}
-    \caption{Analysis Class diagram}
+    \caption{Room details view}
     \label{fig:comparison}
 \end{figure}
 \subsubsection{Customer}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/CustomerBookings.png}
-    \caption{Analysis Class diagram}
+    \caption{Customer bookings view}
     \label{fig:comparison}
 \end{figure}
 \subsubsection{Manager view}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/Analytics.png}
-    \caption{Analysis Class diagram}
+    \caption{Analytics properties view}
     \label{fig:comparison}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{images/ManagePropertiesManager.png}
-    \caption{Analysis Class diagram}
+    \caption{Manager properties view}
     \label{fig:comparison}
 \end{figure}
+
+\section{CAP Theorem and Consistency Management}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/CapTheorem.png}
+    \caption{Cap Theorem}
+    \label{fig:comparison}
+\end{figure}
+In the design of the distributed architecture for the B\&B management platform, we addressed the trade-offs imposed by the \textbf{CAP Theorem} (Consistency, Availability, and Partition Tolerance). Given that network partitions (P) are unavoidable in a distributed environment involving microservices and cloud databases, the system adopts a hybrid strategy depending on the criticality of the specific business domain.
+
+\subsection{Reservation Service: Prioritizing Consistency (CP)}
+For the critical path of booking and payments, the system prioritizes \textbf{Consistency} over Availability. The business logic dictates that avoiding "double bookings" (two customers booking the same room for the same dates) is strictly more important than accepting a request during a partial system failure.
+
+To achieve strong consistency:
+\begin{itemize}
+    \item \textbf{Distributed Locking with Redis:} Before a transaction is finalized in the persistent database, a temporary lock (Time-To-Live of 15 minutes) is acquired on Redis. This acts as a pessimistic locking mechanism, ensuring that once a user selects a room for payment, no other nodes can write to that specific resource.
+    \item \textbf{Atomic Writes in MongoDB:} The final confirmation is performed using MongoDB's atomic document updates. If the database primary node is unreachable (partition), the system rejects the write request rather than allowing a potential state conflict, effectively sacrificing Availability to preserve Data Integrity.
+\end{itemize}
+
+\subsection{Search and Discovery: Prioritizing Availability (AP)}
+For the browsing, searching, and property listing modules, the system prioritizes \textbf{Availability}. It is acceptable for a user to see a room that was booked seconds ago as "available" in the search results, provided the error is caught at the checkout stage. It is not acceptable, however, for the homepage or search filters to be unresponsive.
+
+To achieve high availability:
+\begin{itemize}
+    \item \textbf{Caching Strategy:} Frequently accessed data (property details, amenities) are cached in Redis. If the primary database experiences high latency or downtime, the system serves data from the cache.
+    \item \textbf{Read Replicas:} The system allows reading from secondary database replicas, accepting that there may be a slight replication lag (stale data) in exchange for system responsiveness.
+\end{itemize}
+
+\subsection{Polyglot Persistence and Eventual Consistency}
+The system utilizes a polyglot persistence architecture, syncing data between the document store (MongoDB) and the graph database (Neo4j). This synchronization follows an \textbf{Eventual Consistency} model.
+
+When a reservation is confirmed in MongoDB (the "Source of Truth"), the relationship is propagated to Neo4j asynchronously. While there is a minimal delay between the transaction confirmation and the update of the social graph, this does not impact the transactional integrity of the booking. This approach ensures that the Graph Service remains decoupled and does not block the critical path of the user experience.
+
+In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
