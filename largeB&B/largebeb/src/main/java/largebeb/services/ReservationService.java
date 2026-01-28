@@ -8,18 +8,22 @@ import largebeb.model.RegisteredUser;
 import largebeb.model.Reservation;
 import largebeb.model.Room;
 import largebeb.repository.PropertyRepository;
-import largebeb.repository.ReservationGraphRepository; // IMPORT ADDED
+import largebeb.repository.ReservationGraphRepository;
 import largebeb.repository.ReservationRepository;
 import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil;
-import largebeb.utilities.RatingStats; // Assuming this might be needed for other logic, kept if present
+import largebeb.utilities.RatingStats;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import largebeb.model.Customer;
 import largebeb.utilities.PaymentMethod;
 import largebeb.dto.PaymentRequestDTO;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.CompletableFuture;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -32,6 +36,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReservationService.class);
 
     private final ReservationRepository reservationRepository;
     private final PropertyRepository propertyRepository;
@@ -231,21 +237,28 @@ public class ReservationService {
         tempReservation.setId(null); 
         Reservation finalReservation = reservationRepository.save(tempReservation);
 
-        // Sync reservation to Neo4j
-        try {
-            reservationGraphRepository.createReservation(
-                finalReservation.getId(),             // The new Mongo ID
-                user.getId(),                         // Matches the :User(userId) in Neo4j
-                property.getId(),                     // Matches the :Property(propertyId) in Neo4j
-                finalReservation.getDates().getCheckIn(),
-                finalReservation.getDates().getCheckOut(),
-                amountToPay
-            );
-            System.out.println("Graph: Reservation synced to Neo4j successfully.");
-        } catch (Exception e) {
-            // We log the error but don't stop the process, as the main data is safe in Mongo
-            System.err.println("Graph Error: Failed to sync reservation to Neo4j. " + e.getMessage());
-        }
+        // Async sync reservation to Neo4j (Eventual Consistency)
+        final String finalReservationId = finalReservation.getId();
+        final String finalUserId = user.getId();
+        final String finalPropertyId = property.getId();
+        final double finalAmount = amountToPay;
+        
+        CompletableFuture.runAsync(() -> {
+            try {
+                reservationGraphRepository.createReservation(
+                    finalReservationId,
+                    finalUserId,
+                    finalPropertyId,
+                    finalReservation.getDates().getCheckIn(),
+                    finalReservation.getDates().getCheckOut(),
+                    finalAmount
+                );
+                logger.info("Graph: Reservation {} synced to Neo4j successfully.", finalReservationId);
+            } catch (Exception e) {
+                logger.error("Graph Error: Failed to sync reservation {} to Neo4j: {}", 
+                    finalReservationId, e.getMessage());
+            }
+        });
 
         // Notify Manager of New Booking
         notificationService.notifyManagerOfNewBooking(
@@ -444,13 +457,17 @@ public class ReservationService {
         reservation.setStatus("CANCELLED");
         reservationRepository.save(reservation);
         
-        // Delete reservation from Neo4j
-        try {
-            reservationGraphRepository.deleteById(reservationId);
-            System.out.println("Graph: Reservation deleted/cancelled in Neo4j.");
-        } catch (Exception e) {
-            System.err.println("Graph Error: Failed to delete reservation from Neo4j.");
-        }
+        // Async delete reservation from Neo4j (Eventual Consistency)
+        final String finalReservationId = reservationId;
+        CompletableFuture.runAsync(() -> {
+            try {
+                reservationGraphRepository.deleteById(finalReservationId);
+                logger.info("Graph: Reservation {} deleted/cancelled in Neo4j.", finalReservationId);
+            } catch (Exception e) {
+                logger.error("Graph Error: Failed to delete reservation {} from Neo4j: {}", 
+                    finalReservationId, e.getMessage());
+            }
+        });
 
         // Notify Manager of the cancelled booking
         notificationService.notifyManagerOfCancellation(

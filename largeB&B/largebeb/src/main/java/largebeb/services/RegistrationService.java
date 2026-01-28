@@ -5,20 +5,25 @@ import largebeb.dto.RegistrationResponseDTO;
 import largebeb.model.Customer;
 import largebeb.model.Manager;
 import largebeb.model.RegisteredUser;
-import largebeb.model.graph.UserNode; // Import the Neo4j Node class
-import largebeb.repository.UserGraphRepository; // Import the Neo4j Repository
+import largebeb.model.graph.UserNode;
+import largebeb.repository.UserGraphRepository;
 import largebeb.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class RegistrationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(RegistrationService.class);
 
     private final UserRepository userRepository;      // MongoDB Repository
     private final UserGraphRepository userGraphRepository; // Neo4j Repository
@@ -127,23 +132,31 @@ public class RegistrationService {
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         newUser.setPassword(hashedPassword);
 
-        // Save to MongoDB
+        // Save to MongoDB (Transactional - CP)
         RegisteredUser savedUser = userRepository.save(newUser);
         
-        // Save to neo4j
-        try {
-            UserNode userNode = UserNode.builder()
-                    .username(savedUser.getUsername())
-                    .mongoId(savedUser.getId())
-                    .role(savedUser.getRole())
-                    .name(savedUser.getName()) // Conflict resolved: using name field
-                    .build();
+        // Async sync to Neo4j (Eventual Consistency - AP)
+        final String finalUserId = savedUser.getId();
+        final String finalUsername = savedUser.getUsername();
+        final String finalRole = savedUser.getRole();
+        final String finalName = savedUser.getName();
+        
+        CompletableFuture.runAsync(() -> {
+            try {
+                UserNode userNode = UserNode.builder()
+                        .username(finalUsername)
+                        .mongoId(finalUserId)
+                        .role(finalRole)
+                        .name(finalName)
+                        .build();
 
-            userGraphRepository.save(userNode);
-        } catch (Exception e) {
-            // Log error
-            System.err.println("Error saving to Neo4j: " + e.getMessage());
-        }
+                userGraphRepository.save(userNode);
+                logger.info("Graph: User {} synced to Neo4j successfully.", finalUserId);
+            } catch (Exception e) {
+                logger.error("Graph Error: Failed to sync user {} to Neo4j: {}", 
+                    finalUserId, e.getMessage());
+            }
+        });
 
         return new RegistrationResponseDTO(
             "Registration successful", 
