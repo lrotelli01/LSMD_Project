@@ -304,8 +304,8 @@ Redis is employed as a high-performance, in-memory data store to handle transien
 The most critical functional requirement is preventing \textbf{Overbooking} (two users booking the same room simultaneously). Since MongoDB's document locking can be performance-heavy under high load, we implemented a \textbf{Pessimistic Locking} mechanism on Redis:
 
 \begin{itemize}
-    \item \textbf{Key Pattern:} \texttt{lock:room:\{roomId\}:\{date\}}
-    \item \textbf{Mechanism:} When a user attempts to book, the backend executes a \texttt{SET ... NX EX 600} command (Set if Not Exists, with 10 minutes expiration).
+    \item \textbf{Key Pattern:} \texttt{"temp\_res"+temporaryReservationId}
+    \item \textbf{Mechanism:} When a user attempts to book, the backend verifies availability and creates a temporary hold in Redis with a 15-minute expiration. This prevents overbooking while the user completes the payment.
     \item \textbf{Result:} If Redis returns \texttt{OK}, the room is temporarily reserved, and the transaction proceeds to MongoDB. If \texttt{NULL}, the user receives a "Room busy" error immediately, without impacting the primary database.
 \end{itemize}
 

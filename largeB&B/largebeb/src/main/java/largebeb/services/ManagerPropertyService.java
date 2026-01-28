@@ -13,17 +13,22 @@ import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil;
 import largebeb.utilities.RatingStats;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ManagerPropertyService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ManagerPropertyService.class);
 
     private final PropertyRepository propertyRepository;      // MongoDB
     private final PropertyGraphRepository propertyGraphRepository; // Neo4j
@@ -69,39 +74,49 @@ public class ManagerPropertyService {
             property.setCoordinates(Arrays.asList(lon, lat));
         }
 
-        // Save to MongoDB
+        // Save to MongoDB (Transactional - CP)
         Property saved = propertyRepository.save(property);
 
-        // Save to Neo4j
-        try {
-            // Save the main Property Node using the Repository 
-            PropertyNode propertyNode = PropertyNode.builder()
-                    .propertyId(saved.getId()) // Use Mongo ID as Graph Key
-                    .name(saved.getName())
-                    .city(saved.getCity())
-                    .build();
-            
-            propertyGraphRepository.save(propertyNode);
+        // Async sync to Neo4j (Eventual Consistency - AP)
+        final String finalPropertyId = saved.getId();
+        final String finalName = saved.getName();
+        final String finalCity = saved.getCity();
+        final List<String> finalAmenities = saved.getAmenities() != null 
+            ? new ArrayList<>(saved.getAmenities()) : new ArrayList<>();
+        
+        CompletableFuture.runAsync(() -> {
+            try {
+                // Save the main Property Node using the Repository 
+                PropertyNode propertyNode = PropertyNode.builder()
+                        .propertyId(finalPropertyId)
+                        .name(finalName)
+                        .city(finalCity)
+                        .build();
+                
+                propertyGraphRepository.save(propertyNode);
 
-            // Handle the Amenities (Services) relationships using custom Cypher.
-            // MERGE the service node (create if not exists), then link Property -> Service.
-            if (saved.getAmenities() != null && !saved.getAmenities().isEmpty()) {
-                String cypherQuery = """
-                    MATCH (p:Property {propertyId: $propId})
-                    UNWIND $amenitiesList AS amenityName
-                    MERGE (s:Service {name: amenityName}) 
-                    MERGE (p)-[:HAS_SERVICE]->(s)
-                """;
+                // Handle the Amenities (Services) relationships using custom Cypher
+                if (!finalAmenities.isEmpty()) {
+                    String cypherQuery = """
+                        MATCH (p:Property {propertyId: $propId})
+                        UNWIND $amenitiesList AS amenityName
+                        MERGE (s:Service {name: amenityName}) 
+                        MERGE (p)-[:HAS_SERVICE]->(s)
+                    """;
 
-                neo4jClient.query(cypherQuery)
-                        .bind(saved.getId()).to("propId")
-                        .bind(saved.getAmenities()).to("amenitiesList")
-                        .run();
+                    neo4jClient.query(cypherQuery)
+                            .bind(finalPropertyId).to("propId")
+                            .bind(finalAmenities).to("amenitiesList")
+                            .run();
+                }
+                
+                logger.info("Graph: Property {} synced to Neo4j successfully.", finalPropertyId);
+
+            } catch (Exception e) {
+                logger.error("Graph Error: Failed to sync property {} to Neo4j: {}", 
+                    finalPropertyId, e.getMessage());
             }
-
-        } catch (Exception e) {
-            System.err.println("Error saving property to Neo4j: " + e.getMessage());
-        }
+        });
 
         return mapPropertyToDTO(saved);
     }
@@ -138,34 +153,39 @@ public class ManagerPropertyService {
             }
         }
 
-        // Delete from MongoDB
+        // Delete from MongoDB (Transactional - CP)
         propertyRepository.delete(property);
 
-        // Delete from Neo4j
-        try {
-            // Logic: 
-            // 1. Match the property and its services.
-            // 2. Detach and delete the property.
-            // 3. Check the services that were connected. If they have NO other connections, delete them.
-            String cypherQuery = """
-                MATCH (p:Property {propertyId: $propId})
-                OPTIONAL MATCH (p)-[:HAS_SERVICE]->(s:Service)
-                DETACH DELETE p
-                WITH s
-                WHERE s IS NOT NULL
-                OPTIONAL MATCH (s)<-[r:HAS_SERVICE]-(other:Property)
-                WITH s, count(r) AS connections
-                WHERE connections = 0
-                DELETE s
-            """;
+        // Async delete from Neo4j (Eventual Consistency - AP)
+        final String finalPropertyId = propertyId;
+        CompletableFuture.runAsync(() -> {
+            try {
+                // Logic: 
+                // 1. Match the property and its services.
+                // 2. Detach and delete the property.
+                // 3. Check the services that were connected. If they have NO other connections, delete them.
+                String cypherQuery = """
+                    MATCH (p:Property {propertyId: $propId})
+                    OPTIONAL MATCH (p)-[:HAS_SERVICE]->(s:Service)
+                    DETACH DELETE p
+                    WITH s
+                    WHERE s IS NOT NULL
+                    OPTIONAL MATCH (s)<-[r:HAS_SERVICE]-(other:Property)
+                    WITH s, count(r) AS connections
+                    WHERE connections = 0
+                    DELETE s
+                """;
 
-            neo4jClient.query(cypherQuery)
-                    .bind(propertyId).to("propId")
-                    .run();
-            
-        } catch (Exception e) {
-            System.err.println("Error deleting property from Neo4j: " + e.getMessage());
-        }
+                neo4jClient.query(cypherQuery)
+                        .bind(finalPropertyId).to("propId")
+                        .run();
+                
+                logger.info("Graph: Property {} deleted from Neo4j successfully.", finalPropertyId);
+            } catch (Exception e) {
+                logger.error("Graph Error: Failed to delete property {} from Neo4j: {}", 
+                    finalPropertyId, e.getMessage());
+            }
+        });
     }
 
     /**
