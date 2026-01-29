@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.FavoredPropertyRequestDTO;
 import largebeb.dto.FavoredPropertyResponseDTO;
 import largebeb.model.Message;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/favored")
 @RequiredArgsConstructor
+@Tag(name = "Favorites", description = "Manage customer's favorite/wishlist properties")
 public class FavoredPropertyController {
 
     private final FavoredPropertyService favoredPropertyService;

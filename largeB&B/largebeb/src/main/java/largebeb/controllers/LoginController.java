@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.LoginRequestDTO;
 import largebeb.dto.LoginResponseDTO;
 import largebeb.services.LoginService;
@@ -8,8 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-@RestController // Tells Spring this class handles Web Requests
-@RequestMapping("/api/auth") // Base URL for this controller
+@RestController
+@RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "User authentication: login with JWT token generation")
 public class LoginController {
 
     // Inject the SERVICE

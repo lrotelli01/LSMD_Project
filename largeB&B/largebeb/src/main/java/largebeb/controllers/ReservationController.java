@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.PaymentRequestDTO;
 import largebeb.dto.ReservationRequestDTO;
 import largebeb.dto.ReservationResponseDTO;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/reservations")
 @RequiredArgsConstructor
+@Tag(name = "Reservations", description = "Booking management: initiate, confirm payment, modify, and cancel reservations")
 public class ReservationController {
 
     private final ReservationService reservationService;

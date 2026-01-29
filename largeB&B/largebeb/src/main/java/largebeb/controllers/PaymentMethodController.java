@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.PaymentMethodRequestDTO; 
 import largebeb.services.PaymentMethodService;
 import largebeb.utilities.PaymentMethod;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/payment-methods")
 @RequiredArgsConstructor
+@Tag(name = "Payment Methods", description = "Secure payment method management with tokenization")
 public class PaymentMethodController {
 
     private final PaymentMethodService paymentMethodService;

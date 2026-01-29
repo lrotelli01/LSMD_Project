@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.NotificationResponseDTO;
 import largebeb.services.NotificationService;
 import largebeb.utilities.JwtUtil;
@@ -12,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@Tag(name = "Notifications", description = "User notifications for bookings, cancellations, and system alerts")
 public class NotificationController {
 
     private final NotificationService notificationService;

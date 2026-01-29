@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.RegistrationRequestDTO;
 import largebeb.dto.RegistrationResponseDTO;
 import largebeb.services.RegistrationService;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "User registration for customers and property managers")
 public class RegistrationController {
 
     @Autowired

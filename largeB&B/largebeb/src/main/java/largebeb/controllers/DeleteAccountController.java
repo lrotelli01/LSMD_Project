@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.DeleteAccountResponseDTO; 
 import largebeb.services.DeleteAccountService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "User Account", description = "User account management including account deletion")
 public class DeleteAccountController {
 
     private final DeleteAccountService deleteAccountService;

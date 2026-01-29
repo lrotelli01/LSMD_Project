@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.ReviewRequestDTO;
 import largebeb.dto.ReviewResponseDTO;
 import largebeb.services.ReviewService;
@@ -13,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
+@Tag(name = "Reviews", description = "Property reviews and ratings management")
 public class ReviewController {
 
     private final ReviewService reviewService;

@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.PropertyResponseDTO;
 import largebeb.services.PropertyService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/properties")
 @RequiredArgsConstructor
+@Tag(name = "Properties", description = "Property search, details, trending, top-rated and AI-powered recommendations")
 public class PropertyController {
 
     private final PropertyService propertyService;

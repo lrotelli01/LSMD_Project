@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.MessageRequestDTO;
 import largebeb.dto.MessageResponseDTO;
 import largebeb.model.Message;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
+@Tag(name = "Messaging", description = "Real-time messaging between customers and property managers")
 public class MessageController {
 
     private final MessageService messageService;

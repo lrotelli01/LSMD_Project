@@ -1,5 +1,6 @@
 package largebeb.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.*;
 import largebeb.services.AnalyticsService;
 import largebeb.services.ManagerPropertyService;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/manager")
 @RequiredArgsConstructor
+@Tag(name = "Manager Dashboard", description = "Property management, reservations, analytics, and reviews for property managers")
 public class ManagerController {
 
     private static final Logger logger = LoggerFactory.getLogger(ManagerController.class);
