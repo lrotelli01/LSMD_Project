@@ -120,7 +120,7 @@
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{images/UseCasesDiagram.png}
+    \makebox[\textwidth]{\includegraphics[width=1.8\textwidth]{images/drawww.pdf}}
     \caption{Use cases diagram}
     \label{fig:comparison}
 \end{figure}
@@ -231,7 +231,6 @@ The system utilizes a polyglot persistence architecture, syncing data between th
 
 When a reservation is confirmed in MongoDB, the relationship is propagated to Neo4j asynchronously. While there is a minimal delay between the transaction confirmation and the update of the social graph, this does not impact the transactional integrity of the booking. This approach ensures that the Graph Service remains decoupled and does not block the critical path of the user experience.
 
-<<<<<<< HEAD
 In conclusion, the system is \textbf{CP} regarding write operations for financial transactions and inventory management, while remaining \textbf{AP} for read-heavy operations such as search and recommendation generation.
 \section{Data Distribution and Replication Strategy}
 \label{sec:data_distribution}
