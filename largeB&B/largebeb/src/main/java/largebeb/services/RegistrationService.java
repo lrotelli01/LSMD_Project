@@ -138,16 +138,12 @@ public class RegistrationService {
         // Async sync to Neo4j (Eventual Consistency - AP)
         final String finalUserId = savedUser.getId();
         final String finalUsername = savedUser.getUsername();
-        final String finalRole = savedUser.getRole();
-        final String finalName = savedUser.getName();
         
         CompletableFuture.runAsync(() -> {
             try {
                 UserNode userNode = UserNode.builder()
                         .username(finalUsername)
                         .mongoId(finalUserId)
-                        .role(finalRole)
-                        .name(finalName)
                         .build();
 
                 userGraphRepository.save(userNode);

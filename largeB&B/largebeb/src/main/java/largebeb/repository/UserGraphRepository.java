@@ -13,19 +13,15 @@ public class UserGraphRepository {
     /**
      * Creates or updates a User node in Neo4j
      */
-    public void createOrUpdateUser(String username, String mongoId, String role, String name) {
+    public void createOrUpdateUser(String username, String mongoId) {
         String cypher = """
             MERGE (u:User {username: $username})
-            SET u.mongoId = $mongoId,
-                u.role = $role,
-                u.name = $name
+            SET u.mongoId = $mongoId
             """;
         
         neo4jClient.query(cypher)
                 .bind(username).to("username")
                 .bind(mongoId).to("mongoId")
-                .bind(role).to("role")
-                .bind(name).to("name")
                 .run();
     }
 
@@ -47,6 +43,6 @@ public class UserGraphRepository {
      * Saves a UserNode to Neo4j
      */
     public void save(largebeb.model.graph.UserNode userNode) {
-        createOrUpdateUser(userNode.getUsername(), userNode.getMongoId(), userNode.getRole(), userNode.getName());
+        createOrUpdateUser(userNode.getUsername(), userNode.getMongoId());
     }
 }

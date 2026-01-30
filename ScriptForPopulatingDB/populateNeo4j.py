@@ -26,8 +26,8 @@ class LargeBnBImporter:
         """Creates uniqueness constraints to speed up import and avoid duplicates"""
         print("Creating constraints...")
         with self.driver.session() as session:
-            # ID Constraint on User
-            session.run("CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.userId IS UNIQUE")
+            # Username Constraint on User (primary key in Java model)
+            session.run("CREATE CONSTRAINT user_username IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE")
             # ID Constraint on Property
             session.run("CREATE CONSTRAINT property_id IF NOT EXISTS FOR (p:Property) REQUIRE p.propertyId IS UNIQUE")
             # Amenity name constraint
@@ -38,16 +38,23 @@ class LargeBnBImporter:
         print("Importing Users...")
         query = """
         UNWIND $batch AS row
-        MERGE (u:User {userId: row.id})
-        SET u.name = row.name, u.role = row.role
+        MERGE (u:User {username: row.username})
+        SET u.mongoId = row.id,
+            u.userId = row.id
         """
         
         # Merge the two lists adding the role
         all_users = []
         for c in customers:
-            all_users.append({"id": c['id'], "name": c.get('name', 'Unknown'), "role": "CUSTOMER"})
+            all_users.append({
+                "id": c['id'], 
+                "username": c.get('username', c['id'])  # Use username from JSON
+            })
         for m in managers:
-            all_users.append({"id": m['id'], "name": m.get('name', 'Unknown'), "role": "MANAGER"})
+            all_users.append({
+                "id": m['id'], 
+                "username": m.get('username', m['id'])  # Use username from JSON
+            })
 
         # Execute in batches of 1000 to avoid clogging memory
         batch_size = 1000
@@ -63,17 +70,11 @@ class LargeBnBImporter:
         query = """
         UNWIND $batch AS row
         MERGE (p:Property {propertyId: row.id})
-        SET p.name = row.name, p.city = row.city
         """
         
         data = []
         for p in properties:
-            # Extract city if it exists (useful for future queries)
-            city = p.get('location', {}).get('city', 'Unknown') 
-            # If in the original JSON 'city' is outside 'location', adapt here:
-            if 'city' in p: city = p['city']
-            
-            data.append({"id": p['id'], "name": p.get('name', 'Property'), "city": city})
+            data.append({"id": p['id']})
 
         batch_size = 1000
         with self.driver.session() as session:
@@ -94,7 +95,7 @@ class LargeBnBImporter:
         print("Importing BOOKED relationships...")
         query = """
         UNWIND $batch AS row
-        MATCH (u:User {userId: row.userId})
+        MATCH (u:User {mongoId: row.userId})
         MATCH (p:Property {propertyId: row.propertyId})
         MERGE (u)-[:BOOKED {date: date(row.date)}]->(p)
         """
@@ -127,7 +128,7 @@ class LargeBnBImporter:
     def create_additional_bookings(self, properties):
         """
         Creates additional BOOKED relationships to enable collaborative filtering.
-        Randomly assigns 2-5 extra properties to 30% of users.
+        Randomly assigns 1-2 extra properties to 10% of users.
         """
         import random
         
@@ -135,26 +136,26 @@ class LargeBnBImporter:
         
         # Get all user IDs from Neo4j
         with self.driver.session() as session:
-            result = session.run("MATCH (u:User) RETURN u.userId as userId")
+            result = session.run("MATCH (u:User) RETURN u.mongoId as userId")
             user_ids = [record['userId'] for record in result]
         
-        # Select 30% of users to get additional bookings
-        users_to_boost = random.sample(user_ids, int(len(user_ids) * 0.3))
+        # Select 10% of users to get additional bookings (reduced from 30%)
+        users_to_boost = random.sample(user_ids, int(len(user_ids) * 0.10))
         
         # Get random property IDs
         property_ids = [p['id'] for p in properties if 'id' in p]
         
         query = """
         UNWIND $batch AS row
-        MATCH (u:User {userId: row.userId})
+        MATCH (u:User {mongoId: row.userId})
         MATCH (p:Property {propertyId: row.propertyId})
         MERGE (u)-[:BOOKED {date: date(row.date)}]->(p)
         """
         
         additional_rels = []
         for user_id in users_to_boost:
-            # Each user gets 2-5 additional random bookings
-            num_bookings = random.randint(2, 5)
+            # Each user gets 1-2 additional random bookings (reduced from 2-5)
+            num_bookings = random.randint(1, 2)
             selected_props = random.sample(property_ids, min(num_bookings, len(property_ids)))
             
             for prop_id in selected_props:

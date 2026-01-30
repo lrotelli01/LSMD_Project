@@ -363,9 +363,6 @@ public class UserNode {
     
     @Property("mongoId")
     private String mongoId; // Links to MongoDB User document _id
-    
-    private String role; // CUSTOMER or MANAGER (for filtering queries)
-    private String name; // For visualization without MongoDB queries
 }
 \end{lstlisting}
 
@@ -382,12 +379,6 @@ The UserNode represents users in the graph database with a minimal set of attrib
 public class PropertyNode {
     @Id
     private String propertyId; // MongoDB _id used directly as graph ID
-    
-    @Property("name")
-    private String name;
-    
-    @Property("city")
-    private String city;
 }
 \end{lstlisting}
 

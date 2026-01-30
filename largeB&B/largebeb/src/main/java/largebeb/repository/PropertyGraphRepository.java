@@ -15,17 +15,13 @@ public class PropertyGraphRepository {
     /**
      * Creates or updates a Property node in Neo4j
      */
-    public void createOrUpdateProperty(String propertyId, String name, String city, List<String> amenities) {
+    public void createOrUpdateProperty(String propertyId, List<String> amenities) {
         String cypher = """
             MERGE (p:Property {propertyId: $propertyId})
-            SET p.name = $name,
-                p.city = $city
             """;
         
         neo4jClient.query(cypher)
                 .bind(propertyId).to("propertyId")
-                .bind(name).to("name")
-                .bind(city).to("city")
                 .run();
         
         // Create relationships with amenities if provided
@@ -72,8 +68,6 @@ public class PropertyGraphRepository {
     public void save(largebeb.model.graph.PropertyNode propertyNode) {
         createOrUpdateProperty(
             propertyNode.getPropertyId(), 
-            propertyNode.getName(), 
-            propertyNode.getCity(),
             null  // amenities handled separately
         );
     }

@@ -15,13 +15,7 @@ import org.springframework.data.neo4j.core.schema.Property;
 @Builder
 public class PropertyNode {
 
-    // he Primary Key for the Neo4j Node.
+    // The Primary Key for the Neo4j Node.
     @Id
     private String propertyId; // This holds the MongoDB "_id"
-
-    @Property("name")
-    private String name;
-
-    @Property("city")
-    private String city;
 }

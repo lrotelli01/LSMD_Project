@@ -79,8 +79,6 @@ public class ManagerPropertyService {
 
         // Async sync to Neo4j (Eventual Consistency - AP)
         final String finalPropertyId = saved.getId();
-        final String finalName = saved.getName();
-        final String finalCity = saved.getCity();
         final List<String> finalAmenities = saved.getAmenities() != null 
             ? new ArrayList<>(saved.getAmenities()) : new ArrayList<>();
         
@@ -89,8 +87,6 @@ public class ManagerPropertyService {
                 // Save the main Property Node using the Repository 
                 PropertyNode propertyNode = PropertyNode.builder()
                         .propertyId(finalPropertyId)
-                        .name(finalName)
-                        .city(finalCity)
                         .build();
                 
                 propertyGraphRepository.save(propertyNode);
@@ -245,8 +241,6 @@ public class ManagerPropertyService {
             if (updateGraph) {
                 PropertyNode node = PropertyNode.builder()
                         .propertyId(saved.getId())
-                        .name(saved.getName())
-                        .city(saved.getCity())
                         .build();
                 propertyGraphRepository.save(node); // This works as an upsert based on ID
             }

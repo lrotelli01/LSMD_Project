@@ -20,9 +20,5 @@ public class UserNode {
 
     @Property("mongoId")
     private String mongoId; // This links this Node to the MongoDB Document
-
-    private String role; // Useful for graph queries (e.g. "Find all Managers...")
-
-    private String name; // for easier visualization without querying Mongo
     
 }
