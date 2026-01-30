@@ -1,6 +1,6 @@
 \chapter{Dataset and Data Modelling}
 \section{Dataset}
-The dataset was created using \textbf{Airbnb} to obtain public data (properties, rooms, etc.), and \textbf{Faker} to generate private data (user and manager information, reservations, etc.), its size is about 172MB. Some public data that were not available were also generated using Faker, while points of interest (POIs) were added manually.
+The dataset was created using \textbf{Airbnb} to obtain public data (properties, rooms, etc.), and \textbf{Faker} to generate private data (user and manager information, reservations, etc.), its size is about 172MB. Some public data that were not available were also generated using Faker, while points of interest (POIs) were pre-defined in a static dictionary and then randomly assigned to properties (6 POIs per property).
 
 \subsection{Airbnb}
 \textit{Airbnb} is an online platform that connects people looking for short-term (or long-term) accommodations with homeowners or private room owners who want to rent out extra space. To obtain public data from this platform, the provided files in \textit{InsideAirbnb} were used: `listings.csv`, which contains information about the properties, and `reviews.csv`, which contains information about the reviews. Specifically, data from 150 properties were collected for several European capitals: Rome, Paris, London, Berlin, Madrid, Lisbon, Vienna, Athens, Budapest, Prague, Oslo, Copenhagen, and Stockholm, with 3 to 5 rooms and 50 reviews collected for each property.
@@ -203,7 +203,7 @@ Contrary to the normalized Relational Model (SQL), where "Rooms" and "Properties
 
 \begin{itemize}
     \item \textbf{Why Embedding?} A property has a bounded number of rooms (1-to-Few relationship). Since room availability and prices are always accessed together with the property description, embedding them eliminates the need for disk I/O on a second collection, drastically reducing latency.
-    \item \textbf{Subset Pattern for Reviews:} To optimize the initial load time, we applied the \textit{Subset Pattern}. The 5 most recent reviews are embedded in the \texttt{Property} document for immediate display. The full history of reviews is stored in a separate \texttt{reviews} collection, linked via reference.
+    \item \textbf{Subset Pattern for Reviews:} To optimize the initial load time, we applied the \textit{Subset Pattern}. The 10 most recent reviews are embedded in the \texttt{Property} document for immediate display. The full history of reviews is stored in a separate \texttt{reviews} collection, linked via reference.
 \end{itemize}
 
 Below is the JSON structure of the final \texttt{properties} document:
@@ -230,7 +230,7 @@ Below is the JSON structure of the final \texttt{properties} document:
       }
   ],
   
-  // SUBSET PATTERN (Top 5 Reviews)
+  // SUBSET PATTERN (Top 10 Reviews)
   "latestReviews": [
       { "user": "Mario", "rating": 5, "text": "Great!" }
   ]
@@ -252,7 +252,7 @@ The Python script performs the following critical operations before insertion:
     \item \textbf{Data Cleaning:} The script parses the raw JSON files, correcting malformed fields (e.g., the \texttt{amenities} array which contained nested escaped strings) and normalizing date formats to MongoDB \texttt{ISODate}.
     \item \textbf{Denormalization (Merging):} It reads the \texttt{rooms.json} file into memory and injects each room object into the corresponding parent object in \texttt{properties.json}, effectively transforming the 1:N relationship into an embedded array.
     \item \textbf{Deduplication:} During the ingestion of \texttt{customers.json} and \texttt{managers.json}, the script enforces uniqueness by checking against a hash set of email addresses, discarding duplicate entries to prevent key collisions in the database.
-    \item \textbf{Subset Calculation:} For each property, the script sorts the associated reviews by date and slices the top 5 to populate the \texttt{latestReviews} field, implementing the Subset Pattern at ingestion time.
+    \item \textbf{Subset Calculation:} For each property, the script sorts the associated reviews by date and slices the top 10 to populate the \texttt{latestReviews} field, implementing the Subset Pattern at ingestion time.
 \end{enumerate}
 
 This automated process ensures that the MongoDB database is populated with clean, structured, and query-ready documents, as opposed to a raw import of CSV/JSON tables.
