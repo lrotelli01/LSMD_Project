@@ -122,6 +122,8 @@ public class Property {
     @TextIndexed(weight = 3)
     private String name;
     
+    private String address;
+    
     @TextIndexed
     private String description;
     
@@ -136,11 +138,13 @@ public class Property {
     
     private List<String> amenities;
     private List<String> photos;
+    private String email;
     private String country;
     private String region;
     
     // Embedded documents
     private List<Room> rooms;
+    private List<Review> latestReviews; // Top 10 most recent reviews
     private List<PointOfInterest> pois;
     private RatingStats ratingStats;
 }
@@ -221,8 +225,6 @@ public class Reservation {
     
     private ReservationDates dates;
     
-    private Double totalPrice; // Total price for the reservation
-    
     @CreatedDate
     private LocalDateTime createdAt;
     
@@ -291,6 +293,7 @@ Reviews are stored in a separate collection rather than embedded in properties t
 
 \begin{lstlisting}
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "messages")
@@ -298,38 +301,47 @@ public class Message {
     @Id
     private String id;
     
-    @Indexed
     private String senderId;
     
-    @Indexed
-    private String receiverId;
+    private String recipientId;
     
-    private String text;
+    private String content;
     private LocalDateTime timestamp;
-    private Boolean isRead;
+    
+    @Builder.Default
+    private Boolean isRead = false;
 }
 \end{lstlisting}
 
-The Message model supports the chat functionality between customers and property managers, with indexes on both sender and receiver IDs to optimize conversation retrieval.
+The Message model supports the chat functionality between customers and property managers. The \texttt{recipientId} field stores the message receiver, while \texttt{content} holds the message text. The \texttt{isRead} field tracks message read status with a default value of false.
 
 \subsubsection{Notification Model}
 
 \begin{lstlisting}
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Document(collection = "notifications")
 public class Notification {
     @Id
     private String id;
     
-    @Indexed
-    private String userId;
+    private String recipientId; // User receiving the notification
+    private String title;       // e.g., "New Booking"
+    private String body;        // e.g., "Customer X created a reservation"
+    private String type;        // e.g., "MESSAGE", "RESERVATION_CREATED"
+    private String referenceId; // ID of related Message or Reservation
     
-    private String type;
-    private String message;
-    private LocalDateTime timestamp;
-    private Boolean isRead;
+    private boolean read = false;
+    private LocalDateTime timestamp = LocalDateTime.now();
+    
+    public Notification(String recipientId, String title, 
+                       String body, String type, String referenceId) {
+        this.recipientId = recipientId;
+        this.title = title;
+        this.body = body;
+        this.type = type;
+        this.referenceId = referenceId;
+    }
 }
 \end{lstlisting}
 
@@ -344,18 +356,20 @@ Neo4j models use the \texttt{@Node} annotation to define graph vertices and \tex
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserNode {
     @Id
-    @GeneratedValue
-    private Long graphId;
+    private String username; // Primary key in the graph (human-readable)
     
-    private String userId;
-    private String username;
-    private String privacyStatus;
+    @Property("mongoId")
+    private String mongoId; // Links to MongoDB User document _id
+    
+    private String role; // CUSTOMER or MANAGER (for filtering queries)
+    private String name; // For visualization without MongoDB queries
 }
 \end{lstlisting}
 
-The UserNode represents users in the graph database with a minimal set of attributes necessary for relationship traversal and recommendation algorithms.
+The UserNode represents users in the graph database with a minimal set of attributes necessary for relationship traversal and recommendation algorithms. The \texttt{username} serves as a human-readable primary key for Cypher queries, while \texttt{mongoId} provides the link to the complete user document in MongoDB.
 
 \subsubsection{Property Node}
 
@@ -364,39 +378,30 @@ The UserNode represents users in the graph database with a minimal set of attrib
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PropertyNode {
     @Id
-    @GeneratedValue
-    private Long graphId;
+    private String propertyId; // MongoDB _id used directly as graph ID
     
-    private String propertyId;
+    @Property("name")
     private String name;
+    
+    @Property("city")
     private String city;
 }
 \end{lstlisting}
 
-PropertyNode stores essential property information in the graph for efficient traversal during recommendation queries.
+PropertyNode stores essential property information in the graph for efficient traversal during recommendation queries. The \texttt{propertyId} field directly stores the MongoDB document ID, serving as both the graph primary key and the link to the complete property data in MongoDB.
 
-\subsubsection{Booking Relationship}
+\subsubsection{Graph Relationships}
 
-\begin{lstlisting}
-@RelationshipProperties
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class BookedRelationship {
-    @Id
-    @GeneratedValue
-    private Long id;
-    
-    private LocalDate date;
-    
-    @TargetNode
-    private PropertyNode property;
-}
-\end{lstlisting}
+Unlike the node models, relationships in the application are not represented as Java classes. Instead, they are created and queried directly using Cypher statements in the Neo4j repositories. The primary relationship type is:
 
-The BOOKED relationship connects users to properties they have reserved, storing the booking date as a relationship property. This graph structure enables powerful collaborative filtering queries such as: "Users who booked property X also frequently booked properties Y and Z."
+\begin{itemize}
+    \item \textbf{[:BOOKED]} -- Connects User nodes to Property nodes, representing completed reservations. This relationship is created during the graph population process by the \texttt{populateNeo4j.py} script, which aggregates room-level bookings from MongoDB into property-level graph connections.
+\end{itemize}
+
+This graph structure enables powerful collaborative filtering queries such as: "Users who booked property X also frequently booked properties Y and Z." The relationships are queried using pattern matching in Cypher rather than being mapped to Java objects.
 
 \subsection{Utility Classes}
 
