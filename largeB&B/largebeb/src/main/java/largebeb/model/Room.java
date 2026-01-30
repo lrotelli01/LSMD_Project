@@ -20,11 +20,9 @@ public class Room {
     @Indexed 
     private String propertyId; 
     
-    @Indexed
     private String roomType; 
     @TextIndexed(weight = 2)
     private String name;  
-    @Indexed   
     @Field("beds")
     private short numBeds; 
     

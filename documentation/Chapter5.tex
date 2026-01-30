@@ -116,42 +116,6 @@ Although rooms are embedded within the Property document, specific fields are in
           \label{fig:my_label}
         \end{figure}
     \end{itemize}
-
-    \item \textbf{Room Type Index}
-    \begin{itemize}
-        \item \textbf{Fields:} \texttt{"rooms.roomType"}
-        \item \textbf{Justification:} Optimizes searches where users specify a required room configuration (e.g., filtering for "Single", "Double", or "Suite").
-     \begin{figure}[H]
-          \centering
-          \includegraphics[width=0.5\textwidth]{images/RTNoIndex.png}
-          \caption{Query results without index}
-          \label{fig:my_label}
-        \end{figure}
-        \begin{figure}[H]
-          \centering
-          \includegraphics[width=0.5\textwidth]{images/RTIndex.png}
-          \caption{Query results with index}
-          \label{fig:my_label}
-        \end{figure}
-    \end{itemize}
-
-    \item \textbf{Room Beds Index}
-    \begin{itemize}
-        \item \textbf{Fields:} \texttt{"rooms.beds"}
-        \item \textbf{Justification:} Accelerates queries where users filter by the specific number of beds required (e.g., distinguishing between a double bed room and a twin room with 2 separate beds).
-     \begin{figure}[H]
-          \centering
-          \includegraphics[width=0.5\textwidth]{images/RBNoIndex.png}
-          \caption{Query results without index}
-          \label{fig:my_label}
-        \end{figure}
-        \begin{figure}[H]
-          \centering
-          \includegraphics[width=0.5\textwidth]{images/RBIndex.png}
-          \caption{Query results with index}
-          \label{fig:my_label}
-        \end{figure}
-    \end{itemize}
 \end{itemize}
 
 \subsubsection{Reservations Collection}

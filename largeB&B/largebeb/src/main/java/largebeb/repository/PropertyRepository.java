@@ -23,9 +23,6 @@ public interface PropertyRepository extends MongoRepository<Property, String> {
     // Find properties that contain at least one room with this status
     List<Property> findByRoomsStatus(String status);
 
-    // Find properties that contain at least one room with this type
-    List<Property> findByRoomsRoomType(String roomType);
-
     // Find a Property by its ID, ensuring it contains a room with the specific name
     @Query("{ '_id': ?0, 'rooms.name': ?1 }")
     Optional<Property> findByIdAndRoomName(String propertyId, String roomName);

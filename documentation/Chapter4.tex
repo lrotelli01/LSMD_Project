@@ -172,13 +172,11 @@ public class Room {
     @Indexed
     private String propertyId; // Reverse lookup to parent property
     
-    @Indexed
     private String roomType; // Type category (e.g., "deluxe", "standard")
     
     @TextIndexed(weight = 2)
     private String name;
     
-    @Indexed
     @Field("beds")
     private short numBeds; // Number of beds
     
