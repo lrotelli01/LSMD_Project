@@ -98,11 +98,11 @@ The \texttt{properties} collection utilizes a combination of Compound, Text, and
 Although rooms are embedded within the Property document, specific fields are indexed to allow filtering properties based on room attributes.
 
 \begin{itemize}
-    \item \textbf{Room Price Compound Index}
+    \item \textbf{Room Price Index}
     \begin{itemize}
-        \item \textbf{Type:} Compound Multikey Index
-        \item \textbf{Fields:} \{\texttt{"rooms.pricePerNightAdults"}: 1, \texttt{"rooms.pricePerNightChildren"} :1\}
-        \item \textbf{Justification:} Optimizes complex budget queries where users filter by both adult and child prices simultaneously. This is more efficient than separate indexes because it allows the database to narrow down candidate rooms satisfying both price constraints in a single index scan.
+        \item \textbf{Type:} Single Field Multikey Index
+        \item \textbf{Fields:} \{\texttt{"rooms.pricePerNightAdults"}: 1\}
+        \item \textbf{Justification:} Optimizes price range queries where users filter properties by room price (e.g., "Find rooms between \$80-\$200 per night"). Although rooms also have a \texttt{pricePerNightChildren} field, it is not used in search queries—only in reservation price calculations—so it is excluded from the index to reduce storage overhead and improve index efficiency.
      \begin{figure}[H]
           \centering
           \includegraphics[width=0.5\textwidth]{images/RPCNoIndex.png}

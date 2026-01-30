@@ -28,11 +28,9 @@ import largebeb.utilities.RatingStats;
     // Rating Sort: Optimizes "Sort by Highest Rated" (-1 = Descending)
     @CompoundIndex(name = "rating_sort_idx", def = "{'ratingStats.value': -1}"),
 
-    // Price Range: Optimizes "Find property with room price under X for adults & Y for children"
-    @CompoundIndex(
-        name = "idx_rooms_price_adults_children", 
-        def = "{'rooms.pricePerNightAdults': 1, 'rooms.pricePerNightChildren': 1}"
-    )
+    // Price Range: Optimizes "Find property with room price in range"
+    // Single field index (not compound) since queries filter only on adults price
+    @CompoundIndex(name = "room_price_idx", def = "{'rooms.pricePerNightAdults': 1}")
 })
 public class Property {
 
