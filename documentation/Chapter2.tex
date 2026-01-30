@@ -115,14 +115,35 @@
     \item The system must use a key-value database to temporarily store information, manage cache, locks, and user sessions.
     \item The system must implement a stateless authentication mechanism using JSON Web Tokens (JWT). All protected API resources must require a valid Bearer token in the Authorization header to grant access.
 \end{itemize}
-
+\clearpage
 \subsection{Use Cases Diagram}
-
-\begin{figure}[H]
+% --- PARTE 1: ALTO (Guest) ---
+% Visualizza dai pixel 1860 fino alla cima (2792)
+\begin{figure}[htbp]
     \centering
-    \makebox[\textwidth]{\includegraphics[width=1.8\textwidth]{images/drawww.pdf}}
-    \caption{Use cases diagram}
-    \label{fig:comparison}
+    % viewport = {X_sinistra Y_basso X_destra Y_alto}
+    \includegraphics[width=\textwidth, viewport={0 1860 925 2792}, clip]{images/UseCasesDiagramUML.png}
+    \caption{Use cases diagram (part 1)}
+\end{figure}
+
+\clearpage
+
+% --- PARTE 2: CENTRO (Customer) ---
+% Visualizza la fascia centrale (da 930 a 1860)
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth, viewport={0 930 925 1860}, clip]{images/UseCasesDiagramUML.png}
+    \caption{Use cases diagram (part 2)}
+\end{figure}
+
+\clearpage
+
+% --- PARTE 3: BASSO (Manager) ---
+% Visualizza dal fondo (0) fino a un terzo (930)
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth, viewport={0 0 925 930}, clip]{images/UseCasesDiagramUML.png}
+    \caption{Use cases diagram (part 3)}
 \end{figure}
 
 \subsection{Analysis Class Diagram}
