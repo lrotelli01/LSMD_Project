@@ -276,7 +276,7 @@ The cluster is composed of one \textbf{Primary} node and two \textbf{Secondary} 
 
 \begin{itemize}
     \item \textbf{Node A (IP 10.1.1.21 - Priority 5):} This is the preferred Primary node. It resides on the highest-performance hardware and handles all write operations under normal conditions.
-    \item \textbf{Node B (IP 10.1.1.22 - Priority 2):} This node acts as the immediate hot-standby. It serves read operations and is the first candidate to become Primary if Node A fails, it also hosts the backend application.
+    \item \textbf{Node B (IP 10.1.1.22 - Priority 2):} This node acts as the immediate hot-standby. It serves read operations and is the first candidate to become Primary if Node A fails.
     \item \textbf{Node C (IP 10.1.1.23 - Priority 1):} This node has the lowest priority. It is primarily used for read offloading and acts as a disaster recovery option. Assigning a lower priority ensures it is elected as Primary only as a last resort.
 \end{itemize}
 
