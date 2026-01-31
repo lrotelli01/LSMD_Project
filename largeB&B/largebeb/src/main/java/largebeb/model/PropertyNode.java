@@ -6,16 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Property;
 
-@Node("Property")
-@Data
+@Node("PropertyGraph") // Etichetta modificata per evitare conflitti con MongoDB
+@Data                 // Genera automaticamente getPropertyId()
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class PropertyNode {
 
-    // The Primary Key for the Neo4j Node.
     @Id
-    private String propertyId; // This holds the MongoDB "_id"
+    private String propertyId; // Questo deve corrispondere al metodo cercato dal repository
 }
