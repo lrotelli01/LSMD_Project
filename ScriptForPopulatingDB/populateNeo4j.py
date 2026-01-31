@@ -3,7 +3,7 @@ from neo4j import GraphDatabase
 import os
 # --- NEO4J CONFIGURATION ---
 # Change the password if you have changed it
-URI = "neo4j://127.0.0.1:7687"
+URI = "neo4j://10.1.1.23:7687"
 AUTH = ("neo4j", "Carota123!") 
 base_path = os.path.dirname(os.path.abspath(__file__))
 def load_json(filename):

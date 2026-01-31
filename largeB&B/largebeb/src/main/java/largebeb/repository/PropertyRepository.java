@@ -84,8 +84,10 @@ public interface PropertyRepository extends MongoRepository<Property, String> {
 
     // Search properties with optional filters: city, amenities, price range
     @Aggregation(pipeline = {
+        // Filtro per city solo se city non è null, altrimenti non filtro per città
         "{ '$match': { $and: [ " +
-        "   { $expr: { $or: [ { $eq: [?0, null] }, { $regexMatch: { input: '$city', regex: ?0, options: 'i' } } ] } }, " +
+        "   " +
+        "   ( ?0 != null ? { 'city': { $regex: ?0, $options: 'i' } } : {} ), " +
         "   { $expr: { $or: [ { $eq: [?3, null] }, { $eq: [?3, []] }, { $setIsSubset: [?3, '$amenities'] } ] } }, " +
         "   { $expr: { $or: [ " +
         "     { $and: [ { $eq: [?1, null] }, { $eq: [?2, null] } ] }, " +
