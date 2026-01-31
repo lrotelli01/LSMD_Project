@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/properties")
 @RequiredArgsConstructor
-@Tag(name = "Properties", description = "Property search, details, trending, top-rated and AI-powered recommendations")
+@Tag(name = "Properties", description = "Property search, details, trending, top-rated and recommendations")
 public class PropertyController {
 
     private final PropertyService propertyService;
