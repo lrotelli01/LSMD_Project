@@ -176,7 +176,7 @@ public class PropertyService {
                 .amenities(p.getAmenities())
                 .photos(p.getPhotos())
                 .pois(p.getPois())
-                .location(p.getLocation())
+                .coordinates(p.getCoordinates())
                 .build();
     }
 }
