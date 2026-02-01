@@ -4,7 +4,8 @@ from datetime import datetime
 import os
 
 # --- CONFIGURATION ---
-MONGO_URI = "mongodb://localhost:27017/"
+# MongoDB Replica Set Connection (3 VMs)
+MONGO_URI = "mongodb://10.1.1.21:27017,10.1.1.22:27017,10.1.1.23:27017/?replicaSet=rs0&w=majority"
 DB_NAME = "large_bnb_db"
 
 # FOLDER PATH
@@ -123,6 +124,21 @@ def main():
         
         poi_copy = poi.copy()
         if 'property_id' in poi_copy: del poi_copy['property_id']
+        
+        # Rename 'type' -> 'category' for consistency
+        if 'type' in poi_copy:
+            poi_copy['category'] = poi_copy.pop('type')
+        
+        # GEOJSON CONVERSION for POI coordinates
+        # Generator gave [Lat, Lon]. MongoDB requires [Lon, Lat].
+        if 'coordinates' in poi_copy and len(poi_copy['coordinates']) == 2:
+            lat, lon = poi_copy['coordinates']
+            poi_copy['location'] = {
+                "type": "Point",
+                "coordinates": [lon, lat]
+            }
+            del poi_copy['coordinates']
+        
         pois_by_property[pid].append(poi_copy)
 
     properties_final = []
