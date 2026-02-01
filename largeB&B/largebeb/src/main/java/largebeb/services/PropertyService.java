@@ -62,13 +62,13 @@ public class PropertyService {
 
     // --- 2. RICERCA GEOSPAZIALE (Mappa) ---
     public List<PropertyResponseDTO> getPropertiesInArea(double lat, double lon, double radiusKm) {
-        // Conversione Km -> Metri per la query geospaziale con indice 2dsphere
-        double radiusMeters = radiusKm * 1000;
+        // Conversione Km -> Radianti (Mongo usa radianti per nearSphere standard o metri per $near)
+        // Usiamo l'approccio semplice: distanza in Metri su indice 2dsphere
         
         Query query = new Query();
-        // Usa 'location' (formato GeoJSON) con indice '2dsphere'
-        query.addCriteria(Criteria.where("location").nearSphere(new Point(lon, lat))
-                .maxDistance(radiusMeters / 6378137.0)); // Raggio Terra in metri ~6378137m
+        // Nota: Assicurati che su MongoDB "coordinates" abbia un indice '2dsphere'
+        query.addCriteria(Criteria.where("coordinates").nearSphere(new Point(lon, lat))
+                .maxDistance(radiusKm / 6378.1)); // Distanza normalizzata in radianti (Raggio Terra ~6378km)
         
         List<Property> properties = mongoTemplate.find(query, Property.class);
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
@@ -176,7 +176,7 @@ public class PropertyService {
                 .amenities(p.getAmenities())
                 .photos(p.getPhotos())
                 .pois(p.getPois())
-                .location(p.getLocation())
+                .coordinates(p.getCoordinates())
                 .build();
     }
 }
