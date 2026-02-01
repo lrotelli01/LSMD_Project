@@ -3,7 +3,6 @@ package largebeb.dto;
 import lombok.Builder;
 import lombok.Data;
 import largebeb.model.PointOfInterest;
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import java.util.List;
 
 @Data
@@ -26,6 +25,6 @@ public class PropertyResponseDTO {
     // I tuoi requisiti specifici
     private List<PointOfInterest> pois; 
     
-    // Per la mappa (formato GeoJSON)
-    private GeoJsonPoint location; 
+    // Per la mappa - coordinate semplici [longitude, latitude]
+    private List<Double> coordinates; 
 }

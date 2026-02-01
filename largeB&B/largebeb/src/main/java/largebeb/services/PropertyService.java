@@ -167,6 +167,12 @@ public class PropertyService {
                 .orElse(0.0);
         }
 
+        // Converti GeoJsonPoint in List<Double> [lon, lat]
+        List<Double> coords = null;
+        if (p.getLocation() != null) {
+            coords = List.of(p.getLocation().getX(), p.getLocation().getY());
+        }
+
         return PropertyResponseDTO.builder()
                 .id(p.getId())
                 .name(p.getName())
@@ -179,7 +185,7 @@ public class PropertyService {
                 .amenities(p.getAmenities())
                 .photos(p.getPhotos())
                 .pois(p.getPois())
-                .location(p.getLocation())
+                .coordinates(coords)
                 .build();
     }
 }
