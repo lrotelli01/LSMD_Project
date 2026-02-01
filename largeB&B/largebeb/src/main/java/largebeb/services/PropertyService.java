@@ -225,33 +225,40 @@ public class PropertyService {
             query.addCriteria(Criteria.where("city").regex(city, "i"));
         }
 
+        // B-E. Combina tutti i criteri sulle stanze in un singolo $elemMatch
+        List<Criteria> roomCriteriaList = new ArrayList<>();
+        
         // B. Filtro Room Type
         if (roomType != null && !roomType.trim().isEmpty()) {
-            query.addCriteria(Criteria.where("rooms.roomType").regex(roomType, "i"));
+            roomCriteriaList.add(Criteria.where("roomType").regex(roomType, "i"));
         }
 
         // C. Filtro Prezzo (nelle stanze)
-        if (minPrice != null || maxPrice != null) {
-            Criteria priceCriteria = Criteria.where("pricePerNightAdults");
-            if (minPrice != null) priceCriteria.gte(minPrice.floatValue());
-            if (maxPrice != null) priceCriteria.lte(maxPrice.floatValue());
-            query.addCriteria(Criteria.where("rooms").elemMatch(priceCriteria));
+        if (minPrice != null) {
+            roomCriteriaList.add(Criteria.where("pricePerNightAdults").gte(minPrice.floatValue()));
+        }
+        if (maxPrice != null) {
+            roomCriteriaList.add(Criteria.where("pricePerNightAdults").lte(maxPrice.floatValue()));
         }
 
         // D. Filtro Capacità minima
         if (minCapacity != null && minCapacity > 0) {
-            query.addCriteria(Criteria.where("rooms").elemMatch(
-                Criteria.where("capacityAdults").gte(minCapacity.longValue())
-            ));
+            roomCriteriaList.add(Criteria.where("capacityAdults").gte(minCapacity.longValue()));
         }
 
         // E. Filtro Amenities delle stanze
         if (amenities != null && !amenities.isEmpty()) {
-            List<Criteria> amenityCriteria = new ArrayList<>();
             for (String amenity : amenities) {
-                amenityCriteria.add(Criteria.where("rooms.amenities").regex(amenity, "i"));
+                roomCriteriaList.add(Criteria.where("amenities").regex(amenity, "i"));
             }
-            query.addCriteria(new Criteria().andOperator(amenityCriteria.toArray(new Criteria[0])));
+        }
+
+        // Applica il singolo $elemMatch combinato se ci sono criteri sulle stanze
+        if (!roomCriteriaList.isEmpty()) {
+            Criteria combinedRoomCriteria = new Criteria().andOperator(
+                roomCriteriaList.toArray(new Criteria[0])
+            );
+            query.addCriteria(Criteria.where("rooms").elemMatch(combinedRoomCriteria));
         }
 
         // Esegue la query
