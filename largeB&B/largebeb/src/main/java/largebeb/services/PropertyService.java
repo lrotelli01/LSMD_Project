@@ -64,11 +64,14 @@ public class PropertyService {
     public List<PropertyResponseDTO> getPropertiesInArea(double lat, double lon, double radiusKm) {
         // GeoJsonPoint(x=lon, y=lat) - GeoJSON usa [longitude, latitude]
         GeoJsonPoint point = new GeoJsonPoint(lon, lat);
+        // Limita il raggio massimo a 100km per evitare query troppo pesanti
+        double maxRadiusKm = Math.min(radiusKm, 100.0);
         // Per $nearSphere con GeoJSON e indice 2dsphere, $maxDistance è in METRI
-        double radiusMeters = radiusKm * 1000;
+        double radiusMeters = maxRadiusKm * 1000;
         
         Query query = new Query();
         query.addCriteria(Criteria.where("location").nearSphere(point).maxDistance(radiusMeters));
+        query.limit(100); // Limita i risultati per performance
         
         List<Property> properties = mongoTemplate.find(query, Property.class);
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
