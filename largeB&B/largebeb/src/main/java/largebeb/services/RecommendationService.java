@@ -53,11 +53,11 @@ public class RecommendationService {
     // CONTENT-BASED FILTERING (MongoDB)
 public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyId) {
         
-        // Logica della Query Cypher:
-        // 1. MATCH (p): Trova il nodo della proprietà corrente usando l'ID.
-        // 2. -[:HAS]->(a): Attraversa il grafo per trovare tutti i nodi Amenity collegati (es. Wifi, Pool).
-        // 3. <-[:HAS]-(other): Dai nodi Amenity, torna indietro per trovare ALTRE proprietà che hanno gli stessi servizi.
-        // 4. count(a): Conta quanti servizi hanno in comune. Più alto è il numero, più sono simili.
+        // Cypher Query Logic:
+        // 1. MATCH (p): Find the current property node using the ID.
+        // 2. -[:HAS]->(a): Traverse the graph to find all connected Amenity nodes (e.g., Wifi, Pool).
+        // 3. <-[:HAS]-(other): From Amenity nodes, go back to find OTHER properties that have the same services.
+        // 4. count(a): Count how many services they have in common. The higher the number, the more similar they are.
         
         String cypherQuery = """
             MATCH (p:Property {propertyId: $propId})-[:HAS]->(a:Amenity)<-[:HAS]-(other:Property)
@@ -78,19 +78,19 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
             return Collections.emptyList();
         }
 
-        // Idratazione dei dati (Hybrid Approach):
-        // Neo4j ci dà solo gli ID (velocissimo), ora chiediamo a Mongo i dettagli (Foto, Prezzi, ecc.)
+        // Data Hydration (Hybrid Approach):
+        // Neo4j gives us only the IDs (very fast), now we ask Mongo for details (Photos, Prices, etc.)
         List<Property> properties = (List<Property>) propertyRepository.findAllById(recommendedIds);
         
-        // Noi dobbiamo mantenere l'ordine di Neo4j (dalla più simile alla meno simile).
-        // Creiamo una mappa per riordinare la lista.
+        // We need to maintain Neo4j's order (from most similar to least similar).
+        // We create a map to reorder the list.
         var propertyMap = properties.stream()
                 .collect(Collectors.toMap(Property::getId, p -> p));
         
         return recommendedIds.stream()
-                .map(propertyMap::get)           // Prendi l'oggetto dalla mappa nell'ordine giusto
-                .filter(java.util.Objects::nonNull) // Evita crash se Mongo non trova un ID
-                .map(this::mapToDTO)             // Converti in DTO
+                .map(propertyMap::get)           // Get object from map in correct order
+                .filter(java.util.Objects::nonNull) // Avoid crash if Mongo doesn't find an ID
+                .map(this::mapToDTO)             // Convert to DTO
                 .collect(Collectors.toList());
     }
 
@@ -101,7 +101,7 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
         return copy.size();
     }
 
-    // Helper: Mappa Entity -> DTO (CORRETTO IL FLOAT E LA FOTO)
+    // Helper: Map Entity -> DTO (FIXED FLOAT AND PHOTO)
     private PropertyResponseDTO mapToDTO(Property p) {
         Double minPrice = 0.0;
         if (p.getRooms() != null && !p.getRooms().isEmpty()) {
@@ -112,13 +112,13 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
                 .orElse(0.0);
         }
 
-        // Converti GeoJsonPoint in List<Double> [lon, lat]
+        // Convert GeoJsonPoint to List<Double> [lon, lat]
         java.util.List<Double> coords = null;
         if (p.getLocation() != null) {
             coords = java.util.List.of(p.getLocation().getX(), p.getLocation().getY());
         }
 
-        // Converti POI in DTO
+        // Convert POI to DTO
         List<PointOfInterestDTO> poisDTO = null;
         if (p.getPois() != null) {
             poisDTO = p.getPois().stream()

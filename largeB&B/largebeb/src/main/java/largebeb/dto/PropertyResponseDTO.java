@@ -14,16 +14,16 @@ public class PropertyResponseDTO {
     private String region;
     private String country;
     
-    // Info calcolata: prezzo minimo (es. "A partire da 80€")
+    // Calculated info: minimum price (e.g., "Starting from 80€")
     private Double pricePerNight; 
     
     private Double rating;
     private List<String> amenities;
     private List<String> photos;
     
-    // POI con coordinate semplici
+    // POI with simple coordinates
     private List<PointOfInterestDTO> pois; 
     
-    // Per la mappa - coordinate semplici [longitude, latitude]
+    // For the map - simple coordinates [longitude, latitude]
     private List<Double> coordinates; 
 }

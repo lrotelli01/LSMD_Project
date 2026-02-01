@@ -4,11 +4,11 @@ import string
 import json
 from datetime import datetime, timedelta
  
-# ================= CONFIGURAZIONE =================
+# ================= CONFIGURATION =================
 BASE_URL = "http://localhost:8080/api"
 HEADERS = {"Content-Type": "application/json"}
  
-# Colori per output
+# Colors for output
 GREEN = '\033[92m'
 RED = '\033[91m'
 YELLOW = '\033[93m'
@@ -29,13 +29,13 @@ def print_fail(message, response=None):
         except:
             print(f"   Body: {response.text}")
  
-# ================= GENERATORI DATI =================
+# ================= DATA GENERATORS =================
 def generate_user():
     suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
     return {
         "username": f"user_{suffix}",
         "email": f"test_{suffix}@example.com",
-        "password": "Password1!", # Rispetta la regex complessa
+        "password": "Password1!", # Complies with the complex regex
         "phoneNumber": "1234567890",
         "birthdate": "1990-01-01",
         "role": "CUSTOMER"
@@ -43,36 +43,36 @@ def generate_user():
  
 # ================= MAIN TEST =================
 def run_tests():
-    print(f"{YELLOW}🚀 INIZIO TEST AUTOMATICO LARGEB&B{RESET}")
+    print(f"{YELLOW}🚀 STARTING AUTOMATIC TEST LARGEB&B{RESET}")
  
-    # 1. REGISTRAZIONE
-    print_step("1. Registrazione Nuovo Utente")
+    # 1. REGISTRATION
+    print_step("1. New User Registration")
     user_data = generate_user()
     res = requests.post(f"{BASE_URL}/auth/register", json=user_data, headers=HEADERS)
     if res.status_code == 200:
-        print_pass(f"Utente creato: {user_data['email']}")
+        print_pass(f"User created: {user_data['email']}")
     else:
-        print_fail("Registrazione fallita", res)
+        print_fail("Registration failed", res)
         return
  
     # 2. LOGIN
-    print_step("2. Login e Acquisizione Token")
+    print_step("2. Login and Token Acquisition")
     login_payload = {"email": user_data['email'], "password": user_data['password']}
     res = requests.post(f"{BASE_URL}/auth/login", json=login_payload, headers=HEADERS)
     token = None
     if res.status_code == 200:
         token = res.json().get("token")
-        print_pass("Login effettuato, Token ricevuto")
+        print_pass("Login successful, Token received")
     else:
-        print_fail("Login fallito", res)
+        print_fail("Login failed", res)
         return
  
     AUTH_HEADERS = HEADERS.copy()
     AUTH_HEADERS["Authorization"] = f"Bearer {token}"
  
-    # 3. RICERCA PROPRIETÀ
-    print_step("3. Ricerca Proprietà a 'Rome'")
-    # Nota: Assicurati di aver popolato il DB con città = 'Rome'
+    # 3. PROPERTY SEARCH
+    print_step("3. Search Properties in 'Rome'")
+    # Note: Make sure you have populated the DB with city = 'Rome'
     res = requests.get(f"{BASE_URL}/properties/search?city=Rome", headers=HEADERS)
     target_property_id = None
     target_room_id = None
@@ -80,93 +80,93 @@ def run_tests():
         props = res.json()
         if len(props) > 0:
             target_property_id = props[0]['id']
-            print_pass(f"Trovate {len(props)} case. Selezionata ID: {target_property_id}")
+            print_pass(f"Found {len(props)} properties. Selected ID: {target_property_id}")
         else:
-            print_fail("Nessuna casa trovata a Roma. (DB Vuoto o città errata?)")
+            print_fail("No properties found in Rome. (Empty DB or wrong city?)")
             return
     else:
-        print_fail("Errore API Search", res)
+        print_fail("Search API Error", res)
         return
  
-    # 4. DETTAGLI PROPRIETÀ (Trigger Redis Trending + History)
-    print_step("4. Visita Dettagli (Popola History & Trending)")
-    # Recuperiamo i dettagli COMPLETI per trovare una stanza
+    # 4. PROPERTY DETAILS (Trigger Redis Trending + History)
+    print_step("4. Visit Details (Populates History & Trending)")
+    # Retrieve the FULL details to find a room
     res = requests.get(f"{BASE_URL}/properties/{target_property_id}", headers=AUTH_HEADERS)
     if res.status_code == 200:
         data = res.json()
-        print_pass("Dettagli recuperati")
-        # Cerchiamo una stanza per dopo
-        # Nota: La struttura del JSON dipende dal tuo DTO, qui cerco di indovinare o adattare
-        # Se il DTO non ha le stanze esposte direttamente, questo step potrebbe fallire
-        # Ma nel tuo PropertyResponseDTO non vedo la lista delle stanze... 
-        # Controllo il codice: PropertyResponseDTO ha il prezzo minimo ma non la lista stanze.
-        # DOVREBBE averla se Room è embedded. 
-        # Se non c'è, useremo un endpoint diverso se esiste o tireremo a indovinare.
-        # Guardando il tuo codice: Property ha List<Room>, ma PropertyResponseDTO NON ha List<RoomDTO>!
-        # Ha solo amenities, foto, pois. 
-        # ATTENZIONE: Se non esponi le stanze nel DTO, il frontend non può prenotare!
-        # Verifico il file PropertyResponseDTO...
-        # ... Ah, nel file PropertyResponseDTO.java che hai mandato NON c'è il campo 'rooms'.
-        # Questo è un bug architetturale: come fa l'utente a scegliere la stanza?
-        print(f"{YELLOW}⚠️  ATTENZIONE: PropertyResponseDTO non sembra esporre la lista delle stanze.{RESET}")
-        print("    Tenterò di prenotare recuperando le stanze da un'altra chiamata se esiste,")
-        print("    oppure saltiamo la prenotazione.")
+        print_pass("Details retrieved")
+        # Let's look for a room for later
+        # Note: The JSON structure depends on your DTO, here I try to guess or adapt
+        # If the DTO doesn't expose rooms directly, this step might fail
+        # But in your PropertyResponseDTO I don't see the rooms list... 
+        # Checking the code: PropertyResponseDTO has the minimum price but not the rooms list.
+        # It SHOULD have it if Room is embedded. 
+        # If not, we'll use a different endpoint if it exists or we'll guess.
+        # Looking at your code: Property has List<Room>, but PropertyResponseDTO does NOT have List<RoomDTO>!
+        # It only has amenities, photos, pois. 
+        # WARNING: If you don't expose rooms in the DTO, the frontend cannot book!
+        # Checking the PropertyResponseDTO file...
+        # ... Ah, in the PropertyResponseDTO.java file you sent there is NO 'rooms' field.
+        # This is an architectural bug: how can the user choose the room?
+        print(f"{YELLOW}⚠️  WARNING: PropertyResponseDTO doesn't seem to expose the rooms list.{RESET}")
+        print("    I'll try to book by retrieving rooms from another call if it exists,")
+        print("    or we'll skip the reservation.")
     else:
-        print_fail("Errore Dettagli", res)
+        print_fail("Details Error", res)
  
-    # 5. CONTROLLO STORICO (Redis)
-    print_step("5. Verifica Storico Utente (Redis)")
+    # 5. HISTORY CHECK (Redis)
+    print_step("5. Verify User History (Redis)")
     res = requests.get(f"{BASE_URL}/properties/history", headers=AUTH_HEADERS)
     if res.status_code == 200:
         history = res.json()
-        # Controlliamo se l'ID della casa visitata è nella lista
+        # Check if the visited property ID is in the list
         found = any(p['id'] == target_property_id for p in history)
         if found:
-            print_pass("La casa visitata è apparsa nello storico!")
+            print_pass("The visited property appeared in the history!")
         else:
-            print_fail("La casa NON è nello storico. (Hai aggiornato PropertyController?)")
+            print_fail("The property is NOT in the history. (Did you update PropertyController?)")
     else:
-        print_fail("Errore API History", res)
+        print_fail("History API Error", res)
  
-    # 6. MAPPA GEOSPAZIALE
-    print_step("6. Test Mappa (Coordinate Roma)")
-    # Coordinate Pantheon
+    # 6. GEOSPATIAL MAP
+    print_step("6. Map Test (Rome Coordinates)")
+    # Pantheon Coordinates
     res = requests.get(f"{BASE_URL}/properties/map?lat=41.8986&lon=12.4768&radiusKm=5", headers=HEADERS)
     if res.status_code == 200:
         map_results = res.json()
         if len(map_results) > 0:
-            print_pass(f"Mappa OK: Trovate {len(map_results)} case vicine.")
+            print_pass(f"Map OK: Found {len(map_results)} nearby properties.")
         else:
-            print_fail("Mappa vuota. (Hai messo *1000 nel Service? Le coordinate nel DB sono corrette?)")
+            print_fail("Map empty. (Did you add *1000 in the Service? Are the DB coordinates correct?)")
     else:
-        print_fail("Errore API Map", res)
+        print_fail("Map API Error", res)
  
-    # 7. RACCOMANDAZIONI (Neo4j)
-    print_step("7. Test Raccomandazioni (Neo4j)")
+    # 7. RECOMMENDATIONS (Neo4j)
+    print_step("7. Recommendations Test (Neo4j)")
     res = requests.get(f"{BASE_URL}/properties/{target_property_id}/recommendations/similar", headers=HEADERS)
     if res.status_code == 200:
-        print_pass("Content-Based (Simili) OK")
+        print_pass("Content-Based (Similar) OK")
     else:
-        print_fail("Errore Content-Based", res)
+        print_fail("Content-Based Error", res)
  
     res = requests.get(f"{BASE_URL}/properties/{target_property_id}/recommendations/collaborative", headers=HEADERS)
     if res.status_code == 200:
-        print_pass("Collaborative (Utenti simili) OK")
+        print_pass("Collaborative (Similar users) OK")
     else:
-        print_fail("Errore Collaborative", res)
+        print_fail("Collaborative Error", res)
  
-    # 8. NOTIFICHE
-    print_step("8. Controllo Notifiche")
+    # 8. NOTIFICATIONS
+    print_step("8. Check Notifications")
     res = requests.get(f"{BASE_URL}/notifications", headers=AUTH_HEADERS)
     if res.status_code == 200:
-        print_pass("API Notifiche risponde correttamente")
+        print_pass("Notifications API responds correctly")
     else:
-        print_fail("Errore Notifiche", res)
-    print(f"\n{YELLOW}🏁 TEST COMPLETATO.{RESET}")
+        print_fail("Notifications Error", res)
+    print(f"\n{YELLOW}🏁 TEST COMPLETED.{RESET}")
  
 if __name__ == "__main__":
     try:
         run_tests()
     except requests.exceptions.ConnectionError:
-        print(f"{RED}ERRORE FATALE: Impossibile connettersi a localhost:8080.{RESET}")
-        print("Assicurati che Spring Boot sia avviato!")
+        print(f"{RED}FATAL ERROR: Unable to connect to localhost:8080.{RESET}")
+        print("Make sure Spring Boot is running!")

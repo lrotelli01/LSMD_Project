@@ -10,23 +10,23 @@ import java.util.Optional;
 @Repository
 public interface PropertyRepository extends MongoRepository<Property, String> {
 
-    // Trova proprietà per nome esatto
+    // Find property by exact name
     Optional<Property> findByName(String name);
 
-    // Trova la proprietà che contiene una certa stanza
+    // Find the property containing a specific room
     @Query("{ 'rooms.roomId': ?0 }")
     Optional<Property> findByRoomsId(String roomId);
 
-    // Trova proprietà che hanno stanze con un certo status
+    // Find properties with rooms having a specific status
     List<Property> findByRoomsStatus(String status);
 
-    // Trova proprietà specifica con una stanza specifica
+    // Find specific property with a specific room
     @Query("{ '_id': ?0, 'rooms.name': ?1 }")
     Optional<Property> findByIdAndRoomName(String propertyId, String roomName);
 
-    // Trova tutte le proprietà di un Manager
+    // Find all properties of a Manager
     List<Property> findByManagerId(String managerId);
 
-    // NOTA: Le query complesse (Search, GeoSpatial) sono state spostate 
-    // nel PropertyService usando MongoTemplate per evitare errori di sintassi.
+    // NOTE: Complex queries (Search, GeoSpatial) have been moved 
+    // to PropertyService using MongoTemplate to avoid syntax errors.
 }

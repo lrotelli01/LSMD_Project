@@ -39,9 +39,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String requestURI = request.getRequestURI();
 
-        // Logga solo le richieste API per non intasare la console con file statici/swagger
+        // Only log API requests to not flood the console with static files/swagger
         if (requestURI.startsWith("/api/")) {
-            logger.info(">>> SECURITY FILTER: Richiesta in ingresso verso {}", requestURI);
+            logger.info(">>> SECURITY FILTER: Incoming request to {}", requestURI);
         }
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -51,14 +51,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String userId = jwtUtil.getUserIdFromToken(token);
                     logger.info(">>> TOKEN VALIDO. UserID estratto: {}", userId);
                     
-                    // Cerco l'utente fresco dal Database
+                    // Look up fresh user from Database
                     RegisteredUser user = userRepository.findById(userId).orElse(null);
 
                     if (user != null) {
                         String role = user.getRole(); 
-                        logger.info(">>> UTENTE TROVATO: {} | Ruolo: {}", user.getEmail(), role);
+                        logger.info(">>> USER FOUND: {} | Role: {}", user.getEmail(), role);
                         
-                        // Assegno autorità ROLE_...
+                        // Assign ROLE_... authority
                         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
                         UsernamePasswordAuthenticationToken authToken = 
@@ -70,21 +70,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
-                        logger.info(">>> AUTENTICAZIONE COMPLETATA con successo.");
+                        logger.info(">>> AUTHENTICATION COMPLETED successfully.");
 
                     } else {
-                        logger.error("!!! ERRORE CRITICO: UserID {} nel token NON ESISTE nel Database! Utente cancellato?", userId);
+                        logger.error("!!! CRITICAL ERROR: UserID {} in token DOES NOT EXIST in Database! User deleted?", userId);
                     }
                 } else {
-                    logger.warn("!!! TOKEN NON VALIDO (firma errata o scaduto)");
+                    logger.warn("!!! INVALID TOKEN (wrong signature or expired)");
                 }
             } catch (Exception e) {
-                logger.error("!!! ECCEZIONE nel filtro: {}", e.getMessage());
+                logger.error("!!! EXCEPTION in filter: {}", e.getMessage());
                 SecurityContextHolder.clearContext();
             }
         } else {
             if (requestURI.startsWith("/api/") && !requestURI.contains("/auth/")) {
-                logger.warn("!!! Header Authorization mancante o non inizia con 'Bearer '");
+                logger.warn("!!! Authorization header missing or doesn't start with 'Bearer '");
             }
         }
         

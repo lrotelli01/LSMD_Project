@@ -13,7 +13,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Cattura gli errori di @Valid
+    // Catches @Valid errors
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         
-        // Ritorna un JSON tipo: { "numBeds": "Number of beds must be positive" }
+        // Returns a JSON like: { "numBeds": "Number of beds must be positive" }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 }

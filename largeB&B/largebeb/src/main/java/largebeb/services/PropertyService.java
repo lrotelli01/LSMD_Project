@@ -26,36 +26,36 @@ public class PropertyService {
 
     private final PropertyRepository propertyRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    // INIEZIONE FONDAMENTALE PER LE QUERY DINAMICHE
+    // ESSENTIAL INJECTION FOR DYNAMIC QUERIES
     private final MongoTemplate mongoTemplate; 
 
-    // --- 1. RICERCA AVANZATA (Fix Error 500 & Dati Sporchi) ---
+    // --- 1. ADVANCED SEARCH (Fix Error 500 & Dirty Data) ---
     public List<PropertyResponseDTO> searchProperties(String city, Double minPrice, Double maxPrice, List<String> amenities) {
         Query query = new Query();
 
-        // A. Filtro Città (Case Insensitive: Rome == rome)
+        // A. City Filter (Case Insensitive: Rome == rome)
         if (city != null && !city.trim().isEmpty()) {
             query.addCriteria(Criteria.where("city").regex(city, "i"));
         }
 
-        // B. Filtro Prezzo (Cerca nelle stanze interne)
+        // B. Price Filter (Search in internal rooms)
         if (minPrice != null || maxPrice != null) {
             Criteria priceCriteria = Criteria.where("pricePerNightAdults");
             if (minPrice != null) priceCriteria.gte(minPrice);
             if (maxPrice != null) priceCriteria.lte(maxPrice);
             
-            // elemMatch: Controlla se ALMENO UNA stanza soddisfa il range di prezzo
+            // elemMatch: Checks if AT LEAST ONE room satisfies the price range
             query.addCriteria(Criteria.where("rooms").elemMatch(priceCriteria));
         }
 
-        // C. Filtro Amenities "Sporche" (Usa Regex per ignorare virgolette/parentesi nel DB)
+        // C. "Dirty" Amenities Filter (Uses Regex to ignore quotes/parentheses in DB)
         if (amenities != null && !amenities.isEmpty()) {
             List<Criteria> amenityCriteria = new ArrayList<>();
             for (String amenity : amenities) {
-                // "i" = case insensitive. Trova "Wifi" anche dentro "[\"Wifi\"]"
+                // "i" = case insensitive. Finds "Wifi" even inside "[\"Wifi\"]"
                 amenityCriteria.add(Criteria.where("amenities").regex(amenity, "i"));
             }
-            // AND Operator: La casa deve avere TUTTI i servizi richiesti
+            // AND Operator: Property must have ALL requested amenities
             query.addCriteria(new Criteria().andOperator(amenityCriteria.toArray(new Criteria[0])));
         }
 
@@ -64,18 +64,18 @@ public class PropertyService {
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    // --- 2. RICERCA GEOSPAZIALE (Mappa) ---
+    // --- 2. GEOSPATIAL SEARCH (Map) ---
     public List<PropertyResponseDTO> getPropertiesInArea(double lat, double lon, double radiusKm) {
-        // GeoJsonPoint(x=lon, y=lat) - GeoJSON usa [longitude, latitude]
+        // GeoJsonPoint(x=lon, y=lat) - GeoJSON uses [longitude, latitude]
         GeoJsonPoint point = new GeoJsonPoint(lon, lat);
-        // Limita il raggio massimo a 100km per evitare query troppo pesanti
+        // Limit maximum radius to 100km to avoid heavy queries
         double maxRadiusKm = Math.min(radiusKm, 100.0);
-        // Per $nearSphere con GeoJSON e indice 2dsphere, $maxDistance è in METRI
+        // For $nearSphere with GeoJSON and 2dsphere index, $maxDistance is in METERS
         double radiusMeters = maxRadiusKm * 1000;
         
         Query query = new Query();
         query.addCriteria(Criteria.where("location").nearSphere(point).maxDistance(radiusMeters));
-        query.limit(100); // Limita i risultati per performance
+        query.limit(100); // Limit results for performance
         
         List<Property> properties = mongoTemplate.find(query, Property.class);
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
@@ -87,11 +87,11 @@ public class PropertyService {
                 .orElseThrow(() -> new IllegalArgumentException("Property not found"));
 
         try {
-            // Incrementa il contatore visite su Redis (Sorted Set)
+            // Increment visit counter on Redis (Sorted Set)
             redisTemplate.opsForZSet().incrementScore("trending_properties", propertyId, 1);
             
-            // (Opzionale) Aggiunge alla cronologia utente se servisse qui
-            // Ma di solito lo facciamo nel controller se l'utente è loggato
+            // (Optional) Add to user history if needed here
+            // But usually we do it in the controller if user is logged in
         } catch (Exception e) {
             System.err.println("Redis error: " + e.getMessage());
         }
@@ -99,19 +99,19 @@ public class PropertyService {
         return mapToDTO(property);
     }
     
-    // --- 4. CLASSIFICA (Top 10 Trending) ---
+    // --- 4. RANKING (Top 10 Trending) ---
     public List<PropertyResponseDTO> getTrendingProperties() {
         try {
-            // Prendi i primi 10 ID con punteggio più alto (Reverse Range)
+            // Get top 10 IDs with highest score (Reverse Range)
             var topIds = redisTemplate.opsForZSet().reverseRange("trending_properties", 0, 9);
             if (topIds == null || topIds.isEmpty()) return List.of();
 
             List<String> ids = topIds.stream().map(Object::toString).collect(Collectors.toList());
             
-            // Recupera i dettagli da Mongo
+            // Retrieve details from Mongo
             List<Property> properties = (List<Property>) propertyRepository.findAllById(ids);
             
-            // Nota: findAllById non garantisce l'ordine, ma per ora va bene
+            // Note: findAllById doesn't guarantee order, but it's fine for now
             return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             return List.of();
@@ -129,13 +129,13 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    // --- 6. STORICO UTENTE (Recently Viewed) ---
+    // --- 6. USER HISTORY (Recently Viewed) ---
     public void addToUserHistory(String userId, String propertyId) {
         try {
             String key = "history:" + userId;
-            // Aggiungi in testa alla lista
+            // Add at the head of the list
             redisTemplate.opsForList().leftPush(key, propertyId);
-            // Mantieni solo gli ultimi 10 elementi
+            // Keep only the last 10 elements
             redisTemplate.opsForList().trim(key, 0, 9);
         } catch (Exception e) {
             System.err.println("Redis error (Add History): " + e.getMessage());
@@ -158,11 +158,11 @@ public class PropertyService {
         }
     }
 
-    // --- HELPER: Mappa Entity -> DTO ---
+    // --- HELPER: Map Entity -> DTO ---
     private PropertyResponseDTO mapToDTO(Property p) {
         Double minPrice = 0.0;
         
-        // Calcola il prezzo minimo "A partire da..." tra le stanze disponibili
+        // Calculate minimum price "Starting from..." among available rooms
         if (p.getRooms() != null && !p.getRooms().isEmpty()) {
             minPrice = p.getRooms().stream()
                 .filter(r -> r.getPricePerNightAdults() != null)
@@ -171,13 +171,13 @@ public class PropertyService {
                 .orElse(0.0);
         }
 
-        // Converti GeoJsonPoint in List<Double> [lon, lat]
+        // Convert GeoJsonPoint to List<Double> [lon, lat]
         List<Double> coords = null;
         if (p.getLocation() != null) {
             coords = List.of(p.getLocation().getX(), p.getLocation().getY());
         }
 
-        // Converti POI in DTO con coordinate semplici
+        // Convert POI to DTO with simple coordinates
         List<PointOfInterestDTO> poisDTO = null;
         if (p.getPois() != null) {
             poisDTO = p.getPois().stream()
@@ -201,7 +201,7 @@ public class PropertyService {
                 .build();
     }
 
-    // --- HELPER: Mappa POI Entity -> DTO ---
+    // --- HELPER: Map POI Entity -> DTO ---
     private PointOfInterestDTO mapPoiToDTO(PointOfInterest poi) {
         List<Double> poiCoords = null;
         if (poi.getLocation() != null) {
@@ -215,25 +215,25 @@ public class PropertyService {
                 .build();
     }
 
-    // --- 7. RICERCA STANZE ---
+    // --- 7. ROOM SEARCH ---
     public List<RoomResponseDTO> searchRooms(String city, String roomType, Double minPrice, 
                                               Double maxPrice, Integer minCapacity, List<String> amenities) {
         Query query = new Query();
 
-        // A. Filtro Città (Case Insensitive)
+        // A. City Filter (Case Insensitive)
         if (city != null && !city.trim().isEmpty()) {
             query.addCriteria(Criteria.where("city").regex(city, "i"));
         }
 
-        // B-E. Combina tutti i criteri sulle stanze in un singolo $elemMatch
+        // B-E. Combine all room criteria in a single $elemMatch
         List<Criteria> roomCriteriaList = new ArrayList<>();
         
-        // B. Filtro Room Type
+        // B. Room Type Filter
         if (roomType != null && !roomType.trim().isEmpty()) {
             roomCriteriaList.add(Criteria.where("roomType").regex(roomType, "i"));
         }
 
-        // C. Filtro Prezzo (nelle stanze)
+        // C. Price Filter (in rooms)
         if (minPrice != null) {
             roomCriteriaList.add(Criteria.where("pricePerNightAdults").gte(minPrice.floatValue()));
         }
@@ -241,19 +241,19 @@ public class PropertyService {
             roomCriteriaList.add(Criteria.where("pricePerNightAdults").lte(maxPrice.floatValue()));
         }
 
-        // D. Filtro Capacità minima
+        // D. Minimum Capacity Filter
         if (minCapacity != null && minCapacity > 0) {
             roomCriteriaList.add(Criteria.where("capacityAdults").gte(minCapacity.longValue()));
         }
 
-        // E. Filtro Amenities delle stanze
+        // E. Room Amenities Filter
         if (amenities != null && !amenities.isEmpty()) {
             for (String amenity : amenities) {
                 roomCriteriaList.add(Criteria.where("amenities").regex(amenity, "i"));
             }
         }
 
-        // Applica il singolo $elemMatch combinato se ci sono criteri sulle stanze
+        // Apply single combined $elemMatch if there are room criteria
         if (!roomCriteriaList.isEmpty()) {
             Criteria combinedRoomCriteria = new Criteria().andOperator(
                 roomCriteriaList.toArray(new Criteria[0])
@@ -261,19 +261,19 @@ public class PropertyService {
             query.addCriteria(Criteria.where("rooms").elemMatch(combinedRoomCriteria));
         }
 
-        // Esegue la query
+        // Execute the query
         List<Property> properties = mongoTemplate.find(query, Property.class);
 
-        // Estrae e filtra le stanze che matchano i criteri
+        // Extract and filter rooms that match the criteria
         List<RoomResponseDTO> result = new ArrayList<>();
         for (Property property : properties) {
             if (property.getRooms() == null) continue;
             
             for (Room room : property.getRooms()) {
-                // Verifica se la stanza soddisfa i criteri
+                // Check if room satisfies the criteria
                 boolean matches = true;
 
-                // Filtro roomType
+                // roomType filter
                 if (roomType != null && !roomType.trim().isEmpty()) {
                     if (room.getRoomType() == null || 
                         !room.getRoomType().toLowerCase().contains(roomType.toLowerCase())) {
@@ -281,7 +281,7 @@ public class PropertyService {
                     }
                 }
 
-                // Filtro prezzo
+                // Price filter
                 if (matches && minPrice != null && room.getPricePerNightAdults() != null) {
                     if (room.getPricePerNightAdults() < minPrice) matches = false;
                 }
@@ -289,12 +289,12 @@ public class PropertyService {
                     if (room.getPricePerNightAdults() > maxPrice) matches = false;
                 }
 
-                // Filtro capacità
+                // Capacity filter
                 if (matches && minCapacity != null && room.getCapacityAdults() != null) {
                     if (room.getCapacityAdults() < minCapacity) matches = false;
                 }
 
-                // Filtro amenities della stanza
+                // Room amenities filter
                 if (matches && amenities != null && !amenities.isEmpty() && room.getAmenities() != null) {
                     for (String amenity : amenities) {
                         boolean found = room.getAmenities().stream()
@@ -315,7 +315,7 @@ public class PropertyService {
         return result;
     }
 
-    // --- HELPER: Mappa Room Entity -> DTO ---
+    // --- HELPER: Map Room Entity -> DTO ---
     private RoomResponseDTO mapRoomToDTO(Room room, Property property) {
         return RoomResponseDTO.builder()
                 .id(room.getId())

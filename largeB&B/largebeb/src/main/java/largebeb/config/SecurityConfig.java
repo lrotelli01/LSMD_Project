@@ -4,10 +4,10 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import largebeb.config.JwtAuthenticationFilter; // Assicurati che l'import sia corretto
+import largebeb.config.JwtAuthenticationFilter; // Make sure the import is correct
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // Importante per specificare GET
+import org.springframework.http.HttpMethod; // Important to specify GET
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -34,10 +34,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disabilita CSRF per le API
+            .csrf(csrf -> csrf.disable()) // Disable CSRF for APIs
             
             .authorizeHttpRequests(auth -> auth
-                // 1. ACCESSO LIBERO (Public)
+                // 1. PUBLIC ACCESS
                 .requestMatchers(
                     "/api/auth/**",       // Login, Register, Logout
                     "/v3/api-docs/**",    // Swagger Docs
@@ -46,23 +46,23 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
-                // 2. GUEST & CUSTOMER (Sola Lettura Proprietà)
-                // Permetti a CHIUNQUE di fare GET su /api/properties/...
-                // Questo sblocca: Ricerca, Dettagli, Mappa, Trending, Raccomandazioni
+                // 2. GUEST & CUSTOMER (Read-Only Properties)
+                // Allow ANYONE to GET on /api/properties/...
+                // This unlocks: Search, Details, Map, Trending, Recommendations
                 .requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
                 
-                // 3. TUTTO IL RESTO RICHIEDE AUTENTICAZIONE
-                // (Prenotare, Recensire, Cancellare, ecc.)
+                // 3. EVERYTHING ELSE REQUIRES AUTHENTICATION
+                // (Booking, Reviewing, Deleting, etc.)
                 .anyRequest().authenticated()
             )
             
-            // Imposta la sessione come Stateless (Fondamentale per JWT)
+            // Set session as Stateless (Essential for JWT)
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
 
-            // Aggiungi il filtro JWT prima di quello standard
+            // Add JWT filter before the standard one
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -462,13 +462,13 @@ public class ManagerPropertyService {
                 .orElse(0.0);
         }
 
-        // Converti GeoJsonPoint in List<Double> [lon, lat]
+        // Convert GeoJsonPoint to List<Double> [lon, lat]
         java.util.List<Double> coords = null;
         if (p.getLocation() != null) {
             coords = java.util.List.of(p.getLocation().getX(), p.getLocation().getY());
         }
 
-        // Converti POI in DTO
+        // Convert POI to DTO
         List<PointOfInterestDTO> poisDTO = null;
         if (p.getPois() != null) {
             poisDTO = p.getPois().stream()

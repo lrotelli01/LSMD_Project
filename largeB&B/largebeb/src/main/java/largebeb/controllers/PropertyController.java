@@ -20,37 +20,37 @@ public class PropertyController {
 
     private final PropertyService propertyService;
     private final largebeb.services.RecommendationService recommendationService;
-    // AGGIUNTO: Serve per estrarre l'ID utente dal token
+    // ADDED: Needed to extract user ID from token
     private final JwtUtil jwtUtil; 
 
-    // --- 1. DETTAGLI CASA (Modificato per salvare la Cronologia) ---
+    // --- 1. PROPERTY DETAILS (Modified to save History) ---
     @GetMapping("/{propertyId}")
     public ResponseEntity<PropertyResponseDTO> getPropertyDetails(
             @PathVariable String propertyId,
-            @RequestHeader(value = "Authorization", required = false) String token) { // Il token è opzionale (Guest)
+            @RequestHeader(value = "Authorization", required = false) String token) { // Token is optional (Guest)
         
-        // 1. Recupera i dettagli (incrementa anche il Trending su Redis)
+        // 1. Retrieve details (also increments Trending on Redis)
         PropertyResponseDTO property = propertyService.getPropertyDetails(propertyId);
 
-        // 2. Se l'utente è loggato, aggiungi alla cronologia (Redis List)
+        // 2. If user is logged in, add to history (Redis List)
         if (token != null && token.startsWith("Bearer ")) {
             try {
                 String cleanToken = token.substring(7);
                 String userId = jwtUtil.getUserIdFromToken(cleanToken);
                 propertyService.addToUserHistory(userId, propertyId);
             } catch (Exception e) {
-                // Se il token non è valido o scade, ignoriamo l'errore:
-                // l'utente deve comunque poter vedere la casa.
-                System.out.println("Impossibile aggiornare cronologia: " + e.getMessage());
+                // If token is invalid or expires, ignore the error:
+                // the user must still be able to see the property.
+                System.out.println("Unable to update history: " + e.getMessage());
             }
         }
 
         return ResponseEntity.ok(property);
     }
 
-    // --- 2. STORICO UTENTE (Lettura) ---
-    // Nota: Ho corretto questo metodo per usare il token invece del parametro ?userId
-    // perché è più sicuro (ognuno vede solo la sua storia).
+    // --- 2. USER HISTORY (Read) ---
+    // Note: I corrected this method to use token instead of ?userId parameter
+    // because it's more secure (each user only sees their own history).
     @GetMapping("/history")
     public ResponseEntity<List<PropertyResponseDTO>> getUserHistory(
             @RequestHeader("Authorization") String token) {
@@ -61,7 +61,7 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.getUserHistory(userId));
     }
 
-    // --- 3. RICERCA AVANZATA ---
+    // --- 3. ADVANCED SEARCH ---
     @GetMapping("/search")
     public ResponseEntity<List<PropertyResponseDTO>> searchProperties(
             @RequestParam(required = false) String city,
@@ -71,7 +71,7 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.searchProperties(city, minPrice, maxPrice, amenities));
     }
 
-    // --- 3B. RICERCA STANZE ---
+    // --- 3B. ROOM SEARCH ---
     @GetMapping("/rooms/search")
     public ResponseEntity<List<RoomResponseDTO>> searchRooms(
             @RequestParam(required = false) String city,
@@ -83,7 +83,7 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.searchRooms(city, roomType, minPrice, maxPrice, minCapacity, amenities));
     }
 
-    // --- 4. MAPPA (GeoSpatial) ---
+    // --- 4. MAP (GeoSpatial) ---
     @GetMapping("/map")
     public ResponseEntity<List<PropertyResponseDTO>> getPropertiesInArea(
             @RequestParam double lat,
