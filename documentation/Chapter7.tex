@@ -1,39 +1,63 @@
-\chapter{AI Tools Usage}
+\chapter{API Documentation \& Testing}
+    \section{Backend Interface: Swagger UI}
 
-\section{Purpose}
-Large Language Models (LLMs) were extensively used throughout the development of this project to enhance both code quality and documentation standards. The primary motivations for adopting AI assistance included:
+	For our backend documentation, we integrated Swagger UI. This tool provides a standardized interface to visualize all our REST endpoints. As you can see, the API is organized by Controllers—Guest, Customer, and Manager—mirroring the actors in our system. It allows us to interactively test the backend logic independently from the client.
+    The Swagger UI is accessible at the following URL:
+\begin{center}
+    \url{http://localhost:8080/swagger-ui/index.html\#/}
+\end{center}
+    \vspace{0.5cm}
+    
+    \begin{itemize}
+        \item \textbf{Visualization:} Provides a clear, interactive view of all RESTful endpoints.
+        \item \textbf{Structure:} The API is organized by Controllers:
+        \begin{itemize}
+            \item \texttt{Messaging}
+            \item \texttt{Manager Dashboard}
+            \item \texttt{Authentication}
+            \item \texttt{Payment Methods}
+            \item \texttt{Properties}
+            \item \texttt{Favorites}
+            \item \texttt{Reservations}
+            \item \texttt{User Account}
+            \item \texttt{Notifications}
+        \end{itemize}
+        \item \textbf{Independence:} Allows testing server logic and database queries directly, without relying on the frontend client.
+    \end{itemize}
 
-\begin{itemize}
-    \item \textbf{Documentation}: Producing formal, technically accurate documentation in English with consistent terminology and proper academic style.
-    \item \textbf{Visual Content}: Generating diagrams, schemas, and illustrative images to enhance the comprehensibility of architectural concepts.
-    \item \textbf{Code Quality}: Improving code readability, maintainability, and adherence to Java best practices through automated suggestions and refactoring assistance.
-\end{itemize}
-
-\section{Tasks Performed}
-
-AI tools were employed across multiple development phases:
-
-\paragraph{Documentation Enhancement}
-The LLM assisted in translating technical concepts into formal English prose, ensuring clarity and consistency across all chapters. It helped structure complex explanations, particularly for database design patterns, query optimization strategies, and architectural decisions.
-
-\paragraph{Code Development Support}
-\begin{itemize}
-    \item \textbf{Code Commenting}: Generating comprehensive inline comments and JavaDoc documentation for classes, methods, and complex algorithms.
-    \item \textbf{Code Optimization}: Identifying inefficient patterns and suggesting optimized implementations, such as refactoring service layer methods to eliminate redundant MongoTemplate dependencies.
-    \item \textbf{Debugging Assistance}: Diagnosing runtime errors and configuration issues.
-\end{itemize}
-
-\paragraph{Visual Asset Generation}
-AI-powered tools were used to create various diagrams and images included in this documentation, facilitating the visualization of database relationships, system architecture, and data flow patterns.
-
-\section{Critical Evaluation}
-
-The integration of AI tools proved most effective when used as an intelligent assistant rather than an autonomous code generator. Critical thinking and domain expertise remained essential for:
-\begin{itemize}
-    \item Validating architectural decisions against project requirements
-    \item Ensuring compliance with security best practices (JWT handling, password encryption)
-    \item Maintaining consistency between code implementation and documentation
-    \item Adapting generic solutions to application-specific contexts
-\end{itemize}
-
-In conclusion, AI tools served as a valuable productivity multiplier, enabling faster iteration cycles and higher documentation quality, while reinforcing the importance of human oversight in software engineering decisions.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Swagger1.png}
+    \caption{Endpoints in Swagger (part 1)}
+    \label{fig:db_architecture}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Swagger2.png}
+    \caption{Endpoints in Swagger (part 2)}
+    \label{fig:db_architecture}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Swagger3.png}
+    \caption{Endpoints in Swagger (part 3)}
+    \label{fig:db_architecture}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Swagger4.png}
+    \caption{Endpoints in Swagger (part 4)}
+    \label{fig:db_architecture}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Swagger5.png}
+    \caption{Endpoints in Swagger (part 5)}
+    \label{fig:db_architecture}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Swagger6.png}
+    \caption{Endpoints in Swagger (part 6)}
+    \label{fig:db_architecture}
+\end{figure}
