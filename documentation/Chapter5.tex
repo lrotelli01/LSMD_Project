@@ -64,8 +64,8 @@ The \texttt{properties} collection utilizes a combination of Compound, Text, and
     \item \textbf{Geospatial Index}
     \begin{itemize}
         \item \textbf{Type:} 2dsphere
-        \item \textbf{Fields:} \texttt{coordinates}
-        \item \textbf{Justification:} Required to support geospatial queries such as \texttt{\$near} and \texttt{\$geoWithin}, satisfying the requirement to view properties on a map or find POIs nearby.
+        \item \textbf{Fields:} \texttt{location} (GeoJSON Point format)
+        \item \textbf{Justification:} Required to support geospatial queries such as \texttt{\$near} and \texttt{\$geoWithin}, satisfying the requirement to view properties on a map or find POIs nearby. The \texttt{location} field stores coordinates in GeoJSON format: \texttt{\{ "type": "Point", "coordinates": [longitude, latitude] \}}.
     \begin{figure}[H]
       \centering
       \includegraphics[width=0.5\textwidth]{images/GIndex.png}

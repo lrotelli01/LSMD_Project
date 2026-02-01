@@ -15,6 +15,7 @@ import largebeb.utilities.RatingStats;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,11 +68,11 @@ public class ManagerPropertyService {
         stats.setValue(0.0);
         property.setRatingStats(stats);
 
-        // Handle coordinates (input: [lat, lon] -> stored: [lon, lat] for MongoDB)
+        // Handle coordinates (input: [lat, lon] -> stored as GeoJsonPoint [lon, lat] for MongoDB)
         if (request.getCoordinates() != null && request.getCoordinates().size() == 2) {
             Double lat = request.getCoordinates().get(0);
             Double lon = request.getCoordinates().get(1);
-            property.setCoordinates(Arrays.asList(lon, lat));
+            property.setLocation(new GeoJsonPoint(lon, lat));
         }
 
         // Save to MongoDB (Transactional - CP)
@@ -225,11 +226,11 @@ public class ManagerPropertyService {
         
         if (request.getPhotos() != null) property.setPhotos(request.getPhotos());
         
-        // Handle coordinates
+        // Handle coordinates (input: [lat, lon] -> stored as GeoJsonPoint [lon, lat])
         if (request.getCoordinates() != null && request.getCoordinates().size() == 2) {
             Double lat = request.getCoordinates().get(0);
             Double lon = request.getCoordinates().get(1);
-            property.setCoordinates(Arrays.asList(lon, lat));
+            property.setLocation(new GeoJsonPoint(lon, lat));
         }
 
         // Save to MongoDB
@@ -472,7 +473,7 @@ public class ManagerPropertyService {
                 .amenities(p.getAmenities())
                 .photos(p.getPhotos())
                 .pois(p.getPois())
-                .coordinates(p.getCoordinates())
+                .location(p.getLocation())
                 .build();
     }
 

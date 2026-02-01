@@ -73,26 +73,29 @@ This complex aggregation demonstrates:
 
 \subsubsection{Geospatial Query - Properties Near Location}
 
-Finding properties within a specific radius using MongoDB's geospatial capabilities:
+Finding properties within a specific radius using MongoDB's geospatial capabilities. The implementation uses \texttt{MongoTemplate} for dynamic query construction:
 
 \begin{lstlisting}[style=javaStyle]
-@Aggregation(pipeline = {
-    "{ '$geoNear': { " +
-    "   'near': { 'type': 'Point', 'coordinates': [?1, ?0] }, " +
-    "   'distanceField': 'distance', " +
-    "   'maxDistance': ?2, " +
-    "   'spherical': true " +
-    "} }"
-})
-List<Property> findPropertiesNearLocation(double latitude, double longitude, double maxDistanceMeters);
+public List<PropertyResponseDTO> getPropertiesInArea(double lat, double lon, double radiusKm) {
+    double radiusMeters = radiusKm * 1000;
+    
+    Query query = new Query();
+    // Uses 'location' field (GeoJSON format) with '2dsphere' index
+    query.addCriteria(Criteria.where("location")
+            .nearSphere(new Point(lon, lat))
+            .maxDistance(radiusMeters / 6378137.0)); // Earth radius in meters
+    
+    List<Property> properties = mongoTemplate.find(query, Property.class);
+    return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
+}
 \end{lstlisting}
 
 Key aspects:
 \begin{itemize}
-    \item \textbf{\$geoNear}: Must be the first stage in the pipeline.
-    \item \textbf{spherical: true}: Uses Earth's curvature for accurate distance calculation.
-    \item \textbf{distanceField}: Automatically adds calculated distance to results.
-    \item Requires a \texttt{2dsphere} index on the \texttt{coordinates} field.
+    \item \textbf{GeoJSON format}: The \texttt{location} field stores coordinates as \texttt{\{ "type": "Point", "coordinates": [lon, lat] \}}.
+    \item \textbf{nearSphere}: Uses Earth's curvature for accurate distance calculation.
+    \item \textbf{MongoTemplate}: Provides flexible, programmatic query construction for complex geospatial queries.
+    \item Requires a \texttt{2dsphere} index on the \texttt{location} field.
 \end{itemize}
 
 \subsubsection{Top Rated Properties}

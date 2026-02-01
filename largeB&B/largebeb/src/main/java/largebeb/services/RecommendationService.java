@@ -121,6 +121,7 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
                 // Corretto: Usiamo photos() invece di mainPhoto() che non esisteva
                 .photos(p.getPhotos()) 
                 .pois(p.getPois())
+                .location(p.getLocation())
                 .build();
     }
 }

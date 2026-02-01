@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.util.List;
 import largebeb.utilities.RatingStats;
@@ -67,8 +68,9 @@ public class Property {
 
     // GEOSPATIAL INDEX
     // Required for $near, $nearSphere, and Map views
+    // Uses GeoJSON format: { "type": "Point", "coordinates": [lon, lat] }
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
-    private List<Double> coordinates;
+    private GeoJsonPoint location;
 
     private List<Room> rooms;
 
