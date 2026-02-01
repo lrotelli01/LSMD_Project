@@ -5,8 +5,8 @@ import largebeb.model.Property;
 import largebeb.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -62,13 +62,13 @@ public class PropertyService {
 
     // --- 2. RICERCA GEOSPAZIALE (Mappa) ---
     public List<PropertyResponseDTO> getPropertiesInArea(double lat, double lon, double radiusKm) {
-        // Conversione Km -> Metri per la query geospaziale con indice 2dsphere
+        // GeoJsonPoint(x=lon, y=lat) - GeoJSON usa [longitude, latitude]
+        GeoJsonPoint point = new GeoJsonPoint(lon, lat);
+        // Per $nearSphere con GeoJSON e indice 2dsphere, $maxDistance è in METRI
         double radiusMeters = radiusKm * 1000;
         
         Query query = new Query();
-        // Usa 'location' (formato GeoJSON) con indice '2dsphere'
-        query.addCriteria(Criteria.where("location").nearSphere(new Point(lon, lat))
-                .maxDistance(radiusMeters / 6378137.0)); // Raggio Terra in metri ~6378137m
+        query.addCriteria(Criteria.where("location").nearSphere(point).maxDistance(radiusMeters));
         
         List<Property> properties = mongoTemplate.find(query, Property.class);
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
