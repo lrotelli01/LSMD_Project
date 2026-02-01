@@ -3,6 +3,8 @@ package largebeb.controllers;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.PropertyResponseDTO;
 import largebeb.services.PropertyService;
+// AGGIUNTO: Import necessario per gestire il token
+import largebeb.utilities.JwtUtil; 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,64 +18,86 @@ import java.util.List;
 public class PropertyController {
 
     private final PropertyService propertyService;
+    private final largebeb.services.RecommendationService recommendationService;
+    // AGGIUNTO: Serve per estrarre l'ID utente dal token
+    private final JwtUtil jwtUtil; 
 
-    // 1. RICERCA AVANZATA (Filtri)
-    // Esempio: GET /api/properties/search?city=Roma&minPrice=50&maxPrice=150&amenities=WiFi,AC
+    // --- 1. DETTAGLI CASA (Modificato per salvare la Cronologia) ---
+    @GetMapping("/{propertyId}")
+    public ResponseEntity<PropertyResponseDTO> getPropertyDetails(
+            @PathVariable String propertyId,
+            @RequestHeader(value = "Authorization", required = false) String token) { // Il token è opzionale (Guest)
+        
+        // 1. Recupera i dettagli (incrementa anche il Trending su Redis)
+        PropertyResponseDTO property = propertyService.getPropertyDetails(propertyId);
+
+        // 2. Se l'utente è loggato, aggiungi alla cronologia (Redis List)
+        if (token != null && token.startsWith("Bearer ")) {
+            try {
+                String cleanToken = token.substring(7);
+                String userId = jwtUtil.getUserIdFromToken(cleanToken);
+                propertyService.addToUserHistory(userId, propertyId);
+            } catch (Exception e) {
+                // Se il token non è valido o scade, ignoriamo l'errore:
+                // l'utente deve comunque poter vedere la casa.
+                System.out.println("Impossibile aggiornare cronologia: " + e.getMessage());
+            }
+        }
+
+        return ResponseEntity.ok(property);
+    }
+
+    // --- 2. STORICO UTENTE (Lettura) ---
+    // Nota: Ho corretto questo metodo per usare il token invece del parametro ?userId
+    // perché è più sicuro (ognuno vede solo la sua storia).
+    @GetMapping("/history")
+    public ResponseEntity<List<PropertyResponseDTO>> getUserHistory(
+            @RequestHeader("Authorization") String token) {
+        
+        String cleanToken = token.replace("Bearer ", "");
+        String userId = jwtUtil.getUserIdFromToken(cleanToken);
+        
+        return ResponseEntity.ok(propertyService.getUserHistory(userId));
+    }
+
+    // --- 3. RICERCA AVANZATA ---
     @GetMapping("/search")
     public ResponseEntity<List<PropertyResponseDTO>> searchProperties(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) List<String> amenities) {
-        
-        List<PropertyResponseDTO> results = propertyService.searchProperties(city, minPrice, maxPrice, amenities);
-        return ResponseEntity.ok(results);
+        return ResponseEntity.ok(propertyService.searchProperties(city, minPrice, maxPrice, amenities));
     }
 
-    // 2. MAPPA GEOSPAZIALE
-    // Esempio: GET /api/properties/map?lat=41.90&lon=12.49&radius=5
+    // --- 4. MAPPA (GeoSpatial) ---
     @GetMapping("/map")
-    public ResponseEntity<List<PropertyResponseDTO>> getPropertiesOnMap(
+    public ResponseEntity<List<PropertyResponseDTO>> getPropertiesInArea(
             @RequestParam double lat,
             @RequestParam double lon,
-            @RequestParam(defaultValue = "10.0") double radius) { // Default 10km radius
-        
-        List<PropertyResponseDTO> results = propertyService.getPropertiesInArea(lat, lon, radius);
-        return ResponseEntity.ok(results);
+            @RequestParam double radiusKm) {
+        return ResponseEntity.ok(propertyService.getPropertiesInArea(lat, lon, radiusKm));
     }
 
-    // 3. DETTAGLI CASA (Con POI e Statistiche)
-    // Esempio: GET /api/properties/{id}
-    @GetMapping("/{propertyId}")
-    public ResponseEntity<PropertyResponseDTO> getPropertyDetails(@PathVariable String propertyId) {
-        // Questo metodo incrementa anche le views su Redis (Trending)
-        PropertyResponseDTO property = propertyService.getPropertyDetails(propertyId);
-        return ResponseEntity.ok(property);
-    }
-
-    // 4. TRENDING (Redis Top 10)
-    // Esempio: GET /api/properties/trending
+    // --- 5. TRENDING ---
     @GetMapping("/trending")
     public ResponseEntity<List<PropertyResponseDTO>> getTrendingProperties() {
         return ResponseEntity.ok(propertyService.getTrendingProperties());
     }
 
-    // 5. TOP RATED (Filtro per stelle)
-    // Esempio: GET /api/properties/top-rated
+    // --- 6. TOP RATED ---
     @GetMapping("/top-rated")
     public ResponseEntity<List<PropertyResponseDTO>> getTopRatedProperties() {
         return ResponseEntity.ok(propertyService.getTopRatedProperties());
     }
-    // IMPORTANTE: Inietta anche il nuovo service
-    private final largebeb.services.RecommendationService recommendationService; 
 
-    // 6. RACCOMANDAZIONI "CHI HA PRENOTATO QUESTO..." (Neo4j)
+    // --- 7. RACCOMANDAZIONI COLLABORATIVE ---
     @GetMapping("/{propertyId}/recommendations/collaborative")
     public ResponseEntity<List<PropertyResponseDTO>> getCollaborative(@PathVariable String propertyId) {
         return ResponseEntity.ok(recommendationService.getCollaborativeRecommendations(propertyId));
     }
 
-    // 7. RACCOMANDAZIONI "SIMILI A QUESTO" (MongoDB Content-Based)
+    // --- 8. RACCOMANDAZIONI SIMILI ---
     @GetMapping("/{propertyId}/recommendations/similar")
     public ResponseEntity<List<PropertyResponseDTO>> getSimilar(@PathVariable String propertyId) {
         return ResponseEntity.ok(recommendationService.getContentBasedRecommendations(propertyId));
