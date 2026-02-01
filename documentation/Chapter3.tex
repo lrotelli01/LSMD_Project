@@ -92,7 +92,7 @@ Below are complete examples of documents from each collection in the dataset, sh
   "region": "Lazio",
   "city": "Rome",
   "managerId": "23b8c1e9-3924-46de-beb1-3b9046685257",
-  "coordinates": [12.5013, 41.8719],
+  "location": { "type": "Point", "coordinates": [12.5013, 41.8719] },
   "ratingStats": {
     "value": 4.2,
     "count": 156,
@@ -101,11 +101,11 @@ Below are complete examples of documents from each collection in the dataset, sh
 }
 \end{verbatim}
 
-\subsubsection{Room Document}
+\subsubsection{Room Document (Embedded in Property)}
+Rooms are embedded directly within the Property document for optimal read performance:
 \begin{verbatim}
 {
-  "id": "e2817efd-ae84-4217-9d53-434bb88139b9",
-  "property_id": "bdd640fb-0667-4ad1-9c80-317fa3b1799d",
+  "roomId": "e2817efd-ae84-4217-9d53-434bb88139b9",
   "roomType": "single",
   "name": "Cozy Single Room",
   "numBeds": 1,
@@ -123,15 +123,16 @@ Below are complete examples of documents from each collection in the dataset, sh
 \begin{verbatim}
 {
   "id": "0ef8c2d6-f7fd-4646-b7bb-3eec4bf50b52",
-  "checkInDate": "2025-12-28",
-  "checkOutDate": "2026-01-02",
-  "creationDate": "2025-12-08",
   "adults": 4,
   "children": 2,
   "status": "confirmed",
-  "totalPrice": 452.50,
-  "room_id": "e2817efd-ae84-4217-9d53-434bb88139b9",
-  "customer_id": "6712303a-0f84-4fef-9931-e9eea56c0941"
+  "userId": "6712303a-0f84-4fef-9931-e9eea56c0941",
+  "roomId": "e2817efd-ae84-4217-9d53-434bb88139b9",
+  "dates": {
+    "checkIn": "2025-12-28",
+    "checkOut": "2026-01-02"
+  },
+  "createdAt": "2025-12-08T10:30:00"
 }
 \end{verbatim}
 
@@ -183,10 +184,10 @@ Below are complete examples of documents from each collection in the dataset, sh
 \begin{verbatim}
 {
   "id": "113634a5-2050-4c62-88e8-95d7702c1821",
-  "property_id": "bdd640fb-0667-4ad1-9c80-317fa3b1799d",
+  "propertyId": "bdd640fb-0667-4ad1-9c80-317fa3b1799d",
   "name": "Colosseum",
-  "coordinates": [41.8902, 12.4922],
-  "type": "historical"
+  "location": { "type": "Point", "coordinates": [12.4922, 41.8902] },
+  "category": "historical"
 }
 \end{verbatim}
 
