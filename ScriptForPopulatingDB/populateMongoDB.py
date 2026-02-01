@@ -27,10 +27,23 @@ def load_json(filename):
 def clean_amenities(amenities_field):
     """
     Ensures amenities are a clean list of strings.
+    Handles both string and list inputs with dirty formatting.
     """
-    if isinstance(amenities_field, list):
-        return amenities_field
+    if amenities_field is None:
+        return []
     
+    # If it's a list, clean each element
+    if isinstance(amenities_field, list):
+        cleaned = []
+        for item in amenities_field:
+            if isinstance(item, str):
+                # Remove brackets, quotes, and extra whitespace
+                clean_item = item.replace('[', '').replace(']', '').replace('"', '').replace('{', '').replace('}', '').strip()
+                if clean_item:
+                    cleaned.append(clean_item)
+        return cleaned
+    
+    # If it's a single string (e.g., '["Wifi", "Pool"]')
     if isinstance(amenities_field, str):
         try:
             cleaned = amenities_field.replace('{', '').replace('}', '').replace('[', '').replace(']', '').replace('"', '')
@@ -113,6 +126,11 @@ def main():
         r_copy = r.copy()
         r_copy['roomId'] = r_copy.pop('id')
         if 'property_id' in r_copy: del r_copy['property_id']
+        
+        # Clean room amenities
+        if 'amenities' in r_copy:
+            r_copy['amenities'] = clean_amenities(r_copy['amenities'])
+        
         rooms_by_property[pid].append(r_copy)
 
     # 3b. Map POIs to Property ID
