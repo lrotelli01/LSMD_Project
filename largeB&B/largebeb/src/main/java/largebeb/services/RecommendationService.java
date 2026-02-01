@@ -1,6 +1,8 @@
 package largebeb.services;
 
+import largebeb.dto.PointOfInterestDTO;
 import largebeb.dto.PropertyResponseDTO;
+import largebeb.model.PointOfInterest;
 import largebeb.model.Property;
 import largebeb.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
@@ -117,6 +119,14 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
             coords = java.util.List.of(p.getLocation().getX(), p.getLocation().getY());
         }
 
+        // Converti POI in DTO
+        List<PointOfInterestDTO> poisDTO = null;
+        if (p.getPois() != null) {
+            poisDTO = p.getPois().stream()
+                .map(this::mapPoiToDTO)
+                .collect(Collectors.toList());
+        }
+
         return PropertyResponseDTO.builder()
                 .id(p.getId())
                 .name(p.getName())
@@ -125,8 +135,21 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
                 .rating(p.getRatingStats() != null ? p.getRatingStats().getValue() : 0.0)
                 .amenities(p.getAmenities())
                 .photos(p.getPhotos())
-                .pois(p.getPois())
+                .pois(poisDTO)
                 .coordinates(coords)
+                .build();
+    }
+
+    private PointOfInterestDTO mapPoiToDTO(PointOfInterest poi) {
+        List<Double> poiCoords = null;
+        if (poi.getLocation() != null) {
+            poiCoords = List.of(poi.getLocation().getX(), poi.getLocation().getY());
+        }
+        return PointOfInterestDTO.builder()
+                .id(poi.getId())
+                .name(poi.getName())
+                .category(poi.getCategory())
+                .coordinates(poiCoords)
                 .build();
     }
 }

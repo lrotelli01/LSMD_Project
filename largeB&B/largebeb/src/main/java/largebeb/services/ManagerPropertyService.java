@@ -2,6 +2,7 @@ package largebeb.services;
 
 import largebeb.dto.*;
 import largebeb.model.Property;
+import largebeb.model.PointOfInterest;
 import largebeb.model.RegisteredUser;
 import largebeb.model.Reservation;
 import largebeb.model.Room;
@@ -467,6 +468,14 @@ public class ManagerPropertyService {
             coords = java.util.List.of(p.getLocation().getX(), p.getLocation().getY());
         }
 
+        // Converti POI in DTO
+        List<PointOfInterestDTO> poisDTO = null;
+        if (p.getPois() != null) {
+            poisDTO = p.getPois().stream()
+                .map(this::mapPoiToDTO)
+                .collect(Collectors.toList());
+        }
+
         return PropertyResponseDTO.builder()
                 .id(p.getId())
                 .name(p.getName())
@@ -478,8 +487,21 @@ public class ManagerPropertyService {
                 .rating(p.getRatingStats() != null ? p.getRatingStats().getValue() : 0.0)
                 .amenities(p.getAmenities())
                 .photos(p.getPhotos())
-                .pois(p.getPois())
+                .pois(poisDTO)
                 .coordinates(coords)
+                .build();
+    }
+
+    private PointOfInterestDTO mapPoiToDTO(PointOfInterest poi) {
+        List<Double> poiCoords = null;
+        if (poi.getLocation() != null) {
+            poiCoords = List.of(poi.getLocation().getX(), poi.getLocation().getY());
+        }
+        return PointOfInterestDTO.builder()
+                .id(poi.getId())
+                .name(poi.getName())
+                .category(poi.getCategory())
+                .coordinates(poiCoords)
                 .build();
     }
 
