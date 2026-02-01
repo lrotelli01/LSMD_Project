@@ -111,6 +111,12 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
                 .orElse(0.0);
         }
 
+        // Converti GeoJsonPoint in List<Double> [lon, lat]
+        java.util.List<Double> coords = null;
+        if (p.getLocation() != null) {
+            coords = java.util.List.of(p.getLocation().getX(), p.getLocation().getY());
+        }
+
         return PropertyResponseDTO.builder()
                 .id(p.getId())
                 .name(p.getName())
@@ -118,10 +124,9 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
                 .pricePerNight(minPrice)
                 .rating(p.getRatingStats() != null ? p.getRatingStats().getValue() : 0.0)
                 .amenities(p.getAmenities())
-                // Corretto: Usiamo photos() invece di mainPhoto() che non esisteva
-                .photos(p.getPhotos()) 
+                .photos(p.getPhotos())
                 .pois(p.getPois())
-                .location(p.getLocation())
+                .coordinates(coords)
                 .build();
     }
 }

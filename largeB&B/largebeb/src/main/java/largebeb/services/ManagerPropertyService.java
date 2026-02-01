@@ -461,6 +461,12 @@ public class ManagerPropertyService {
                 .orElse(0.0);
         }
 
+        // Converti GeoJsonPoint in List<Double> [lon, lat]
+        java.util.List<Double> coords = null;
+        if (p.getLocation() != null) {
+            coords = java.util.List.of(p.getLocation().getX(), p.getLocation().getY());
+        }
+
         return PropertyResponseDTO.builder()
                 .id(p.getId())
                 .name(p.getName())
@@ -473,7 +479,7 @@ public class ManagerPropertyService {
                 .amenities(p.getAmenities())
                 .photos(p.getPhotos())
                 .pois(p.getPois())
-                .location(p.getLocation())
+                .coordinates(coords)
                 .build();
     }
 

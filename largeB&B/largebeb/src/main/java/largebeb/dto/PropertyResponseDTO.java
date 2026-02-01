@@ -2,7 +2,6 @@ package largebeb.dto;
 
 import lombok.Builder;
 import lombok.Data;
-import largebeb.model.PointOfInterest;
 import java.util.List;
 
 @Data
@@ -22,8 +21,8 @@ public class PropertyResponseDTO {
     private List<String> amenities;
     private List<String> photos;
     
-    // I tuoi requisiti specifici
-    private List<PointOfInterest> pois; 
+    // POI con coordinate semplici
+    private List<PointOfInterestDTO> pois; 
     
     // Per la mappa - coordinate semplici [longitude, latitude]
     private List<Double> coordinates; 
