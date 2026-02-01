@@ -187,7 +187,7 @@ public class ManagerReservationService {
         return buildPropertyPaymentStatus(property);
     }
 
-    // ==================== PRIVATE HELPER METHODS ====================
+    // PRIVATE HELPER METHODS
 
     private RoomPaymentStatusDTO buildPropertyPaymentStatus(Property property) {
         List<RoomPaymentStatusDTO.RoomStatusDetail> roomDetails = new ArrayList<>();

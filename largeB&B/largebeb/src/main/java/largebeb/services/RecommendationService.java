@@ -26,7 +26,7 @@ public class RecommendationService {
     private final PropertyRepository propertyRepository;
     private final MongoTemplate mongoTemplate;
 
-    // --- 1. COLLABORATIVE FILTERING (Neo4j) ---
+    // COLLABORATIVE FILTERING (Neo4j)
     public List<PropertyResponseDTO> getCollaborativeRecommendations(String propertyId) {
         
         String cypherQuery = """
@@ -50,7 +50,7 @@ public class RecommendationService {
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    // --- 2. CONTENT-BASED FILTERING (MongoDB) ---
+    // CONTENT-BASED FILTERING (MongoDB)
 public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyId) {
         
         // Logica della Query Cypher:
@@ -82,7 +82,6 @@ public List<PropertyResponseDTO> getContentBasedRecommendations(String propertyI
         // Neo4j ci dà solo gli ID (velocissimo), ora chiediamo a Mongo i dettagli (Foto, Prezzi, ecc.)
         List<Property> properties = (List<Property>) propertyRepository.findAllById(recommendedIds);
         
-        // Trucco tecnico: findAllById NON garantisce l'ordine.
         // Noi dobbiamo mantenere l'ordine di Neo4j (dalla più simile alla meno simile).
         // Creiamo una mappa per riordinare la lista.
         var propertyMap = properties.stream()
