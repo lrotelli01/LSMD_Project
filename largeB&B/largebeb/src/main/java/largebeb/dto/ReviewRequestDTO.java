@@ -14,23 +14,18 @@ public class ReviewRequestDTO {
     private String text;
 
     @NotNull
-    @Min(1) @Max(5)
     private Double rating; // Overall
 
     @NotNull
-    @Min(1) @Max(5)
     private Double cleanliness;
     
     @NotNull
-    @Min(1) @Max(5)
     private Double communication;
     
     @NotNull
-    @Min(1) @Max(5)
     private Double location;
     
     @NotNull
-    @Min(1) @Max(5)
     // Value for money
     private Double value;
 
