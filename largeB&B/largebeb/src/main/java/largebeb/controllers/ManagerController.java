@@ -31,7 +31,7 @@ public class ManagerController {
     private final ManagerReservationService managerReservationService;
     private final ReviewService reviewService;
 
-    // ==================== PROPERTY MANAGEMENT ====================
+    // PROPERTY MANAGEMENT
 
     @GetMapping("/properties")
     public ResponseEntity<?> getMyProperties(@RequestHeader("Authorization") String token) {
@@ -82,7 +82,7 @@ public class ManagerController {
         }
     }
 
-    // ==================== ROOM MANAGEMENT ====================
+    // ROOM MANAGEMENT
 
     @GetMapping("/properties/{propertyId}/rooms")
     public ResponseEntity<?> getRooms(
@@ -138,7 +138,7 @@ public class ManagerController {
         }
     }
 
-    // ==================== ANALYTICS ====================
+    // ANALYTICS
 
     /**
      * Get analytics for a specific property or all properties if propertyId is not provided
@@ -219,7 +219,7 @@ public class ManagerController {
         }
     }
 
-    // ==================== ADVANCED ANALYTICS ====================
+    // ADVANCED ANALYTICS
 
     /**
      * Get rating evolution analysis for a specific property
@@ -282,7 +282,7 @@ public class ManagerController {
         }
     }
 
-    // ==================== REVIEWS BY PERIOD ====================
+    // REVIEWS BY PERIOD
 
     /**
      * Get all reviews for a specific property within a time period
@@ -325,7 +325,7 @@ public class ManagerController {
         }
     }
 
-    // ==================== RESERVATIONS VIEW ====================
+    // RESERVATIONS VIEW
 
     /**
      * Get all reservations with optional date filtering
@@ -399,7 +399,7 @@ public class ManagerController {
         }
     }
 
-    // ==================== PAYMENT STATUS ====================
+    // PAYMENT STATUS
 
     @GetMapping("/payment-status")
     public ResponseEntity<?> getPaymentStatus(@RequestHeader("Authorization") String token) {
@@ -421,7 +421,7 @@ public class ManagerController {
         }
     }
 
-    // ==================== EXCEPTION HANDLER HELPER ====================
+    // EXCEPTION HANDLER HELPER
     
     private ResponseEntity<?> handleException(Exception e) {
         if (e instanceof SecurityException) {

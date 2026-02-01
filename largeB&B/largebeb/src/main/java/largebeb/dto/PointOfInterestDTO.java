@@ -10,6 +10,6 @@ public class PointOfInterestDTO {
     private String id;
     private String name;
     private String category;
-    // Coordinate semplici [longitude, latitude]
+    // [longitude, latitude]
     private List<Double> coordinates;
 }

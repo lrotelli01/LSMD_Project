@@ -20,19 +20,19 @@ public class PropertyController {
 
     private final PropertyService propertyService;
     private final largebeb.services.RecommendationService recommendationService;
-    // ADDED: Needed to extract user ID from token
+    // Needed to extract user ID from token
     private final JwtUtil jwtUtil; 
 
-    // --- 1. PROPERTY DETAILS (Modified to save History) ---
+    // PROPERTY DETAILS (Modified to save History)
     @GetMapping("/{propertyId}")
     public ResponseEntity<PropertyResponseDTO> getPropertyDetails(
             @PathVariable String propertyId,
             @RequestHeader(value = "Authorization", required = false) String token) { // Token is optional (Guest)
         
-        // 1. Retrieve details (also increments Trending on Redis)
+        // Retrieve details (also increments Trending on Redis)
         PropertyResponseDTO property = propertyService.getPropertyDetails(propertyId);
 
-        // 2. If user is logged in, add to history (Redis List)
+        // If user is logged in, add to history (Redis List)
         if (token != null && token.startsWith("Bearer ")) {
             try {
                 String cleanToken = token.substring(7);
@@ -48,7 +48,7 @@ public class PropertyController {
         return ResponseEntity.ok(property);
     }
 
-    // --- 2. USER HISTORY (Read) ---
+    // USER HISTORY (Read)
     // Note: I corrected this method to use token instead of ?userId parameter
     // because it's more secure (each user only sees their own history).
     @GetMapping("/history")
@@ -61,7 +61,7 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.getUserHistory(userId));
     }
 
-    // --- 3. ADVANCED SEARCH ---
+    // ADVANCED SEARCH
     @GetMapping("/search")
     public ResponseEntity<List<PropertyResponseDTO>> searchProperties(
             @RequestParam(required = false) String city,
@@ -71,7 +71,7 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.searchProperties(city, minPrice, maxPrice, amenities));
     }
 
-    // --- 3B. ROOM SEARCH ---
+    // ROOM SEARCH
     @GetMapping("/rooms/search")
     public ResponseEntity<List<RoomResponseDTO>> searchRooms(
             @RequestParam(required = false) String city,
@@ -83,7 +83,7 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.searchRooms(city, roomType, minPrice, maxPrice, minCapacity, amenities));
     }
 
-    // --- 4. MAP (GeoSpatial) ---
+    // MAP (GeoSpatial)
     @GetMapping("/map")
     public ResponseEntity<List<PropertyResponseDTO>> getPropertiesInArea(
             @RequestParam double lat,
@@ -92,25 +92,25 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.getPropertiesInArea(lat, lon, radiusKm));
     }
 
-    // --- 5. TRENDING ---
+    // TRENDING
     @GetMapping("/trending")
     public ResponseEntity<List<PropertyResponseDTO>> getTrendingProperties() {
         return ResponseEntity.ok(propertyService.getTrendingProperties());
     }
 
-    // --- 6. TOP RATED ---
+    // TOP RATED
     @GetMapping("/top-rated")
     public ResponseEntity<List<PropertyResponseDTO>> getTopRatedProperties() {
         return ResponseEntity.ok(propertyService.getTopRatedProperties());
     }
 
-    // --- 7. RACCOMANDAZIONI COLLABORATIVE ---
+    // COLLABORATIVE RECOMMENDATIONS
     @GetMapping("/{propertyId}/recommendations/collaborative")
     public ResponseEntity<List<PropertyResponseDTO>> getCollaborative(@PathVariable String propertyId) {
         return ResponseEntity.ok(recommendationService.getCollaborativeRecommendations(propertyId));
     }
 
-    // --- 8. RACCOMANDAZIONI SIMILI ---
+    // SIMILIAR RECOMMENDATIONS
     @GetMapping("/{propertyId}/recommendations/similar")
     public ResponseEntity<List<PropertyResponseDTO>> getSimilar(@PathVariable String propertyId) {
         return ResponseEntity.ok(recommendationService.getContentBasedRecommendations(propertyId));

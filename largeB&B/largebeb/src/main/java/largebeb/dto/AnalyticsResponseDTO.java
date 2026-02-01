@@ -37,7 +37,7 @@ public class AnalyticsResponseDTO {
     private long totalAdults;
     private long totalChildren;
     
-    // ============== NEW: Additional Required Metrics ==============
+    // Additional Required Metrics
     private String mostBookedRoomType;        // Most frequently booked room type
     private double avgGuestsPerRoomPerBooking; // Average guests per room per booking
     
@@ -47,13 +47,13 @@ public class AnalyticsResponseDTO {
     // Monthly Breakdown (if requested)
     private Map<String, MonthlyStatsDTO> monthlyBreakdown;
     
-    // ============== NEW: Rating Evolution ==============
+    // Rating Evolution
     private RatingAnalyticsDTO ratingAnalytics;
     
-    // ============== NEW: Reservation Trends ==============
+    // Reservation Trends
     private ReservationTrendsDTO reservationTrends;
     
-    // ============== NEW: Comparative Performance ==============
+    // Comparative Performance
     private ComparativePerformanceDTO comparativePerformance;
     
     @Data
@@ -74,7 +74,7 @@ public class AnalyticsResponseDTO {
         private long guests;
     }
     
-    // ============== NEW DTOs for Advanced Analytics ==============
+    // DTOs for Advanced Analytics
     
     /**
      * Rating Evolution - tracks how ratings change over time
