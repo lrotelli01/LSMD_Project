@@ -50,8 +50,6 @@ public class AnalyticsService {
     private final MongoTemplate mongoTemplate;
     private final JwtUtil jwtUtil;
 
-    // ==================== PUBLIC API METHODS ====================
-
     /**
      * Get comprehensive analytics for a specific property with optional date range
      */
@@ -179,7 +177,7 @@ public class AnalyticsService {
         return calculateComparativePerformance(property);
     }
 
-    // ==================== CORE ANALYTICS CALCULATION ====================
+    // CORE ANALYTICS CALCULATION
 
     private AnalyticsResponseDTO calculateComprehensiveAnalytics(Property property, 
                                                                   LocalDate startDate, LocalDate endDate,
@@ -211,19 +209,19 @@ public class AnalyticsService {
         // Monthly breakdown
         Map<String, MonthlyStatsDTO> monthlyBreakdown = calculateMonthlyBreakdown(reservations, property);
 
-        // NEW: Rating Analytics
+        // Rating Analytics
         RatingAnalyticsDTO ratingAnalytics = calculateRatingAnalytics(property.getId(), effectiveStart, effectiveEnd);
 
-        // NEW: Reservation Trends
+        // Reservation Trends
         ReservationTrendsDTO reservationTrends = calculateReservationTrends(reservations, effectiveStart, effectiveEnd);
 
-        // NEW: Comparative Performance
+        // Comparative Performance
         ComparativePerformanceDTO comparativePerformance = calculateComparativePerformance(property);
 
-        // NEW: Most booked room type
+        // Most booked room type
         String mostBookedRoomType = calculateMostBookedRoomType(reservations, property);
 
-        // NEW: Average guests per room per booking
+        // Average guests per room per booking
         double avgGuestsPerRoomPerBooking = calculateAvgGuestsPerRoomPerBooking(reservations);
 
         return AnalyticsResponseDTO.builder()
@@ -252,7 +250,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ==================== RATING EVOLUTION ANALYSIS ====================
+    // RATING EVOLUTION ANALYSIS
 
     /**
      * Calculates comprehensive rating analytics with evolution tracking
@@ -387,7 +385,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ==================== RESERVATION TRENDS ANALYSIS ====================
+    // RESERVATION TRENDS ANALYSIS
 
     /**
      * Calculates reservation trends and booking patterns
@@ -524,7 +522,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ==================== COMPARATIVE PERFORMANCE ANALYSIS ====================
+    // COMPARATIVE PERFORMANCE ANALYSIS
 
     /**
      * Calculates comparative performance against similar properties using MongoDB aggregation
@@ -604,7 +602,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ==================== MONGODB AGGREGATION PIPELINE ====================
+    // MONGODB AGGREGATION PIPELINE
 
     /**
      * Uses MongoDB aggregation pipeline for efficient revenue calculation
@@ -685,7 +683,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ==================== HELPER CLASSES ====================
+    // HELPER CLASSES
 
     private static class BasicStats {
         long totalReservations;
@@ -718,7 +716,7 @@ public class AnalyticsService {
         private long totalChildren;
     }
 
-    // ==================== HELPER METHODS ====================
+    // HELPER METHODS
 
     private BasicStats calculateBasicStats(List<Reservation> reservations, Property property) {
         BasicStats stats = new BasicStats();

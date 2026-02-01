@@ -42,7 +42,7 @@ public class ManagerPropertyService {
     /**
      * Add a new property (Manager only)
      */
-    @Transactional // Recommended for multi-db operations
+    @Transactional // for multi-db operations
     public PropertyResponseDTO addProperty(String token, PropertyRequestDTO request) {
         RegisteredUser manager = getManagerFromToken(token);
 
