@@ -2,7 +2,9 @@ package largebeb.services;
 
 import largebeb.dto.PointOfInterestDTO;
 import largebeb.dto.PropertyResponseDTO;
+import largebeb.dto.RoomResponseDTO;
 import largebeb.model.Property;
+import largebeb.model.Room;
 import largebeb.model.PointOfInterest;
 import largebeb.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
@@ -210,6 +212,119 @@ public class PropertyService {
                 .name(poi.getName())
                 .category(poi.getCategory())
                 .coordinates(poiCoords)
+                .build();
+    }
+
+    // --- 7. RICERCA STANZE ---
+    public List<RoomResponseDTO> searchRooms(String city, String roomType, Double minPrice, 
+                                              Double maxPrice, Integer minCapacity, List<String> amenities) {
+        Query query = new Query();
+
+        // A. Filtro Città (Case Insensitive)
+        if (city != null && !city.trim().isEmpty()) {
+            query.addCriteria(Criteria.where("city").regex(city, "i"));
+        }
+
+        // B. Filtro Room Type
+        if (roomType != null && !roomType.trim().isEmpty()) {
+            query.addCriteria(Criteria.where("rooms.roomType").regex(roomType, "i"));
+        }
+
+        // C. Filtro Prezzo (nelle stanze)
+        if (minPrice != null || maxPrice != null) {
+            Criteria priceCriteria = Criteria.where("pricePerNightAdults");
+            if (minPrice != null) priceCriteria.gte(minPrice.floatValue());
+            if (maxPrice != null) priceCriteria.lte(maxPrice.floatValue());
+            query.addCriteria(Criteria.where("rooms").elemMatch(priceCriteria));
+        }
+
+        // D. Filtro Capacità minima
+        if (minCapacity != null && minCapacity > 0) {
+            query.addCriteria(Criteria.where("rooms").elemMatch(
+                Criteria.where("capacityAdults").gte(minCapacity.longValue())
+            ));
+        }
+
+        // E. Filtro Amenities delle stanze
+        if (amenities != null && !amenities.isEmpty()) {
+            List<Criteria> amenityCriteria = new ArrayList<>();
+            for (String amenity : amenities) {
+                amenityCriteria.add(Criteria.where("rooms.amenities").regex(amenity, "i"));
+            }
+            query.addCriteria(new Criteria().andOperator(amenityCriteria.toArray(new Criteria[0])));
+        }
+
+        // Esegue la query
+        List<Property> properties = mongoTemplate.find(query, Property.class);
+
+        // Estrae e filtra le stanze che matchano i criteri
+        List<RoomResponseDTO> result = new ArrayList<>();
+        for (Property property : properties) {
+            if (property.getRooms() == null) continue;
+            
+            for (Room room : property.getRooms()) {
+                // Verifica se la stanza soddisfa i criteri
+                boolean matches = true;
+
+                // Filtro roomType
+                if (roomType != null && !roomType.trim().isEmpty()) {
+                    if (room.getRoomType() == null || 
+                        !room.getRoomType().toLowerCase().contains(roomType.toLowerCase())) {
+                        matches = false;
+                    }
+                }
+
+                // Filtro prezzo
+                if (matches && minPrice != null && room.getPricePerNightAdults() != null) {
+                    if (room.getPricePerNightAdults() < minPrice) matches = false;
+                }
+                if (matches && maxPrice != null && room.getPricePerNightAdults() != null) {
+                    if (room.getPricePerNightAdults() > maxPrice) matches = false;
+                }
+
+                // Filtro capacità
+                if (matches && minCapacity != null && room.getCapacityAdults() != null) {
+                    if (room.getCapacityAdults() < minCapacity) matches = false;
+                }
+
+                // Filtro amenities della stanza
+                if (matches && amenities != null && !amenities.isEmpty() && room.getAmenities() != null) {
+                    for (String amenity : amenities) {
+                        boolean found = room.getAmenities().stream()
+                            .anyMatch(a -> a.toLowerCase().contains(amenity.toLowerCase()));
+                        if (!found) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (matches) {
+                    result.add(mapRoomToDTO(room, property));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // --- HELPER: Mappa Room Entity -> DTO ---
+    private RoomResponseDTO mapRoomToDTO(Room room, Property property) {
+        return RoomResponseDTO.builder()
+                .id(room.getId())
+                .propertyId(property.getId())
+                .propertyName(property.getName())
+                .propertyCity(property.getCity())
+                .name(room.getName())
+                .roomType(room.getRoomType())
+                .numBeds(room.getNumBeds())
+                .amenities(room.getAmenities())
+                .photos(room.getPhotos())
+                .status(room.getStatus())
+                .capacityAdults(room.getCapacityAdults())
+                .capacityChildren(room.getCapacityChildren())
+                .pricePerNightAdults(room.getPricePerNightAdults())
+                .pricePerNightChildren(room.getPricePerNightChildren())
                 .build();
     }
 }

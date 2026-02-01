@@ -2,6 +2,7 @@ package largebeb.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import largebeb.dto.PropertyResponseDTO;
+import largebeb.dto.RoomResponseDTO;
 import largebeb.services.PropertyService;
 // AGGIUNTO: Import necessario per gestire il token
 import largebeb.utilities.JwtUtil; 
@@ -68,6 +69,18 @@ public class PropertyController {
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) List<String> amenities) {
         return ResponseEntity.ok(propertyService.searchProperties(city, minPrice, maxPrice, amenities));
+    }
+
+    // --- 3B. RICERCA STANZE ---
+    @GetMapping("/rooms/search")
+    public ResponseEntity<List<RoomResponseDTO>> searchRooms(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String roomType,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Integer minCapacity,
+            @RequestParam(required = false) List<String> amenities) {
+        return ResponseEntity.ok(propertyService.searchRooms(city, roomType, minPrice, maxPrice, minCapacity, amenities));
     }
 
     // --- 4. MAPPA (GeoSpatial) ---

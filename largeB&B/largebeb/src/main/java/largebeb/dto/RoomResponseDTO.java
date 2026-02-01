@@ -9,6 +9,8 @@ import java.util.List;
 public class RoomResponseDTO {
     private String id;
     private String propertyId;
+    private String propertyName;  // Nome della proprietà
+    private String propertyCity;  // Città della proprietà
     private String name;
     private String roomType;
     private Short numBeds;
