@@ -104,11 +104,6 @@ public class PropertyService {
         return mapToDTO(property);
     }
     
-    /**
-     * Cache: trending properties list with TTL of 30 minutes
-     * Returns top 10 most viewed properties
-     */
-    @Cacheable(value = "trendingProperties", key = "'top10'")
     public List<PropertyResponseDTO> getTrendingProperties() {
         try {
             // Get top 10 IDs with highest score (Reverse Range)
@@ -127,11 +122,6 @@ public class PropertyService {
         }
     }
     
-    /**
-     * Cache: top rated properties with TTL of 1 hour
-     * Returns 20 highest-rated properties
-     */
-    @Cacheable(value = "topRatedProperties", key = "'top20'")
     public List<PropertyResponseDTO> getTopRatedProperties() {
         Query query = new Query();
         query.with(Sort.by(Sort.Direction.DESC, "ratingStats.value"));
@@ -155,11 +145,6 @@ public class PropertyService {
         }
     }
 
-    /**
-     * Cache: user property history with TTL of 1 hour
-     * Returns last 10 properties viewed by the user
-     */
-    @Cacheable(value = "userHistory", key = "#userId")
     public List<PropertyResponseDTO> getUserHistory(String userId) {
         try {
             String key = "history:" + userId;

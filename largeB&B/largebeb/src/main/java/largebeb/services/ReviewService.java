@@ -13,8 +13,6 @@ import largebeb.repository.UserRepository;
 import largebeb.utilities.JwtUtil; 
 import largebeb.utilities.RatingStats;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -35,7 +33,6 @@ public class ReviewService {
 
     // Customer create a review
     @Transactional
-    @CacheEvict(value = {"propertyReviews", "topRatedProperties"}, key = "#root.target.propertyIdFromReservation(#request.getReservationId())", allEntries = false, beforeInvocation = false)
     public ReviewResponseDTO createReview(String token, ReviewRequestDTO request) {
         RegisteredUser currentUser = getUserFromToken(token);
 
@@ -112,7 +109,6 @@ public class ReviewService {
 
     // Customer edit their own review
     @Transactional
-    @CacheEvict(value = "propertyReviews", allEntries = true)
     public ReviewResponseDTO editReview(String token, String reviewId, ReviewRequestDTO request) {
         RegisteredUser currentUser = getUserFromToken(token);
         Review review = reviewRepository.findById(reviewId)
@@ -162,7 +158,6 @@ public class ReviewService {
 
     // Customer delete their review
     @Transactional
-    @CacheEvict(value = "propertyReviews", allEntries = true)
     public void deleteReview(String token, String reviewId) {
         RegisteredUser currentUser = getUserFromToken(token);
         
@@ -184,7 +179,6 @@ public class ReviewService {
 
     // Manager reply to review
     @Transactional
-    @CacheEvict(value = "propertyReviews", allEntries = true)
     public ReviewResponseDTO replyToReview(String token, String reviewId, String replyText) {
         RegisteredUser currentUser = getUserFromToken(token);
 
@@ -220,11 +214,6 @@ public class ReviewService {
         return mapToDTO(updatedReview);
     }
 
-    /**
-     * Cache: property reviews with TTL of 1 hour
-     * Retrieves all reviews for a specific property
-     */
-    @Cacheable(value = "propertyReviews", key = "#propertyId")
     public List<ReviewResponseDTO> getReviewsByPropertyId(String propertyId) {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new IllegalArgumentException("Property not found with id: " + propertyId));
@@ -239,12 +228,6 @@ public class ReviewService {
         return reviews.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    /**
-     * Cache: reviews by property and period with TTL of 30 minutes
-     * Get reviews for a property within a specific time period (Manager requirement)
-     * Allows manager to see reviews received during a selected time period
-     */
-    @Cacheable(value = "propertyReviewsPeriod", key = "#propertyId + '-' + #startDate + '-' + #endDate")
     public List<ReviewResponseDTO> getReviewsByPropertyIdAndPeriod(String token, String propertyId, 
                                                                     LocalDate startDate, LocalDate endDate) {
         RegisteredUser manager = getUserFromToken(token);
@@ -278,11 +261,6 @@ public class ReviewService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Cache: all manager reviews by period with TTL of 1 hour
-     * Get all reviews for all properties owned by the manager within a time period
-     */
-    @Cacheable(value = "managerReviewsPeriod", key = "#token + '-' + #startDate + '-' + #endDate")
     public List<ReviewResponseDTO> getAllManagerReviewsByPeriod(String token, LocalDate startDate, LocalDate endDate) {
         RegisteredUser manager = getUserFromToken(token);
 

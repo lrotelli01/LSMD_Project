@@ -4,7 +4,7 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import largebeb.config.JwtAuthenticationFilter; // Make sure the import is correct
+import largebeb.config.JwtAuthenticationFilter; 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod; // Important to specify GET
@@ -46,12 +46,13 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
-                // 2. GUEST & CUSTOMER (Read-Only Properties)
+                // GUEST & CUSTOMER (Read-Only Properties)
                 // Allow ANYONE to GET on /api/properties/...
                 // This unlocks: Search, Details, Map, Trending, Recommendations
                 .requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
-                
-                // 3. EVERYTHING ELSE REQUIRES AUTHENTICATION
+                // Allow everyone to see reviews for a property
+                .requestMatchers(HttpMethod.GET, "/api/reviews/property/**").permitAll()
+                // EVERYTHING ELSE REQUIRES AUTHENTICATION
                 // (Booking, Reviewing, Deleting, etc.)
                 .anyRequest().authenticated()
             )
