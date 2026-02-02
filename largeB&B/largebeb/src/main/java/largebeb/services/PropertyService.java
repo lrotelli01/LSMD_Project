@@ -8,6 +8,8 @@ import largebeb.model.Room;
 import largebeb.model.PointOfInterest;
 import largebeb.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
@@ -80,7 +82,11 @@ public class PropertyService {
         return properties.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    // DETAILS & REDIS (Trending)
+    /**
+     * Cache: properties with TTL of 1 hour
+     * Tracks trending properties and counts views
+     */
+    @Cacheable(value = "properties", key = "#propertyId")
     public PropertyResponseDTO getPropertyDetails(String propertyId) {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new IllegalArgumentException("Property not found"));
@@ -98,7 +104,11 @@ public class PropertyService {
         return mapToDTO(property);
     }
     
-    // RANKING (Top 10 Trending)
+    /**
+     * Cache: trending properties list with TTL of 30 minutes
+     * Returns top 10 most viewed properties
+     */
+    @Cacheable(value = "trendingProperties", key = "'top10'")
     public List<PropertyResponseDTO> getTrendingProperties() {
         try {
             // Get top 10 IDs with highest score (Reverse Range)
@@ -117,7 +127,11 @@ public class PropertyService {
         }
     }
     
-    // TOP RATED (From MongoDB)
+    /**
+     * Cache: top rated properties with TTL of 1 hour
+     * Returns 20 highest-rated properties
+     */
+    @Cacheable(value = "topRatedProperties", key = "'top20'")
     public List<PropertyResponseDTO> getTopRatedProperties() {
         Query query = new Query();
         query.with(Sort.by(Sort.Direction.DESC, "ratingStats.value"));
@@ -141,6 +155,11 @@ public class PropertyService {
         }
     }
 
+    /**
+     * Cache: user property history with TTL of 1 hour
+     * Returns last 10 properties viewed by the user
+     */
+    @Cacheable(value = "userHistory", key = "#userId")
     public List<PropertyResponseDTO> getUserHistory(String userId) {
         try {
             String key = "history:" + userId;
