@@ -201,6 +201,7 @@ public class PropertyService {
                 .photos(p.getPhotos())
                 .pois(poisDTO)
                 .coordinates(coords)
+                .latestReviews(p.getLatestReviews())
                 .build();
     }
 

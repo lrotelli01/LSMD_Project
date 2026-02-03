@@ -3,6 +3,7 @@ package largebeb.dto;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
+import largebeb.model.Review;
 
 @Data
 @Builder
@@ -25,5 +26,8 @@ public class PropertyResponseDTO {
     private List<PointOfInterestDTO> pois; 
     
     // For the map - simple coordinates [longitude, latitude]
-    private List<Double> coordinates; 
+    private List<Double> coordinates;
+    
+    // Latest 10 reviews for this property (retrieved from the property document)
+    private List<Review> latestReviews;
 }
