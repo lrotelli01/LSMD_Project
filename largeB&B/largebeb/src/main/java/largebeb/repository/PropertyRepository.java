@@ -26,7 +26,4 @@ public interface PropertyRepository extends MongoRepository<Property, String> {
 
     // Find all properties of a Manager
     List<Property> findByManagerId(String managerId);
-
-    // NOTE: Complex queries (Search, GeoSpatial) have been moved 
-    // to PropertyService using MongoTemplate to avoid syntax errors.
 }
