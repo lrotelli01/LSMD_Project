@@ -4,9 +4,13 @@ import lombok.Builder;
 import lombok.Data;
 import java.util.List;
 import largebeb.model.Review;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PropertyResponseDTO {
     private String id;
     private String name;
